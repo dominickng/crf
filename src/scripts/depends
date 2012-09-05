@@ -1,0 +1,26 @@
+#!/bin/bash
+
+INCLUDE=src/include
+PRECOMPILED='std.h'
+
+TMP=/tmp/depends.${RANDOM}
+RUN=${1}
+shift
+
+while [ ${#} -ne 0 ]; do
+  ${RUN} ${1} | sed "s#^[^:]*:#${1%.cc}.o:#" >> ${TMP}
+  shift
+done
+
+for f in ${PRECOMPILED}; do
+  sed "s#${INCLUDE}/${f}#${INCLUDE}/${f}.gch#g" ${TMP} > ${TMP}.2
+  mv ${TMP}.2 ${TMP}
+done
+
+# manual dependencies for pre-compiled header files
+echo "${INCLUDE}/std.h.gch: ${INCLUDE}/std.h" >> ${TMP}
+
+# clean up
+cat ${TMP}
+rm ${TMP}
+

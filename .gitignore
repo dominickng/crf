@@ -1,0 +1,4 @@
+bin/
+*.o
+Makefile.deps
+*.gch
