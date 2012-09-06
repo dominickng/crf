@@ -1,22 +1,22 @@
 namespace Util {
   namespace HashTable {
 
-    template <typename Key, typename Value, typename Hash=Hasher::Hash,
-             size_t PoolSize=MEDIUM>
+    template <typename E, typename K, typename Hash=Hasher::Hash, size_t PoolSize=MEDIUM>
     class BaseHashTable {
       protected:
         size_t _nbuckets;
         size_t _size;
         size_t _used_buckets;
 
-        typedef Entry<Key, Value, Hash> EntryType;
+        typedef E Entry;
+        typedef K Key;
 
         Pool *_pool;
-        EntryType **_buckets;
+        Entry **_buckets;
 
-        virtual EntryType *insert(const Key &key, const Value &value,
-            const Hash hash, const size_t bucket) {
-          EntryType *e = EntryType::create(_pool, _size, key, value, hash, _buckets[bucket]);
+        virtual Entry *insert(const Key &key, const Hash hash,
+            const size_t bucket) {
+          Entry *e = Entry::create(_pool, _size, key, hash, _buckets[bucket]);
 
           ++_size;
           if (_buckets[bucket] == NULL)
@@ -28,57 +28,29 @@ namespace Util {
       public:
         BaseHashTable(const size_t nbuckets=BASE_SIZE) :
           _nbuckets(nbuckets), _size(0), _used_buckets(0),
-          _pool(new Pool(PoolSize)), _buckets(new (_pool) EntryType*[_nbuckets]) { }
+          _pool(new Pool(PoolSize)), _buckets(new Entry*[_nbuckets]) { }
 
-        virtual ~BaseHashTable(void) { delete _pool; }
+        virtual ~BaseHashTable(void) {
+          delete _pool;
+          delete _buckets;
+        }
 
         inline size_t size(void) const { return _size; }
 
-        virtual EntryType *add(const Key &key, const Value &value) {
+        virtual Entry *add(const Key &key) {
           Hash hash(key);
           uint64_t bucket = hash.value() % _nbuckets;
-          EntryType *e = _buckets[bucket]->find(hash, key);
+          Entry *e = _buckets[bucket]->find(hash, key);
           if (e)
             return e;
-          return insert(key, value, hash, bucket);
-        }
-
-        virtual EntryType *add(EntryType *entry) {
-          Hash hash(entry->key());
-          uint64_t bucket = hash.value() % _nbuckets;
-          EntryType *e = _buckets[bucket]->find(hash, entry->key());
-          if (e)
-            return e;
-          return insert(entry->key(), entry->value(), hash, bucket);
-        }
-
-        const Value &operator[](const Key &key) const {
-          Hash hash(key);
-          uint64_t bucket = hash.value() % _nbuckets;
-          EntryType *e = _buckets[bucket]->find(hash, key);
-          if (!e) {
-            Value v;
-            return insert(key, v, hash, bucket)->value();
-          }
-          return e->value();
-        }
-
-        Value &operator[](const Key &key) {
-          Hash hash(key);
-          uint64_t bucket = hash.value() % _nbuckets;
-          EntryType *e = _buckets[bucket]->find(hash, key);
-          if (!e) {
-            Value v;
-            return insert(key, v, hash, bucket)->value();
-          }
-          return e->value();
+          return insert(key, hash, bucket);
         }
 
         virtual void clear(void) {
           _size = 0;
           _used_buckets = 0;
           _pool->clear();
-          memset(_buckets, 0, _nbuckets * sizeof(EntryType *));
+          memset(_buckets, 0, _nbuckets * sizeof(Entry *));
         }
     };
   }

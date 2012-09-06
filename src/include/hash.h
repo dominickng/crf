@@ -216,11 +216,11 @@ namespace Util {
 
         uint64_t _hash;
       public:
-        bool operator==(const FNV1aHash &other) {
+        bool operator==(const FNV1aHash &other) const {
           return _hash == other._hash;
         }
 
-        bool operator==(const uint64_t hash) {
+        bool operator==(const uint64_t hash) const {
           return _hash == hash;
         }
 

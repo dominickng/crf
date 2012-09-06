@@ -1,11 +1,15 @@
+#ifndef _HASHTABLE_H
+#define _HASHTABLE_H
+
 namespace Util {
   namespace HashTable {
     template <typename Key, typename Value, typename Hash=Hasher::Hash,
              size_t PoolSize=MEDIUM>
-    class HashTable : public OrderedHashTable<Key, Value, Hash, PoolSize> {
+    class HashTable : public OrderedHashTable<KeyValueEntry<Key, Value, Hash>,
+        Key, Hash, PoolSize> {
       protected:
-        typedef OrderedHashTable<Key, Value, Hash, PoolSize> Base;
-        typedef typename Base::EntryType EntryType;
+        typedef KeyValueEntry<Key, Value, Hash> Entry;
+        typedef OrderedHashTable<Entry, Key, Hash, PoolSize> Base;
         typedef typename Base::Entries Entries;
 
         const float _max_load;
@@ -23,14 +27,11 @@ namespace Util {
             Base::add(*it);
         }
 
-        virtual EntryType *insert(const Key &key, const Value &value,
+        using Base::insert;
+        virtual Entry *insert(const Key &key, const Value &value,
             const Hash hash, const size_t bucket) {
-          if (Base::_used_buckets / (double) Base::_nbuckets > _max_load)
-            expand();
-          EntryType *e = EntryType::create(Base::_pool, Base::_size, key,
-              value, hash, Base::_buckets[bucket]);
-          Base::_buckets[bucket] = e;
-          ++Base::_size;
+          Entry *e = insert(key, hash, bucket);
+          e->value(value);
           return e;
         }
 
@@ -40,6 +41,40 @@ namespace Util {
           _max_load(max_load), _expansion_factor(expansion_factor) { }
 
         virtual ~HashTable(void) { }
+
+        virtual Entry *add(const Key &key, const Value &value) {
+          Hash hash(key);
+          uint64_t bucket = hash.value() % Base::_nbuckets;
+          Entry *e = Base::_buckets[bucket]->find(hash, key);
+          if (e)
+            return e;
+          return insert(key, value, hash, bucket);
+        }
+
+        const Entry *operator[](const Key &key) const {
+          Hash hash(key);
+          uint64_t bucket = hash.value() % Base::_nbuckets;
+          Entry *e = Base::_buckets[bucket]->find(hash, key);
+          if (!e) {
+            Value v;
+            return insert(key, v, hash, bucket);
+          }
+          return e->value();
+        }
+
+        Value &operator[](const Key &key) {
+          Hash hash(key);
+          uint64_t bucket = hash.value() % Base::_nbuckets;
+          Entry *e = Base::_buckets[bucket]->find(hash, key);
+          if (!e) {
+            Value v;
+            return insert(key, v, hash, bucket)->value();
+          }
+          return e->value();
+        }
+
     };
   }
 }
+
+#endif

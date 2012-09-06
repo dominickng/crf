@@ -1,6 +1,8 @@
-#include "std.h"
+#include "base.h"
 #include "config.h"
 #include "hashtable.h"
+#include "word.h"
+#include "lexicon.h"
 
 namespace config = NLP::config;
 namespace port = NLP::port;
@@ -28,6 +30,7 @@ class TestConfig : public config::Config {
 };
 
 int main(int argc, char *argv[]) {
+  NLP::Lexicon lexicon;
   TestConfig config;
   Util::Hasher::Hash hash;
   hashtable::HashTable<std::string, int> hash_table;

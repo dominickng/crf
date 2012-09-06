@@ -1,9 +1,6 @@
 #ifndef _POOL_H
 #define _POOL_H
 
-#include <cstdlib>
-#include <vector>
-
 namespace Util {
   class MemoryZone {
     private:
@@ -73,9 +70,20 @@ namespace Util {
         else {
           MemoryZone *tmp = new MemoryZone(size);
           buf = tmp->alloc(size);
-          _unused.push_back(tmp);
+          _used.push_back(tmp);
         }
         return buf;
+      }
+
+      const char *strdup(const char *const str, const size_t len) {
+        char *buf = alloc(len + 1);
+        memmove(buf, str, len);
+        buf[len] = '\0';
+        return buf;
+      }
+
+      const char *strdup(const char *const str) {
+        return strdup(str, strlen(str));
       }
 
       void clear(void) {
@@ -99,11 +107,5 @@ namespace Util {
       }
   };
 }
-
-void *operator new[](const size_t size, Util::Pool *pool) throw() {
-  return (void *) pool->alloc(size);
-}
-
-void operator delete[](void *ptr, Util::Pool *pool) throw() { }
 
 #endif

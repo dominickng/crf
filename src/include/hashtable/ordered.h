@@ -40,15 +40,16 @@ namespace Util {
         }
     };
 
-    template <typename Key, typename Value, typename Hash=Hasher::Hash,
+    template <typename E, typename K, typename Hash=Hasher::Hash,
              size_t PoolSize=MEDIUM>
-    class OrderedHashTable : public BaseHashTable<Key, Value, Hash, PoolSize> {
+    class OrderedHashTable : public BaseHashTable<E, K, Hash, PoolSize> {
       protected:
-        typedef BaseHashTable<Key, Value, Hash, PoolSize> Base;
-        typedef typename Base::EntryType EntryType;
-        typedef std::vector<EntryType *> Entries;
-        typedef typename std::vector<EntryType *>::iterator iterator;
-        typedef typename std::vector<EntryType *>::const_iterator const_iterator;
+        typedef E Entry;
+        typedef K Key;
+        typedef BaseHashTable<Entry, Key, Hash, PoolSize> Base;
+        typedef std::vector<Entry *> Entries;
+        typedef typename std::vector<Entry *>::iterator iterator;
+        typedef typename std::vector<Entry *>::const_iterator const_iterator;
 
         Entries _entries;
 
@@ -58,9 +59,8 @@ namespace Util {
 
         virtual ~OrderedHashTable(void) { }
 
-        virtual EntryType *insert(const Key &key, const Value &value,
-            const Hash hash, const size_t bucket) {
-          EntryType * e = Base::insert(key, value, hash, bucket);
+        virtual Entry *insert(const Key &key, const Hash hash, const size_t bucket) {
+          Entry * e = Base::insert(key, hash, bucket);
           _entries.push_back(e);
           return e;
         }
@@ -71,7 +71,7 @@ namespace Util {
         }
 
         void compact(void) {
-          iterator new_end = std::remove(_entries.begin(), _entries.end(), reinterpret_cast<EntryType *>(0));
+          iterator new_end = std::remove(_entries.begin(), _entries.end(), reinterpret_cast<Entry *>(0));
           _entries.erase(new_end, _entries.end());
         }
 
@@ -91,27 +91,27 @@ namespace Util {
         }
 
         void sort_by_key(void) {
-          sort(KeyCmp<EntryType>());
+          sort(KeyCmp<Entry>());
           renumber();
         }
 
         void sort_by_rev_key(void) {
-          sort(RevKeyCmp<EntryType>());
+          sort(RevKeyCmp<Entry>());
           renumber();
         }
 
         void sort_by_value(void) {
-          sort(ValueCmp<EntryType>());
+          sort(ValueCmp<Entry>());
           renumber();
         }
 
         void sort_by_rev_value(void) {
-          sort(RevValueCmp<EntryType>());
+          sort(RevValueCmp<Entry>());
           renumber();
         }
 
         void sort_by_index(void) {
-          sort(IndexCmp<EntryType>());
+          sort(IndexCmp<Entry>());
           renumber();
         }
     };
