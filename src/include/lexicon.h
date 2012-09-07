@@ -15,6 +15,8 @@ namespace NLP {
 
       void load(const std::string &filename);
       void load(const std::string &filename, std::istream &input);
+      void save(const std::string &filename, const std::string &preface);
+      void save(std::ostream &out, const std::string &preface);
 
       const Word canonize(const std::string &raw) const;
       const Word canonize(const char *raw) const;
@@ -26,6 +28,8 @@ namespace NLP {
       const Word operator[](const std::string &raw) const { return canonize(raw); }
       const Word operator[](const char *raw) const { return canonize(raw); }
       const char *operator[](const Word &word) const { return str(word); }
+
+      void sort_by_freq(void);
 
       size_t size(void) const;
   };

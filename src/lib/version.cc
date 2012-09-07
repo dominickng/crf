@@ -1,3 +1,1 @@
-namespace NLP {
-  const char *VERSION = "0.01";
-}
+const char *VERSION = "0.01";

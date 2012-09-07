@@ -1,6 +1,6 @@
 #include "config.h"
 
-namespace NLP { namespace config {
+namespace Util { namespace config {
 
 OpBase::OpBase(OpGroup &group, const std::string &name, const std::string &desc,
     const bool has_default, const bool requires_arg) :

@@ -1,4 +1,4 @@
-namespace NLP {
+namespace Util {
   namespace port {
 
     extern const char *BOLD;

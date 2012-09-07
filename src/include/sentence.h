@@ -32,5 +32,9 @@ namespace NLP {
           return words;
       }
     }
+
+    size_t size(void) {
+      return words.size();
+    }
   };
 }

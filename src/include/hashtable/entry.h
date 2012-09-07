@@ -27,6 +27,7 @@ namespace Util {
         inline const Hash hash(void) const { return _hash; }
         inline const uint64_t index(void) const { return _index; }
         inline uint64_t index(void) { return _index; }
+        inline void index(const uint64_t index) { _index = index; }
         inline const StringEntry *next(void) const { return _next; }
         inline const Value &value(void) const { return _value; }
         inline Value &value(void) { return _value; }
@@ -63,6 +64,10 @@ namespace Util {
         }
 
         size_t size(void){ return _next ? _next->size() + 1 : 1; }
+
+        std::ostream &save(std::ostream &out) const {
+          return out << _str << ' ' << _value;
+        }
     };
 
     template <typename Key, typename Value, typename Hash=Hasher::Hash>
@@ -93,6 +98,7 @@ namespace Util {
         inline const Hash hash(void) const { return _hash; }
         inline const uint64_t index(void) const { return _index; }
         inline uint64_t index(void) { return _index; }
+        inline void index(const uint64_t index) { _index = index; }
         inline const KeyValueEntry *next(void) const { return _next; }
         inline const Key &key(void) const { return _key; }
         inline const Value &value(void) const { return _value; }

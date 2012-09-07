@@ -44,10 +44,12 @@ namespace NLP {
         if (isspace(*current)) {
           *current = '\0';
           sent.get_single(cols[index++]).push_back(begin);
-          begin = current;
+          begin = ++current;
         }
-        ++current;
+        else
+          ++current;
       }
+      sent.get_single(cols[index++]).push_back(begin);
       next_line();
     }
     return true;

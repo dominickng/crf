@@ -2,6 +2,6 @@
 #include "port.h"
 
 
-namespace NLP { namespace port {
+namespace Util { namespace port {
 
 } }

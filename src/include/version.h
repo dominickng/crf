@@ -1,3 +1,1 @@
-namespace NLP {
-  extern const char *VERSION;
-}
+extern const char *VERSION;

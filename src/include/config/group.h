@@ -1,4 +1,4 @@
-namespace NLP {
+namespace Util {
   namespace config {
     class OpGroup : public OptionBase {
       // represents a group of options

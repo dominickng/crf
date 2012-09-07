@@ -1,4 +1,4 @@
-namespace NLP {
+namespace Util {
   namespace config {
     class ConfigException : public Exception {
       public:

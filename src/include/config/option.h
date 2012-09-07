@@ -1,4 +1,4 @@
-namespace NLP {
+namespace Util {
   namespace config {
     class OpBase : public OptionBase {
       // represent ops that take a required argument

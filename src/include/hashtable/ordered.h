@@ -82,7 +82,7 @@ namespace Util {
 
         void renumber(void) {
           for (size_t i = 0; i != _entries.size(); ++i)
-            _entries[i]->index() = i;
+            _entries[i]->index(i);
         }
 
         template <typename Comparator>
@@ -113,6 +113,11 @@ namespace Util {
         void sort_by_index(void) {
           sort(IndexCmp<Entry>());
           renumber();
+        }
+
+        void save(std::ostream &out) const {
+          for (typename Entries::const_iterator i = _entries.begin(); i != _entries.end(); ++i)
+            (*i)->save(out);
         }
     };
   }

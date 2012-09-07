@@ -1,6 +1,6 @@
 #include "config.h"
 
-namespace NLP { namespace config {
+namespace Util { namespace config {
 
 const char *
 ConfigException::what(void) const throw() {

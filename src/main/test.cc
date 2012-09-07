@@ -6,8 +6,8 @@
 
 #include "io.h"
 
-namespace config = NLP::config;
-namespace port = NLP::port;
+namespace config = Util::config;
+namespace port = Util::port;
 namespace hashtable = Util::HashTable;
 
 class TestConfig : public config::Config {
@@ -59,12 +59,13 @@ int main(int argc, char *argv[]) {
 
       NLP::Sentence sent;
       NLP::ReaderFactory reader("conll", "stdin", config.input_option.file(), config.input_option());
-      reader.next(sent);
 
-      for (NLP::Raws::iterator i = sent.words.begin(); i != sent.words.end(); ++i)
-        std::cout << *i << " ";
-      std::cout << std::endl;
-
+      while (reader.next(sent)) {
+        for (NLP::Raws::iterator i = sent.entities.begin(); i != sent.entities.end(); ++i)
+          std::cout << *i << " ";
+        std::cout << std::endl;
+        sent.reset();
+      }
     }
   }
   catch (config::ConfigException &e) {
