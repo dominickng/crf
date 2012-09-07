@@ -1,0 +1,33 @@
+namespace NLP {
+  class Lexicon {
+    private:
+      class _Impl;
+      _Impl *_impl;
+
+    public:
+      Lexicon(const size_t nbuckets=Util::HashTable::MEDIUM, const size_t pool_size=Util::HashTable::LARGE);
+      Lexicon(const std::string &filename, const size_t nbuckets=Util::HashTable::MEDIUM, const size_t pool_size=Util::HashTable::LARGE);
+      Lexicon(const std::string &filename, std::istream &input, const size_t nbuckets=Util::HashTable::MEDIUM, const size_t pool_size=Util::HashTable::LARGE);
+      Lexicon(const Lexicon &other);
+
+      void add(const std::string &raw, const uint64_t freq=1);
+      void insert(const std::string &raw, const uint64_t freq=1);
+
+      void load(const std::string &filename);
+      void load(const std::string &filename, std::istream &input);
+
+      const Word canonize(const std::string &raw) const;
+      const Word canonize(const char *raw) const;
+      void canonize(const Raws &raws, Words &words) const;
+
+      const char *str(const Word &word) const;
+      void str(const Words &words, Raws &raws) const;
+
+      const Word operator[](const std::string &raw) const { return canonize(raw); }
+      const Word operator[](const char *raw) const { return canonize(raw); }
+      const char *operator[](const Word &word) const { return str(word); }
+
+      size_t size(void) const;
+  };
+
+}

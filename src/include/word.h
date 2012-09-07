@@ -21,11 +21,13 @@ namespace NLP {
 
       operator uint64_t(void) const { return _id; }
 
-      uint64_t freq(void) const {
+      inline uint64_t id(void) const { return _id; }
+
+      inline uint64_t freq(void) const {
         return (_id < 2) ? 0 : _freq();
       }
 
-      uint64_t index(void) const {
+      inline uint64_t index(void) const {
         switch (_id) {
           case 0:
             return None::val;
@@ -36,7 +38,7 @@ namespace NLP {
         }
       }
 
-      const char *str(void) const {
+      inline const char *str(void) const {
         switch (_id) {
           case 0:
             return None::str;
@@ -47,4 +49,6 @@ namespace NLP {
         }
       }
   };
+
+  typedef std::vector<Word> Words;
 }

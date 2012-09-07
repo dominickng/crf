@@ -40,13 +40,12 @@ namespace Util {
         }
     };
 
-    template <typename E, typename K, typename Hash=Hasher::Hash,
-             size_t PoolSize=MEDIUM>
-    class OrderedHashTable : public BaseHashTable<E, K, Hash, PoolSize> {
+    template <typename E, typename K, typename Hash=Hasher::Hash>
+    class OrderedHashTable : public BaseHashTable<E, K, Hash> {
       protected:
         typedef E Entry;
         typedef K Key;
-        typedef BaseHashTable<Entry, Key, Hash, PoolSize> Base;
+        typedef BaseHashTable<Entry, Key, Hash> Base;
         typedef std::vector<Entry *> Entries;
         typedef typename std::vector<Entry *>::iterator iterator;
         typedef typename std::vector<Entry *>::const_iterator const_iterator;
@@ -54,8 +53,9 @@ namespace Util {
         Entries _entries;
 
       public:
-        OrderedHashTable(const size_t nbuckets=BASE_SIZE) :
-          Base(nbuckets), _entries()  { }
+        OrderedHashTable(const size_t nbuckets=BASE_SIZE,
+            const size_t pool_size=SMALL) :
+          Base(nbuckets, pool_size), _entries()  { }
 
         virtual ~OrderedHashTable(void) { }
 

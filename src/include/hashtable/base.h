@@ -1,11 +1,12 @@
 namespace Util {
   namespace HashTable {
 
-    template <typename E, typename K, typename Hash=Hasher::Hash, size_t PoolSize=MEDIUM>
+    template <typename E, typename K, typename Hash=Hasher::Hash>
     class BaseHashTable {
       protected:
         size_t _nbuckets;
         size_t _size;
+        size_t _pool_size;
         size_t _used_buckets;
 
         typedef E Entry;
@@ -26,9 +27,10 @@ namespace Util {
         }
 
       public:
-        BaseHashTable(const size_t nbuckets=BASE_SIZE) :
+        BaseHashTable(const size_t nbuckets=BASE_SIZE,
+            const size_t pool_size=SMALL) :
           _nbuckets(nbuckets), _size(0), _used_buckets(0),
-          _pool(new Pool(PoolSize)), _buckets(new Entry*[_nbuckets]) { }
+          _pool(new Pool(pool_size)), _buckets(new Entry*[_nbuckets]) { }
 
         virtual ~BaseHashTable(void) {
           delete _pool;
@@ -51,6 +53,11 @@ namespace Util {
           _used_buckets = 0;
           _pool->clear();
           memset(_buckets, 0, _nbuckets * sizeof(Entry *));
+        }
+
+        virtual Entry *find(const Key &key) const {
+          const Hash hash(key);
+          return _buckets[hash.value() % _nbuckets]->find(hash, key);
         }
     };
   }

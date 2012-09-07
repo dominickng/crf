@@ -3,13 +3,12 @@
 
 namespace Util {
   namespace HashTable {
-    template <typename Key, typename Value, typename Hash=Hasher::Hash,
-             size_t PoolSize=MEDIUM>
+    template <typename Key, typename Value, typename Hash=Hasher::Hash>
     class HashTable : public OrderedHashTable<KeyValueEntry<Key, Value, Hash>,
-        Key, Hash, PoolSize> {
+        Key, Hash> {
       protected:
         typedef KeyValueEntry<Key, Value, Hash> Entry;
-        typedef OrderedHashTable<Entry, Key, Hash, PoolSize> Base;
+        typedef OrderedHashTable<Entry, Key, Hash> Base;
         typedef typename Base::Entries Entries;
 
         const float _max_load;
@@ -17,7 +16,7 @@ namespace Util {
 
         void expand(void) {
           Pool *old = Base::_pool;
-          Base::_pool = new Pool(PoolSize);
+          Base::_pool = new Pool(Base::_pool_size);
           Base::_nbuckets *= _expansion_factor;
           Base::_used_buckets = 0;
           Base::_size = 0;
@@ -36,8 +35,9 @@ namespace Util {
         }
 
       public:
-        HashTable(const size_t nbuckets=BASE_SIZE, const float max_load=0.7,
-            const float expansion_factor=2.0) : Base(nbuckets),
+        HashTable(const size_t nbuckets=BASE_SIZE,
+            const size_t pool_size=SMALL, const float max_load=0.7,
+            const float expansion_factor=2.0) : Base(nbuckets, pool_size),
           _max_load(max_load), _expansion_factor(expansion_factor) { }
 
         virtual ~HashTable(void) { }
@@ -52,7 +52,7 @@ namespace Util {
         }
 
         const Entry *operator[](const Key &key) const {
-          Hash hash(key);
+          const Hash hash(key);
           uint64_t bucket = hash.value() % Base::_nbuckets;
           Entry *e = Base::_buckets[bucket]->find(hash, key);
           if (!e) {
@@ -63,7 +63,7 @@ namespace Util {
         }
 
         Value &operator[](const Key &key) {
-          Hash hash(key);
+          const Hash hash(key);
           uint64_t bucket = hash.value() % Base::_nbuckets;
           Entry *e = Base::_buckets[bucket]->find(hash, key);
           if (!e) {

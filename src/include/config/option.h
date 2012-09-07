@@ -8,7 +8,7 @@ namespace NLP {
         bool _is_set;
 
         virtual void _set(const std::string &value) = 0;
-        virtual void _validate(void) const = 0;
+        virtual void _validate(void) = 0;
 
       public:
         OpBase(OpGroup &group, const std::string &name,
@@ -31,7 +31,7 @@ namespace NLP {
         const T _default;
         T _value;
 
-        virtual void _validate(void) const { }
+        virtual void _validate(void) { }
 
       public:
         Op(OpGroup &group, const std::string &name, const std::string &desc) :
@@ -131,7 +131,7 @@ namespace NLP {
           }
         }
 
-        virtual void _validate(void) const { _check(Op<T>::_value); }
+        virtual void _validate(void) { _check(Op<T>::_value); }
 
       public:
         OpRestricted(OpGroup &group, const std::string &name,
@@ -192,7 +192,7 @@ namespace NLP {
           OpRestricted<T>::_decode_options(s);
         }
 
-        virtual void _validate(void) const {  }
+        virtual void _validate(void) {  }
 
       public:
         OpList(OpGroup &group, const std::string &name,

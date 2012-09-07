@@ -29,5 +29,8 @@ namespace NLP {
 #include "port.h"
 #include "exception.h"
 #include "version.h"
+#include "raw.h"
+#include "input.h"
+#include "sentence.h"
 
 #endif

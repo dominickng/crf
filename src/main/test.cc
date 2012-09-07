@@ -4,6 +4,8 @@
 #include "word.h"
 #include "lexicon.h"
 
+#include "io.h"
+
 namespace config = NLP::config;
 namespace port = NLP::port;
 namespace hashtable = Util::HashTable;
@@ -29,8 +31,16 @@ class TestConfig : public config::Config {
   { }
 };
 
+void test_lexicon(NLP::Lexicon &lexicon) {
+  lexicon.add("hello", 200);
+  lexicon.add("goodbye", 12);
+  std::cout << lexicon.size() << ' ' << lexicon["hello"].str() << ' ' << lexicon["hello"].freq() << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   NLP::Lexicon lexicon;
+  test_lexicon(lexicon);
+
   TestConfig config;
   Util::Hasher::Hash hash;
   hashtable::HashTable<std::string, int> hash_table;
@@ -46,6 +56,15 @@ int main(int argc, char *argv[]) {
           it != config.list_option.end(); ++it)
         std::cout << *it << " ";
       std::cout << std::endl;
+
+      NLP::Sentence sent;
+      NLP::ReaderFactory reader("conll", "stdin", config.input_option.file(), config.input_option());
+      reader.next(sent);
+
+      for (NLP::Raws::iterator i = sent.words.begin(); i != sent.words.end(); ++i)
+        std::cout << *i << " ";
+      std::cout << std::endl;
+
     }
   }
   catch (config::ConfigException &e) {
