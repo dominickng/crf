@@ -32,5 +32,10 @@ namespace NLP {
 #include "raw.h"
 #include "input.h"
 #include "sentence.h"
+#include "word.h"
+
+#include "pool.h"
+#include "config.h"
+#include "shared.h"
 
 #endif

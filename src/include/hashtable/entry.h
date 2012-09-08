@@ -1,7 +1,7 @@
 #include "pool.h"
 
 namespace Util {
-  namespace HashTable {
+  namespace hashtable {
 
     template <typename Value, typename Hash=Hasher::Hash>
     class StringEntry {
@@ -66,7 +66,7 @@ namespace Util {
         size_t size(void){ return _next ? _next->size() + 1 : 1; }
 
         std::ostream &save(std::ostream &out) const {
-          return out << _str << ' ' << _value;
+          return out << _str << ' ' << _value << '\n';
         }
     };
 

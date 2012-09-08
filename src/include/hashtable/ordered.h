@@ -1,5 +1,5 @@
 namespace Util {
-  namespace HashTable {
+  namespace hashtable {
     template <typename E>
     class KeyCmp {
       public:

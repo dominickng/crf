@@ -2,7 +2,7 @@
 #define _HASHTABLE_H
 
 namespace Util {
-  namespace HashTable {
+  namespace hashtable {
     template <typename Key, typename Value, typename Hash=Hasher::Hash>
     class HashTable : public OrderedHashTable<KeyValueEntry<Key, Value, Hash>,
         Key, Hash> {

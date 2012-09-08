@@ -1,14 +1,12 @@
 #include "base.h"
-#include "config.h"
 #include "hashtable.h"
-#include "word.h"
 #include "lexicon.h"
 
 #include "io.h"
 
 namespace config = Util::config;
 namespace port = Util::port;
-namespace hashtable = Util::HashTable;
+namespace hashtable = Util::hashtable;
 
 class TestConfig : public config::Config {
   public:

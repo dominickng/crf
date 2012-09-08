@@ -11,6 +11,7 @@ namespace Util {
         virtual void _validate(void) = 0;
 
       public:
+        friend class OpAlias;
         OpBase(OpGroup &group, const std::string &name,
             const std::string &desc, const bool has_default,
             const bool requires_arg=true);
@@ -22,6 +23,9 @@ namespace Util {
         virtual void set(const std::string &value);
         virtual void set_default(void) = 0;
         virtual void validate(void);
+
+        inline bool has_default(void) const { return _has_default; }
+        inline bool is_set(void) const { return _is_set; }
     };
 
     template <typename T>
@@ -31,10 +35,17 @@ namespace Util {
         const T _default;
         T _value;
 
+        virtual void _set(const std::string &value) {
+          std::istringstream s(value);
+          if (!(s >> _value))
+            throw ConfigException("Invalid value", _name, value);
+        }
+
         virtual void _validate(void) { }
 
       public:
-        Op(OpGroup &group, const std::string &name, const std::string &desc) :
+        Op(OpGroup &group, const std::string &name, const std::string &desc,
+            const bool requires_arg=true) :
           OpBase(group, name, desc, false, requires_arg), _default(), _value() { }
 
         Op(OpGroup &group, const std::string &name, const std::string &desc,
@@ -43,12 +54,6 @@ namespace Util {
           _default(default_value), _value() { }
 
         virtual ~Op(void) { }
-
-        virtual void _set(const std::string &value) {
-          std::istringstream s(value);
-          if (!(s >> _value))
-            throw ConfigException("Invalid value", _name, value);
-        }
 
         virtual void help(std::ostream &out, const std::string &prefix,
             const unsigned int depth) const {
@@ -227,6 +232,33 @@ namespace Util {
         }
     };
 
+    class OpPath : public Op<std::string> {
+      protected:
+        const OpPath *_base;
+        mutable std::string _derived;
+
+      public:
+        OpPath(OpGroup &group, const std::string &name, const std::string &desc,
+            const OpPath *base=0) :
+          Op<std::string>(group, name, desc, true), _base(base), _derived() { }
+
+        OpPath(OpGroup &group, const std::string &name, const std::string &desc,
+            const std::string &default_value, const OpPath *base=0) :
+          Op<std::string>(group, name, desc, default_value, false),
+          _base(base), _derived() { }
+
+        virtual ~OpPath(void) { }
+
+        inline const std::string &operator()(void) const {
+          if (_base && _value.size() > 2 && _value[0] == port::PATH_SEP
+              && _value[1] == port::PATH_SEP) {
+            _derived = (*_base)() + port::PATH_SEP + Op<std::string>::_value.substr(2);
+            return _derived;
+          }
+          return Op<std::string>::_value;
+        };
+    };
+
     class OpInput : public Op<std::string> {
       public:
         static const char *const STDIN;
@@ -238,8 +270,10 @@ namespace Util {
         virtual void _validate(void);
 
       public:
-        OpInput(OpGroup &group, const std::string &name, const std::string &desc) :
-          Op<std::string>(group, name, desc, STDIN, true), _in(0), _is_stdin(false) { }
+        OpInput(OpGroup &group, const std::string &name,
+            const std::string &desc) :
+          Op<std::string>(group, name, desc, STDIN, true), _in(0),
+          _is_stdin(false) { }
 
         virtual ~OpInput(void);
 
@@ -263,6 +297,30 @@ namespace Util {
         virtual ~OpOutput(void);
 
         inline std::ostream &file(void) const { return *_out; }
+    };
+
+    class OpAlias : public OpBase {
+      protected:
+        OpBase &_aliased;
+
+        virtual void _set(const std::string &value) { _aliased._set(value); };
+        virtual void _validate(void) { _aliased._validate(); };
+      public:
+        OpAlias(OpGroup &group, const std::string &name,
+            const std::string &desc, OpBase &aliased) :
+          OpBase(group, name, desc, aliased.has_default(),
+              aliased.requires_arg()), _aliased(aliased) { }
+
+        virtual ~OpAlias(void) { }
+
+        virtual void help(std::ostream &out, const std::string &prefix,
+            const unsigned int depth) const {
+          _aliased.help(out, prefix, depth);
+        }
+
+        virtual void set(const std::string &value) { _aliased.set(value); };
+        virtual void set_default(void) { _aliased.set_default(); };
+        virtual void validate(void) { _aliased.validate(); };
     };
   }
 }

@@ -47,7 +47,6 @@ void OpInput::_validate(void) {
     if (!*_in)
       throw ConfigException("Could not open file for reading", _name, _value);
   }
-
 }
 
 const char *const OpOutput::STDOUT = "stdout";

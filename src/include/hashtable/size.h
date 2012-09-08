@@ -1,5 +1,5 @@
 namespace Util {
-  namespace HashTable {
+  namespace hashtable {
 
     static const size_t BABY = 1 << 10;
     static const size_t TINY = 1 << 16;

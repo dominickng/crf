@@ -3,5 +3,5 @@
 
 
 namespace Util { namespace port {
-
+  const char PATH_SEP = '/';
 } }

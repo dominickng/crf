@@ -1,5 +1,5 @@
 namespace Util {
-  namespace HashTable {
+  namespace hashtable {
 
     template <typename E, typename K, typename Hash=Hasher::Hash>
     class BaseHashTable {

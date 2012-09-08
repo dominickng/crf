@@ -2,14 +2,10 @@
 #define _LEXICON_H
 
 #include "base.h"
-#include "shared.h"
 #include "hashtable.h"
-#include "word.h"
 #include "lexicon.h"
 
 namespace NLP {
-  namespace HT = Util::HashTable;
-
   typedef HT::StringEntry<uint64_t> Entry;
   typedef HT::OrderedHashTable<Entry, std::string> ImplBase;
   class Lexicon::_Impl : public ImplBase, public Util::Shared {
@@ -135,6 +131,5 @@ namespace NLP {
 
   size_t Lexicon::size(void) const { return _impl->size(); }
 }
-
 
 #endif
