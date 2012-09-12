@@ -1,9 +1,11 @@
 #include "base.h"
 
+#include "config.h"
 #include "io.h"
 #include "hashtable/size.h"
 #include "shared.h"
 #include "lexicon.h"
+#include "tagset.h"
 #include "crf/tagger.h"
 
 namespace NLP { namespace CRF {

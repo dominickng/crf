@@ -70,6 +70,7 @@ namespace Util {
           _value = _default;
         }
 
+        inline void operator()(const T &v) { _value = v; }
         inline const T &operator()(void) const { return _value; }
     };
 
@@ -272,7 +273,17 @@ namespace Util {
       public:
         OpInput(OpGroup &group, const std::string &name,
             const std::string &desc) :
-          Op<std::string>(group, name, desc, STDIN, true), _in(0),
+          Op<std::string>(group, name, desc), _in(0),
+          _is_stdin(false) { }
+
+        OpInput(OpGroup &group, const std::string &name,
+            const std::string &desc, const bool stdin_default) :
+          Op<std::string>(group, name, desc, stdin_default ? STDIN : "", true),
+          _in(0), _is_stdin(false) { }
+
+        OpInput(OpGroup &group, const std::string &name,
+            const std::string &desc, const std::string &default_value) :
+          Op<std::string>(group, name, desc, default_value, true), _in(0),
           _is_stdin(false) { }
 
         virtual ~OpInput(void);
@@ -318,7 +329,7 @@ namespace Util {
           _aliased.help(out, prefix, depth);
         }
 
-        virtual void set(const std::string &value) { _aliased.set(value); };
+        virtual void set(const std::string &value) { _aliased.set(value); _is_set = true; };
         virtual void set_default(void) { _aliased.set_default(); };
         virtual void validate(void) { _aliased.validate(); };
     };

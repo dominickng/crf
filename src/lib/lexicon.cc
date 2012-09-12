@@ -8,19 +8,19 @@
 namespace NLP {
   typedef HT::StringEntry<uint64_t> Entry;
   typedef HT::OrderedHashTable<Entry, std::string> ImplBase;
-  class Lexicon::_Impl : public ImplBase, public Util::Shared {
+  class Lexicon::Impl : public ImplBase, public Util::Shared {
     private:
       std::string preface;
 
     public:
-      _Impl(const size_t nbuckets, const size_t pool_size)
+      Impl(const size_t nbuckets, const size_t pool_size)
         : ImplBase(nbuckets, pool_size), Shared(), preface() { }
-      _Impl(const std::string &filename, const size_t nbuckets,
+      Impl(const std::string &filename, const size_t nbuckets,
           const size_t pool_size) : ImplBase(nbuckets, pool_size), Shared(), preface() {
         load(filename);
       }
 
-      _Impl(const std::string &filename, std::istream &input,
+      Impl(const std::string &filename, std::istream &input,
           const size_t nbuckets, const size_t pool_size) :
         ImplBase(nbuckets, pool_size), Shared(), preface() {
           load(filename, input);
@@ -95,14 +95,14 @@ namespace NLP {
   };
 
   Lexicon::Lexicon(const size_t nbuckets, const size_t pool_size) :
-    _impl(new _Impl(nbuckets, pool_size)) { }
+    _impl(new Impl(nbuckets, pool_size)) { }
 
   Lexicon::Lexicon(const std::string &filename, const size_t nbuckets,
-      const size_t pool_size) : _impl(new _Impl(filename, nbuckets, pool_size)) { }
+      const size_t pool_size) : _impl(new Impl(filename, nbuckets, pool_size)) { }
 
   Lexicon::Lexicon(const std::string &filename, std::istream &input,
       const size_t nbuckets, const size_t pool_size)
-    : _impl(new _Impl(filename, input, nbuckets, pool_size)) { }
+    : _impl(new Impl(filename, input, nbuckets, pool_size)) { }
 
   Lexicon::Lexicon(const Lexicon &other) : _impl(share(other._impl)) { }
 

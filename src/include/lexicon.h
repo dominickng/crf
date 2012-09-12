@@ -3,13 +3,15 @@ namespace NLP {
 
   class Lexicon {
     private:
-      class _Impl;
-      _Impl *_impl;
+      class Impl;
+      Impl *_impl;
 
     public:
       Lexicon(const size_t nbuckets=HT::MEDIUM, const size_t pool_size=HT::LARGE);
-      Lexicon(const std::string &filename, const size_t nbuckets=HT::MEDIUM, const size_t pool_size=HT::LARGE);
-      Lexicon(const std::string &filename, std::istream &input, const size_t nbuckets=HT::MEDIUM, const size_t pool_size=HT::LARGE);
+      Lexicon(const std::string &filename, const size_t nbuckets=HT::MEDIUM,
+          const size_t pool_size=HT::LARGE);
+      Lexicon(const std::string &filename, std::istream &input,
+          const size_t nbuckets=HT::MEDIUM, const size_t pool_size=HT::LARGE);
       Lexicon(const Lexicon &other);
 
       void add(const std::string &raw, const uint64_t freq=1);

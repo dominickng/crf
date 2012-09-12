@@ -11,8 +11,8 @@ namespace NLP {
       Word(None) : _id(0) { }
       Word(Sentinel) : _id(1) { }
 
-      Word(const uint64_t id) : _id(id) { }
-      Word (const Word &other) : _id(other._id) { }
+      explicit Word(const uint64_t id) : _id(id) { }
+      Word(const Word &other) : _id(other._id) { }
 
       Word &operator=(const Word other) {
         _id = other._id;

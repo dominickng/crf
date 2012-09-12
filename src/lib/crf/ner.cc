@@ -1,13 +1,18 @@
 #include "base.h"
 
+#include "config.h"
 #include "io.h"
 #include "hashtable/size.h"
 #include "shared.h"
 #include "lexicon.h"
+#include "tagset.h"
 #include "crf/tagger.h"
 #include "crf/ner.h"
 
 namespace NLP { namespace CRF {
+
+const std::string NER::name = "ner";
+const std::string NER::desc = "desc";
 
 class NER::Impl : public Tagger::Impl {
   private:

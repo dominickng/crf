@@ -50,14 +50,14 @@ namespace Util {
         }
 
         StringEntry *find(const Hash hash, const std::string &str) {
-          for (StringEntry *l = this; l != 0; l = l->_next)
+          for (StringEntry *l = this; l != NULL; l = l->_next)
             if (l->equal(hash, str))
               return l;
           return NULL;
         }
 
         StringEntry *find(const char c) {
-          for (StringEntry *l = this; l != 0; l = l->_next)
+          for (StringEntry *l = this; l != NULL; l = l->_next)
             if (l->equal(c))
               return l;
           return NULL;

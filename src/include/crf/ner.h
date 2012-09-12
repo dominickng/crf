@@ -2,6 +2,9 @@ namespace NLP {
   namespace CRF {
     class NER : public Tagger {
       public:
+        const static std::string name;
+        const static std::string desc;
+
         class Config : public Tagger::Config {
           public:
             Config(const std::string &name="ner",

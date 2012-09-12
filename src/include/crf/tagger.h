@@ -34,7 +34,7 @@ namespace NLP {
       public:
         Config &cfg;
         Lexicon lexicon;
-        Lexicon tags;
+        TagSet tags;
         std::string preface;
 
         Impl(Config &cfg, const std::string &preface)
