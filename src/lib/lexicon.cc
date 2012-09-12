@@ -27,11 +27,11 @@ namespace NLP {
         }
 
       void add(const std::string &raw, const uint64_t freq) {
-        Base::add(raw)->value() += freq;
+        Base::add(raw)->value += freq;
       }
 
       void insert(const std::string &raw, const uint64_t freq) {
-        Base::add(raw)->value(freq);
+        Base::add(raw)->value = freq;
       }
 
       void load(const std::string &filename) {
@@ -81,7 +81,7 @@ namespace NLP {
       }
 
       const char *str(const Word &word) const {
-        return reinterpret_cast<Entry *>(word.id())->str();
+        return reinterpret_cast<Entry *>(word.id())->str;
       }
 
       void str(const Words &words, Raws &raws) const {

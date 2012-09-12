@@ -5,6 +5,7 @@
 #include "hashtable.h"
 #include "lexicon.h"
 #include "tagset.h"
+#include "crf/features.h"
 #include "crf.h"
 
 namespace config = Util::config;

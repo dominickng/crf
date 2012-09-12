@@ -30,7 +30,7 @@ namespace Util {
         virtual Entry *insert(const Key &key, const Value &value,
             const Hash hash, const size_t bucket) {
           Entry *e = insert(key, hash, bucket);
-          e->value(value);
+          e->value = value;
           return e;
         }
 
@@ -59,7 +59,7 @@ namespace Util {
             Value v;
             return insert(key, v, hash, bucket);
           }
-          return e->value();
+          return e->value;
         }
 
         Value &operator[](const Key &key) {
@@ -68,9 +68,9 @@ namespace Util {
           Entry *e = Base::_buckets[bucket]->find(hash, key);
           if (!e) {
             Value v;
-            return insert(key, v, hash, bucket)->value();
+            return insert(key, v, hash, bucket)->value;
           }
-          return e->value();
+          return e->value;
         }
 
     };

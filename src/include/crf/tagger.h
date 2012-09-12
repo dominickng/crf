@@ -35,10 +35,11 @@ namespace NLP {
         Config &cfg;
         Lexicon lexicon;
         TagSet tags;
+        Attributes attributes;
         std::string preface;
 
         Impl(Config &cfg, const std::string &preface)
-          : Util::Shared(), cfg(cfg), lexicon(), tags(), preface(preface) { }
+          : Util::Shared(), cfg(cfg), lexicon(), tags(), attributes(), preface(preface) { }
 
         ~Impl(void) { /* nothing */}
 

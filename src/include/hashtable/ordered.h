@@ -4,7 +4,7 @@ namespace Util {
     class KeyCmp {
       public:
         bool operator()(const E *const e1, const E *const e2) {
-          return e1->key() < e2->key();
+          return e1->key < e2->key;
         }
     };
 
@@ -12,7 +12,7 @@ namespace Util {
     class RevKeyCmp {
       public:
         bool operator()(const E *const e1, const E *const e2) {
-          return e1->key() > e2->key();
+          return e1->key > e2->key;
         }
     };
 
@@ -20,7 +20,7 @@ namespace Util {
     class ValueCmp {
       public:
         bool operator()(const E *const e1, const E *const e2) {
-          return e1->value() < e2->value();
+          return e1->value < e2->value;
         }
     };
 
@@ -28,7 +28,7 @@ namespace Util {
     class RevValueCmp {
       public:
         bool operator()(const E *const e1, const E *const e2) {
-          return e1->value() > e2->value();
+          return e1->value > e2->value;
         }
     };
 
@@ -36,7 +36,7 @@ namespace Util {
     class IndexCmp {
       public:
         bool operator()(const E *const e1, const E *const e2) {
-          return e1->index() > e2->index();
+          return e1->index > e2->index;
         }
     };
 
@@ -82,7 +82,7 @@ namespace Util {
 
         void renumber(void) {
           for (size_t i = 0; i != _entries.size(); ++i)
-            _entries[i]->index(i);
+            _entries[i]->index = i;
         }
 
         template <typename Comparator>

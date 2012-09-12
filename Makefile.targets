@@ -7,6 +7,11 @@ CONFIG_OBJECTS = src/lib/config/base.o src/lib/config/group.o src/lib/config/opt
 
 CRF_OBJECTS = src/lib/word.o src/lib/lexicon.o src/lib/tagset.o src/lib/crf/tagger.o src/lib/crf/ner.o
 
+FEATURE_OBJECTS = src/lib/crf/features/attributes.o src/lib/crf/features/feature_types.o \
+		  src/lib/crf/features/feature_gen.o
+
+REQUIRED_OBJECTS = $(IO_OBJECTS) $(CRF_OBJECTS) $(FEATURE_OBJECTS)
+
 .PHONY: all deps clean
 
 all: $(BINARIES)
@@ -20,9 +25,9 @@ deps:
 %.h.gch: %.h
 	$(CXX) -x c++-header $(CXXFLAGS) -o $@ $<
 
-bin/test: src/main/test.o $(CORE_OBJECTS) $(PORT_OBJECTS) $(CONFIG_OBJECTS) $(IO_OBJECTS) $(CRF_OBJECTS)
+bin/test: src/main/test.o $(CORE_OBJECTS) $(PORT_OBJECTS) $(CONFIG_OBJECTS) $(REQUIRED_OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-bin/train_ner: src/main/train_ner.o $(CORE_OBJECTS) $(PORT_OBJECTS) $(CONFIG_OBJECTS) $(IO_OBJECTS) $(CRF_OBJECTS)
+bin/train_ner: src/main/train_ner.o $(CORE_OBJECTS) $(PORT_OBJECTS) $(CONFIG_OBJECTS) $(REQUIRED_OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 

@@ -6,6 +6,7 @@
 #include "shared.h"
 #include "lexicon.h"
 #include "tagset.h"
+#include "crf/features.h"
 #include "crf/tagger.h"
 #include "crf/ner.h"
 

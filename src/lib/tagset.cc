@@ -14,20 +14,22 @@ namespace NLP {
 
     public:
       Impl(void) : ImplBase(HT::TINY, HT::TINY), Shared(), preface() { }
-      Impl(const std::string &filename) : ImplBase(HT::TINY, HT::TINY), Shared(), preface() {
+      Impl(const std::string &filename)
+        : ImplBase(HT::TINY, HT::TINY), Shared(), preface() {
         load(filename);
       }
 
-      Impl(const std::string &filename, std::istream &input) : ImplBase(HT::TINY, HT::TINY), Shared(), preface() {
+      Impl(const std::string &filename, std::istream &input)
+        : ImplBase(HT::TINY, HT::TINY), Shared(), preface() {
         load(filename, input);
       }
 
       void add(const std::string &raw, const uint64_t freq) {
-        Base::add(raw)->value() += freq;
+        Base::add(raw)->value += freq;
       }
 
       void insert(const std::string &raw, const uint64_t freq) {
-        Base::add(raw)->value(freq);
+        Base::add(raw)->value = freq;
       }
 
       void load(const std::string &filename) {
@@ -64,14 +66,14 @@ namespace NLP {
         Entry *e = find(raw.c_str());
         if (!e)
           return NONE;
-        return Tag(e->index());
+        return Tag(e->index);
       }
 
       const Tag canonize(const char *raw) const {
         Entry *e = find(raw);
         if (!e)
           return NONE;
-        return Tag(e->index());
+        return Tag(e->index);
       }
 
       void canonize(const Raws &raws, Tags &tags) const {
@@ -82,7 +84,7 @@ namespace NLP {
       }
 
       const char *str(const Tag &tag) const {
-        return _entries[tag.id()]->str();
+        return _entries[tag.id()]->str;
       }
 
       void str(const Tags &tags, Raws &raws) const {
