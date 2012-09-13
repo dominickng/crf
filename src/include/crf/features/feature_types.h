@@ -13,19 +13,21 @@ namespace NLP {
             : config::OpFlag(group, name, desc, default_value), _gen(gen) { }
 
           ~OpType(void) { delete _gen; }
-          void generate(Attributes &attributes, Sentence &sent, TagPair &tp, size_t index);
-          void generate(Context &context, Attributes &attributes, Sentence &sent, size_t index);
+
+          template <typename TPC>
+          void generate(Attributes &attributes, Sentence &sent, TPC &tpc, size_t index) { (*_gen)(attributes, sent, tpc, index); }
       };
 
       class FeatureTypes : public config::Config {
         public:
+          TagSet tags;
           OpType use_words;
           const static Type words;
 
-          FeatureTypes(const std::string &name, const std::string &desc);
+          FeatureTypes(const std::string &name, const std::string &desc, const TagSet &tags);
 
           void generate(Attributes &attributes, Sentence &sent);
-          void generate(Context &context, Attributes &attributes, Sentence &sent);
+          void generate(Attributes &attributes, Context &context, Sentence &sent);
       };
   }
 }

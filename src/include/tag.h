@@ -17,6 +17,7 @@ namespace NLP {
 
       Tag(const uint16_t id) : _id(id) { }
       explicit Tag(const uint64_t id) : _id(_check(id)) { }
+
       Tag(const Tag &other) : _id(other._id) { }
 
       Tag &operator=(const Tag other) {

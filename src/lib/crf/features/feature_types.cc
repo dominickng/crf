@@ -1,6 +1,7 @@
 #include "base.h"
 #include "config.h"
 #include "hashtable.h"
+#include "tagset.h"
 #include "crf/features/type.h"
 #include "crf/features/context.h"
 #include "crf/features/feature.h"
@@ -12,8 +13,30 @@ namespace NLP { namespace CRF {
 
 const Type FeatureTypes::words = {"word features", "w", 0};
 
-FeatureTypes::FeatureTypes(const std::string &name, const std::string &desc)
-  : config::Config(name, desc),
+FeatureTypes::FeatureTypes(const std::string &name, const std::string &desc,
+    const TagSet &tags)
+  : config::Config(name, desc), tags(tags),
     use_words(*this, "words", "use word features", new WordGen(FeatureTypes::words)) { }
+
+void FeatureTypes::generate(Attributes &attributes, Sentence &sent) {
+  for(size_t i = 0; i <= sent.words.size(); ++i) {
+    Tag prev, curr;
+    if (i == sent.words.size()) {
+      prev = tags.canonize(sent.pos[i-1]);
+      curr = Tag((uint16_t)1);
+    }
+    else {
+      prev = Tag((uint16_t)0);
+      curr = tags.canonize(sent.pos[i]);
+    }
+    TagPair tp(prev, curr);
+    use_words.generate(attributes, sent, tp, i);
+  }
+}
+
+void FeatureTypes::generate(Attributes &attributes, Context &context, Sentence &sent) {
+  for(size_t i = 0; i <= sent.words.size(); ++i)
+    use_words.generate(attributes, sent, context, i);
+}
 
 } }

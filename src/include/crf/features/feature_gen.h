@@ -8,7 +8,7 @@ namespace NLP {
         FeatureGen(const Type &type) : type(type) { }
         virtual ~FeatureGen(void) { }
         virtual void operator()(Attributes &attributes, Sentence &sent, TagPair &tp, size_t j) = 0;
-        virtual void operator()(Attributes &attributes, Context &c, Sentence &sent, size_t j) = 0;
+        virtual void operator()(Attributes &attributes, Sentence &sent, Context &c, size_t j) = 0;
     };
 
     class WordGen : public FeatureGen {
@@ -17,7 +17,7 @@ namespace NLP {
         virtual ~WordGen(void) { }
 
         virtual void operator()(Attributes &attributes, Sentence &sent, TagPair &tp, size_t j);
-        virtual void operator()(Attributes &attributes, Context &c, Sentence &sent, size_t j);
+        virtual void operator()(Attributes &attributes, Sentence &sent, Context &c, size_t j);
 
     };
   }
