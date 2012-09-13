@@ -9,11 +9,15 @@ namespace NLP {
             config::OpPath model;
             config::OpPath lexicon;
             config::OpPath tags;
+            config::OpPath attributes;
+            config::OpPath features;
             Config(const std::string &name, const std::string &desc)
               : config::Config(name, desc),
             model(*this, "model", "default location to save the model"),
             lexicon(*this, "lexicon", "default location to save the lexicon file", "//lexicon", &model),
-            tags(*this, "tags", "default location to save the tag file", "//tags", &model) { }
+            tags(*this, "tags", "default location to save the tag file", "//tags", &model),
+            attributes(*this, "attributes", "default location to save the attributes file", "//attributes", &model),
+            features(*this, "features", "default location to save the features file", "//features", &model) { }
 
             virtual ~Config(void) { /* nothing */ }
         };
@@ -36,15 +40,18 @@ namespace NLP {
         Lexicon lexicon;
         TagSet tags;
         Attributes attributes;
+        FeatureTypes feature_types;
         std::string preface;
 
         Impl(Config &cfg, const std::string &preface)
-          : Util::Shared(), cfg(cfg), lexicon(), tags(), attributes(), preface(preface) { }
+          : Util::Shared(), cfg(cfg), lexicon(), tags(), attributes(),
+            feature_types(tags), preface(preface) { }
 
-        ~Impl(void) { /* nothing */}
+        virtual ~Impl(void) { /* nothing */ }
 
         virtual void extract(Reader &reader);
         virtual void _pass1(Reader &reader);
+        virtual void _pass2(Reader &reader) = 0;
     };
 
   }

@@ -15,7 +15,7 @@ namespace NLP {
           ~OpType(void) { delete _gen; }
 
           template <typename TPC>
-          void generate(Attributes &attributes, Sentence &sent, TPC &tpc, size_t index) { (*_gen)(attributes, sent, tpc, index); }
+          void generate(Attributes &attributes, Sentence &sent, TPC &tpc, int index) { (*_gen)(attributes, sent, tpc, index); }
       };
 
       class FeatureTypes : public config::Config {
@@ -24,7 +24,7 @@ namespace NLP {
           OpType use_words;
           const static Type words;
 
-          FeatureTypes(const std::string &name, const std::string &desc, const TagSet &tags);
+          FeatureTypes(const TagSet &tags);
 
           void generate(Attributes &attributes, Sentence &sent);
           void generate(Attributes &attributes, Context &context, Sentence &sent);

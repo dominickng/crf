@@ -21,6 +21,17 @@ class NER::Impl : public Tagger::Impl {
   public:
     Impl(NER::Config &cfg, const std::string &preface) : Base(cfg, preface) { }
 
+    virtual void _pass2(Reader &reader) {
+      Sentence sent;
+      while (reader.next(sent)) {
+        feature_types.generate(attributes, sent);
+        sent.reset();
+      }
+
+      attributes.save_attributes(cfg.attributes(), preface);
+      attributes.save_features(cfg.features(), preface);
+    }
+
 };
 
 NER::NER(NER::Config &cfg, const std::string &preface)

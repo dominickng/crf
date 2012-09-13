@@ -53,10 +53,10 @@ namespace NLP {
         }
 
         void increment(TagPair &tp) {
+          ++value;
           for (Features::iterator i = features.begin(); i != features.end(); ++i)
             if (i->klasses == tp) {
               ++i->freq;
-              ++value;
               return;
             }
           insert(tp);
@@ -144,7 +144,7 @@ namespace NLP {
           _buckets[bucket] = entry;
           _entries.push_back(entry);
           ++_size;
-          entry->insert(tp);
+          entry->increment(tp);
         }
 
         void add(uint64_t index, TagPair &tp) {
@@ -197,7 +197,6 @@ namespace NLP {
         }
 
         void save_attributes(std::ostream &out, const std::string &preface) {
-          compact();
           sort_by_rev_value();
           out << preface << '\n';
           for (Entries::const_iterator i = _entries.begin(); i != _entries.end(); ++i)

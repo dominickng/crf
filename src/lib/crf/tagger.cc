@@ -18,7 +18,11 @@ Tagger::Tagger(const Tagger &other)
   : _impl(share(other._impl)), cfg(other.cfg) { }
 
 void Tagger::Impl::extract(Reader &reader) {
+  std::cerr << "beginning pass 1" << std::endl;
   _pass1(reader);
+  reader.reset();
+  std::cerr << "beginning pass 2" << std::endl;
+  _pass2(reader);
 }
 
 void Tagger::Impl::_pass1(Reader &reader) {

@@ -17,7 +17,7 @@ namespace Util {
 
         virtual Entry *insert(const Key &key, const Hash hash,
             const size_t bucket) {
-          Entry *e = Entry::create(_pool, _size, key, hash, _buckets[bucket]);
+          Entry *e = Entry::create(_pool, _size+1, key, hash, _buckets[bucket]);
 
           ++_size;
           if (_buckets[bucket] == NULL)

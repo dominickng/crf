@@ -10,12 +10,14 @@ namespace NLP { namespace CRF {
 
 WordGen::WordGen(const Type &type) : FeatureGen(type) { }
 
-void WordGen::operator()(Attributes &attributes, Sentence &sent, TagPair &tp, size_t j) {
-  Raw word = sent.words[j];
-  attributes(type.id, word, tp);
+void WordGen::operator()(Attributes &attributes, Sentence &sent, TagPair &tp, int j) {
+  if (tp.curr.id() != 1) {
+    Raw word = sent.words[j];
+    attributes(type.id, word, tp);
+  }
 }
 
-void WordGen::operator()(Attributes &attributes, Context &c, Sentence &sent, size_t j) {
+void WordGen::operator()(Attributes &attributes, Sentence &sent, Context &c, int j) {
 }
 
 

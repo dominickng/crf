@@ -82,7 +82,7 @@ namespace Util {
 
         void renumber(void) {
           for (size_t i = 0; i != _entries.size(); ++i)
-            _entries[i]->index = i;
+            _entries[i]->index = i+1;
         }
 
         template <typename Comparator>

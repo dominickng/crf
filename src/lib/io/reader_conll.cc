@@ -59,6 +59,7 @@ namespace NLP {
     Reader::reset();
     _nlines = 0;
     _len = 0;
+    _buffer[0] = '\0';
   }
 
 }
