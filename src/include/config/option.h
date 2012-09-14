@@ -61,6 +61,8 @@ namespace Util {
 
           if (_has_default)
             out << " (def=\"" << _default << "\")";
+          if (OpBase::_requires_arg)
+            out << " [required]";
           out << std::endl;
         }
 
@@ -88,6 +90,8 @@ namespace Util {
 
           if (_has_default)
             out << " (def=\"" << (_default ? "true" : "false") << "\")";
+          if (Op<bool>::_requires_arg)
+            out << " [required]";
           out << std::endl;
         }
 
@@ -177,6 +181,8 @@ namespace Util {
 
           if (Op<T>::_has_default)
             out << " (def=\"" << Op<T>::_default << "\")";
+          if (Op<T>::_requires_arg)
+            out << " [required]";
           out << std::endl;
         }
 
@@ -223,6 +229,8 @@ namespace Util {
 
           if (OpRestricted<T>::_has_default)
             out << " (def=\"" << _defaults << "\")" << std::endl;
+          if (OpRestricted<T>::_requires_arg)
+            out << " [required]";
         }
 
         virtual void set_default(void) {

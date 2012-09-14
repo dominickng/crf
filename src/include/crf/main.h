@@ -24,10 +24,11 @@ namespace NLP {
 
     config::OpInput input(cfg, "input", "training data location");
 
+    TAGGER tagger(tagger_cfg, preface);
     cfg.add(&tagger_cfg);
+    cfg.add(&tagger.feature_types());
     if(cfg.process(argc, argv)) {
       ReaderFactory reader("conll", input(), input.file(), "");
-      TAGGER tagger(tagger_cfg, preface);
       tagger.train(reader);
     }
 

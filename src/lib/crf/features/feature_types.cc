@@ -14,7 +14,7 @@ namespace NLP { namespace CRF {
 const Type FeatureTypes::words = {"word features", "w", 0};
 
 FeatureTypes::FeatureTypes(const TagSet &tags)
-  : config::Config("FeatureTypes", "Feature types config"), tags(tags),
+  : config::Config("types", "Feature types config"), tags(tags),
     use_words(*this, "words", "use word features", new WordGen(FeatureTypes::words)) { }
 
 void FeatureTypes::generate(Attributes &attributes, Sentence &sent) {

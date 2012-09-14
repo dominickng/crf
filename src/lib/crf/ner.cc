@@ -55,7 +55,6 @@ class NER::Impl : public Tagger::Impl {
         sent.reset();
       }
     }
-
 };
 
 NER::NER(NER::Config &cfg, const std::string &preface)

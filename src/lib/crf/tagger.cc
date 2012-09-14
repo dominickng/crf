@@ -12,10 +12,10 @@
 namespace NLP { namespace CRF {
 
 Tagger::Tagger(Tagger::Config &cfg, const std::string &preface, Impl *impl)
-  : _impl(impl), cfg(cfg) { }
+  : _impl(impl), _cfg(cfg), _feature_types(impl->feature_types) { }
 
 Tagger::Tagger(const Tagger &other)
-  : _impl(share(other._impl)), cfg(other.cfg) { }
+  : _impl(share(other._impl)), _cfg(other._cfg), _feature_types(other._feature_types) { }
 
 void Tagger::Impl::train(Reader &reader) {
   Instances instances;

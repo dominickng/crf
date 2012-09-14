@@ -20,13 +20,17 @@ namespace NLP {
             features(*this, "features", "default location to save the features file", "//features", &model) { }
 
             virtual ~Config(void) { /* nothing */ }
+
         };
+
+        FeatureTypes &feature_types(void) { return _feature_types; }
 
       protected:
         class Impl;
 
         Impl *_impl;
-        Config &cfg;
+        Config &_cfg;
+        FeatureTypes &_feature_types;
 
         Tagger(Tagger::Config &cfg, const std::string &preface, Impl *impl);
         Tagger(const Tagger &other);
@@ -41,7 +45,7 @@ namespace NLP {
         TagSet tags;
         Attributes attributes;
         FeatureTypes feature_types;
-        std::string preface;
+        const std::string preface;
 
         Impl(Config &cfg, const std::string &preface)
           : Util::Shared(), cfg(cfg), lexicon(), tags(), attributes(),
