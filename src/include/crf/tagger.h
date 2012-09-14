@@ -49,9 +49,11 @@ namespace NLP {
 
         virtual ~Impl(void) { /* nothing */ }
 
-        virtual void extract(Reader &reader);
-        virtual void _pass1(Reader &reader);
+        virtual void train(Reader &reader);
+        virtual void extract(Reader &reader, Instances &instances);
+        virtual void _pass1(Reader &reader) = 0;
         virtual void _pass2(Reader &reader) = 0;
+        virtual void _pass3(Reader &reader, Instances &instances) = 0;
     };
 
   }

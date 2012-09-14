@@ -21,6 +21,20 @@ class NER::Impl : public Tagger::Impl {
   public:
     Impl(NER::Config &cfg, const std::string &preface) : Base(cfg, preface) { }
 
+    virtual void _pass1(Reader &reader) {
+      Sentence sent;
+      while (reader.next(sent)) {
+        for (size_t i = 0; i < sent.size(); ++i) {
+          lexicon.add(sent.words[i]);
+          tags.add(sent.entities[i]);
+        }
+        sent.reset();
+      }
+
+      lexicon.save(cfg.lexicon(), preface);
+      tags.save(cfg.tags(), preface);
+    }
+
     virtual void _pass2(Reader &reader) {
       Sentence sent;
       while (reader.next(sent)) {
@@ -32,11 +46,25 @@ class NER::Impl : public Tagger::Impl {
       attributes.save_features(cfg.features(), preface);
     }
 
+    virtual void _pass3(Reader &reader, Instances &instances) {
+      Sentence sent;
+      while (reader.next(sent)) {
+        Contexts contexts;
+        instances.push_back(contexts);
+        feature_types.generate(attributes, sent, instances.back());
+        sent.reset();
+      }
+    }
+
 };
 
 NER::NER(NER::Config &cfg, const std::string &preface)
   : Tagger(cfg, preface, new Impl(cfg, preface)) { }
 
-void NER::extract(Reader &reader) { _impl->extract(reader); }
+void NER::train(Reader &reader) { _impl->train(reader); }
+
+void NER::extract(Reader &reader, Instances &instances) {
+  _impl->extract(reader, instances);
+}
 
 } }

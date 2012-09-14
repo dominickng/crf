@@ -21,25 +21,28 @@ void FeatureTypes::generate(Attributes &attributes, Sentence &sent) {
   for(int i = 0; i <= sent.words.size(); ++i) {
     Tag prev, curr;
     if (i == sent.words.size()) {
-      prev = tags.canonize(sent.pos[i-1]);
+      prev = tags.canonize(sent.entities[i-1]);
       curr = Tag((uint16_t)1);
     }
     else if (i == 0) {
       prev = Tag((uint16_t)0);
-      curr = tags.canonize(sent.pos[i]);
+      curr = tags.canonize(sent.entities[i]);
     }
     else {
-      prev = tags.canonize(sent.pos[i-1]);
-      curr = tags.canonize(sent.pos[i]);
+      prev = tags.canonize(sent.entities[i-1]);
+      curr = tags.canonize(sent.entities[i]);
     }
     TagPair tp(prev, curr);
     use_words.generate(attributes, sent, tp, i);
   }
 }
 
-void FeatureTypes::generate(Attributes &attributes, Context &context, Sentence &sent) {
-  for(size_t i = 0; i <= sent.words.size(); ++i)
-    use_words.generate(attributes, sent, context, i);
+void FeatureTypes::generate(Attributes &attributes, Sentence &sent, Contexts &contexts) {
+  for(size_t i = 0; i <= sent.words.size(); ++i) {
+    Context context;
+    contexts.push_back(context);
+    use_words.generate(attributes, sent, contexts.back(), i);
+  }
 }
 
 } }

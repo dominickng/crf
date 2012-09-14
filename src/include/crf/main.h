@@ -28,7 +28,7 @@ namespace NLP {
     if(cfg.process(argc, argv)) {
       ReaderFactory reader("conll", input(), input.file(), "");
       TAGGER tagger(tagger_cfg, preface);
-      tagger.extract(reader);
+      tagger.train(reader);
     }
 
     return 0;

@@ -80,7 +80,7 @@ namespace NLP {
         bool find(const char *type, const std::string &str, uint64_t &id) const {
           for (const AttribEntry *l = this; l != NULL; l = l->next)
             if (l->equal(type, str) && l->value > 0) {
-              id = l->index - 1;
+              id = l->index;
               return l->index != 0;
             }
           return false;
@@ -197,6 +197,7 @@ namespace NLP {
         }
 
         void save_attributes(std::ostream &out, const std::string &preface) {
+          compact();
           sort_by_rev_value();
           out << preface << '\n';
           for (Entries::const_iterator i = _entries.begin(); i != _entries.end(); ++i)

@@ -38,6 +38,7 @@ namespace NLP {
     Tag prev;
     Tag curr;
 
+    TagPair(void) : prev((uint16_t)0), curr((uint16_t)0) { }
     TagPair(Tag prev, Tag curr) : prev(prev), curr(curr) { }
 
     size_t index(const size_t ntags) const {

@@ -13,7 +13,8 @@ namespace NLP {
         };
         NER(NER::Config &cfg, const std::string &preface);
 
-        void extract(Reader &reader);
+        void train(Reader &reader);
+        void extract(Reader &reader, Instances &instances);
 
       private:
         class Impl;

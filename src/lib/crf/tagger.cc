@@ -17,26 +17,21 @@ Tagger::Tagger(Tagger::Config &cfg, const std::string &preface, Impl *impl)
 Tagger::Tagger(const Tagger &other)
   : _impl(share(other._impl)), cfg(other.cfg) { }
 
-void Tagger::Impl::extract(Reader &reader) {
+void Tagger::Impl::train(Reader &reader) {
+  Instances instances;
+  extract(reader, instances);
+  //TODO actually train
+}
+
+void Tagger::Impl::extract(Reader &reader, Instances &instances) {
   std::cerr << "beginning pass 1" << std::endl;
   _pass1(reader);
   reader.reset();
   std::cerr << "beginning pass 2" << std::endl;
   _pass2(reader);
-}
-
-void Tagger::Impl::_pass1(Reader &reader) {
-  Sentence sent;
-  while (reader.next(sent)) {
-    for (size_t i = 0; i < sent.size(); ++i) {
-      lexicon.add(sent.words[i]);
-      tags.add(sent.entities[i]);
-    }
-    sent.reset();
-  }
-
-  lexicon.save(cfg.lexicon(), preface);
-  tags.save(cfg.tags(), preface);
+  reader.reset();
+  std::cerr << "beginning pass 3" << std::endl;
+  _pass3(reader, instances);
 }
 
 } }

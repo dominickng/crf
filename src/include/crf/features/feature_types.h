@@ -27,7 +27,7 @@ namespace NLP {
           FeatureTypes(const TagSet &tags);
 
           void generate(Attributes &attributes, Sentence &sent);
-          void generate(Attributes &attributes, Context &context, Sentence &sent);
+          void generate(Attributes &attributes, Sentence &sent, Contexts &contexts);
       };
   }
 }
