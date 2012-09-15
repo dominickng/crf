@@ -25,7 +25,14 @@ namespace NLP {
 
         void operator()(const char *type, const std::string &str, TagPair &tp);
         void operator()(const char *type, const std::string &str, uint64_t &id);
+        void operator()(const char *type, const std::string &str, Context &c);
         void sort_by_freq(void);
+        void reset_estimations(void);
+
+        uint64_t nfeatures(void) const;
+
+        void copy_lambdas(const lbfgsfloatval_t *x);
+        void copy_gradient(lbfgsfloatval_t *x);
 
         size_t size(void) const;
     };

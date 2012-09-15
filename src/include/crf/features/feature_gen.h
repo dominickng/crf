@@ -20,5 +20,15 @@ namespace NLP {
         virtual void operator()(Attributes &attributes, Sentence &sent, Context &c, int j);
 
     };
+
+    class PosGen : public FeatureGen {
+      public:
+        PosGen(const Type &type);
+        virtual ~PosGen(void) { }
+
+        virtual void operator()(Attributes &attributes, Sentence &sent, TagPair &tp, int j);
+        virtual void operator()(Attributes &attributes, Sentence &sent, Context &c, int j);
+
+    };
   }
 }

@@ -2,6 +2,7 @@
 
 #include "config.h"
 #include "io.h"
+#include "lbfgs.h"
 #include "hashtable.h"
 #include "lexicon.h"
 #include "tagset.h"
@@ -21,12 +22,11 @@ namespace NLP {
     typename TAGGER::Config tagger_cfg;
 
     config::OpAlias model(cfg, "model", "location to store the model", tagger_cfg.model);
-
     config::OpInput input(cfg, "input", "training data location");
 
     TAGGER tagger(tagger_cfg, preface);
+    tagger_cfg.add(&tagger.feature_types());
     cfg.add(&tagger_cfg);
-    cfg.add(&tagger.feature_types());
     if(cfg.process(argc, argv)) {
       ReaderFactory reader("conll", input(), input.file(), "");
       tagger.train(reader);

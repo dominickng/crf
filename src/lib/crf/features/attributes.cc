@@ -3,7 +3,9 @@
 
 #include "base.h"
 #include "hashtable.h"
+#include "lbfgs.h"
 #include "crf/features/feature.h"
+#include "crf/features/context.h"
 #include "crf/features/attributes.h"
 
 namespace NLP {
@@ -86,6 +88,18 @@ namespace NLP {
           return false;
         }
 
+        bool find(const char *type, const std::string &str, Context &c) {
+          for (AttribEntry *l = this; l != NULL; l = l->next)
+            if (l->equal(type, str) && l->value > 0) {
+              for(Features::iterator i = l->features.begin(); i != l->features.end(); ++i) {
+                if(i->klasses == c.klasses)
+                  c.features.push_back(&(*i));
+              return true;
+              }  
+            }
+          return false;
+        }
+
         void save_attribute(std::ostream &out) const {
           assert(index != 0);
           out << type << ' ' << str << ' ' << value << '\n';
@@ -100,7 +114,7 @@ namespace NLP {
 
         uint64_t nfeatures(void) const {
           assert(index != 0);
-          uint64_t total;
+          uint64_t total = 0;
           for (Features::const_iterator i = features.begin(); i != features.end(); ++i)
             if (i->freq)
               ++total;
@@ -109,6 +123,21 @@ namespace NLP {
 
         size_t nchained(void) const {
           return next ? next->nchained() + 1 : 1;
+        }
+
+        void reset_estimations(void) {
+          for (Features::iterator i = features.begin(); i != features.end(); ++i)
+            i->est = 0.0;
+        }
+
+        void copy_lambdas(const lbfgsfloatval_t *x, size_t &index) {
+          for (Features::iterator i = features.begin(); i != features.end(); ++i)
+            i->lambda = x[index++];
+        }
+
+        void copy_gradients(lbfgsfloatval_t *x, size_t &index) {
+          for (Features::iterator i = features.begin(); i != features.end(); ++i)
+            x[index++] = i->freq - i->est;
         }
 
     };
@@ -164,6 +193,10 @@ namespace NLP {
           return Base::_buckets[AttribEntry::hash(type, str).value() % Base::_nbuckets]->find(type, str, id);
         }
 
+        bool find(const char *type, const std::string &str, Context &c) {
+          return Base::_buckets[AttribEntry::hash(type, str).value() % Base::_nbuckets]->find(type, str, c);
+        }
+
         void load(const std::string &filename) {
           std::ifstream input(filename.c_str());
           if (!input)
@@ -172,13 +205,13 @@ namespace NLP {
         }
 
         void load(const std::string &filename, std::istream &input) {
-          uint64_t nlines;
+          uint64_t nlines = 0;
 
           read_preface(filename, input, preface, nlines);
 
           std::string type;
           std::string str;
-          uint64_t freq;
+          uint64_t freq = 0;
           while (input >> type >> str >> freq) {
             ++nlines;
             if (input.get() != '\n')
@@ -202,6 +235,30 @@ namespace NLP {
           out << preface << '\n';
           for (Entries::const_iterator i = _entries.begin(); i != _entries.end(); ++i)
             (*i)->save_attribute(out);
+        }
+
+        uint64_t nfeatures(void) const {
+          uint64_t n = 0;
+          for (Entries::const_iterator i = _entries.begin(); i != _entries.end(); ++i)
+            n += (*i)->nfeatures();
+          return n;
+        }
+
+        void reset_estimations(void) {
+          for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
+            (*i)->reset_estimations();
+        }
+
+        void copy_lambdas(const lbfgsfloatval_t *x) {
+          size_t index = 0;
+          for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
+            (*i)->copy_lambdas(x, index);
+        }
+
+        void copy_gradients(lbfgsfloatval_t *x) {
+          size_t index = 0;
+          for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
+            (*i)->copy_gradients(x, index);
         }
 
         size_t size(void) const { return Base::_size; }
@@ -243,7 +300,14 @@ namespace NLP {
 
     void Attributes::operator()(const char *type, const std::string &str, uint64_t &id) { _impl->find(type, str, id); }
 
+    void Attributes::operator()(const char *type, const std::string &str, Context &c) { _impl->find(type, str, c); }
+
     void Attributes::sort_by_freq(void) { _impl->sort_by_rev_value(); }
+    void Attributes::reset_estimations(void) { _impl->reset_estimations(); }
+
+    uint64_t Attributes::nfeatures(void) const { return _impl->nfeatures(); }
+    void Attributes::copy_lambdas(const lbfgsfloatval_t *x) { _impl->copy_lambdas(x);; }
+    void Attributes::copy_gradient(lbfgsfloatval_t *x) { _impl->copy_gradients(x);; }
 
     size_t Attributes::size(void) const { return _impl->size(); }
   }

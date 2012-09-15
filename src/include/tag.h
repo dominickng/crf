@@ -30,6 +30,28 @@ namespace NLP {
 
       inline bool operator==(const Tag &other) { return _id == other._id; }
       inline bool operator!=(const Tag &other) { return _id != other._id; }
+
+      inline Tag& operator++(void) {
+        ++_id;
+        return *this;
+      }
+      inline Tag operator++(int) {
+        _id++;
+        return *this;
+      }
+
+      inline Tag& operator--(void) {
+        --_id;
+        return *this;
+      }
+      inline Tag operator--(int) {
+        _id--;
+        return *this;
+      }
+
+      inline bool operator<(const size_t x) { return _id < x; }
+      inline bool operator<=(const size_t x) { return _id <= x; }
+
   };
 
   typedef std::vector<Tag> Tags;
@@ -45,11 +67,20 @@ namespace NLP {
       return prev.id() * ntags + curr.id();
     }
 
+    static size_t npairs(const size_t ntags) {
+      return ntags * ntags;
+    }
+
     uint16_t prev_id(void) const { return prev.id(); }
     uint16_t curr_id(void) const { return curr.id(); }
 
-    inline bool operator==(const TagPair &other) { return prev == other.prev && curr == other.curr; }
-    inline bool operator!=(const TagPair &other) { return prev != other.prev || curr != other.curr; }
+    inline bool operator==(const TagPair &other) const {
+      return prev == other.prev && curr == other.curr;
+    }
+    inline bool operator!=(const TagPair &other) const {
+      return prev != other.prev || curr != other.curr;
+    }
+
   };
 
   typedef std::vector<TagPair> TagPairs;

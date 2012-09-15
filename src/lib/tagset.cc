@@ -40,7 +40,7 @@ namespace NLP {
       }
 
       void load(const std::string &filename, std::istream &input) {
-        uint64_t nlines;
+        uint64_t nlines = 0;
 
         read_preface(filename, input, preface, nlines);
 
@@ -99,8 +99,8 @@ namespace NLP {
 
   TagSet::TagSet(void) :
     _impl(new Impl()) {
-      insert(None::str, 0);
       insert(Sentinel::str, 0);
+      insert(None::str, 0);
   }
 
   TagSet::TagSet(const std::string &filename)

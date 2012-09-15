@@ -98,7 +98,7 @@ namespace Util {
       public:
         OpFlag(OpGroup &group, const std::string &name,
             const std::string &desc, const bool default_value=false) :
-          Op(group, name, desc, default_value, false) { }
+          Op<bool>(group, name, desc, default_value, false) { }
 
         virtual ~OpFlag(void) { }
     };
@@ -234,7 +234,7 @@ namespace Util {
         }
 
         virtual void set_default(void) {
-          if (!OpBase::_has_default)
+          if (!OpRestricted<T>::_has_default)
             throw ConfigException("Option has no default value", OpRestricted<T>::_name);
           std::istringstream s(_defaults);
           OpRestricted<T>::_decode_options(s);

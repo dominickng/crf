@@ -13,7 +13,7 @@ void OpGroup::help(std::ostream &out, const std::string &prefix, const unsigned 
   const std::string me = prefix + _name + "-";
   if (depth != 0)
     out << std::endl;
-  out << port::BOLD << prefix << _name << port::OFF << ": " << _desc << std::endl;
+  out << port::BOLD << _name << port::OFF << ": " << _desc << std::endl;
 
   for (std::vector<OptionBase *>::const_iterator child = _children.begin(); child != _children.end(); ++child)
     (*child)->help(out, me, depth + 1);
@@ -51,12 +51,11 @@ void OpGroup::validate(void) {
 }
 
 void Config::help(std::ostream &out, const std::string &prefix, const unsigned int depth) const {
-  const std::string me = prefix + _name + "-";
   if (depth != 0)
     out << std::endl;
   out << port::BOLD << _name << port::OFF << ": " << _desc << '\n' << std::endl;
   for (std::vector<OptionBase *>::const_iterator child = _children.begin(); child != _children.end(); ++child)
-    (*child)->help(out, me, depth + 1);
+    (*child)->help(out, prefix, depth + 1);
 }
 
 OptionBase *Config::process(const std::string &orig_key, const std::string &key) {

@@ -27,7 +27,6 @@ namespace Util {
     };
 
     class Config : public OpGroup {
-      protected:
         virtual void help(std::ostream &out, const std::string &prefix, const unsigned int depth) const;
 
       public:

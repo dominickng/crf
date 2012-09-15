@@ -33,6 +33,8 @@ namespace NLP {
 
       size_t size(void) const;
       size_t index(TagPair &tp) const;
+
+      size_t npairs(void) const { return size() * size(); };
   };
 
 }
