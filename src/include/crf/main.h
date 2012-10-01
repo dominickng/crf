@@ -1,14 +1,3 @@
-#include "base.h"
-
-#include "config.h"
-#include "io.h"
-#include "lbfgs.h"
-#include "hashtable.h"
-#include "lexicon.h"
-#include "tagset.h"
-#include "crf/features.h"
-#include "crf.h"
-
 namespace config = Util::config;
 
 namespace NLP {

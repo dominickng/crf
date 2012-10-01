@@ -6,7 +6,8 @@ namespace Util {
         OpGroup(const std::string &name, const std::string &desc) :
           OptionBase(name, desc), _children() { }
 
-        std::vector<OptionBase *> _children;
+        typedef std::vector<OptionBase *> Children;
+        Children _children;
 
         virtual void help(std::ostream &out, const std::string &prefix, const unsigned int depth) const;
 

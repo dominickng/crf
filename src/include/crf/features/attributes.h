@@ -22,6 +22,8 @@ namespace NLP {
         void save_attributes(std::ostream &out, const std::string &preface);
         void save_features(const std::string &filename, const std::string &preface);
         void save_features(std::ostream &out, const std::string &preface);
+        void save_weights(const std::string &filename, const std::string &preface);
+        void save_weights(std::ostream &out, const std::string &preface);
 
         void operator()(const char *type, const std::string &str, TagPair &tp);
         void operator()(const char *type, const std::string &str, uint64_t &id);
@@ -31,8 +33,9 @@ namespace NLP {
 
         uint64_t nfeatures(void) const;
 
+        double sum_lambda_sq(void);
         void copy_lambdas(const lbfgsfloatval_t *x);
-        void copy_gradient(lbfgsfloatval_t *x);
+        void copy_gradients(lbfgsfloatval_t *x, double inv_sigma_sq);
 
         size_t size(void) const;
     };

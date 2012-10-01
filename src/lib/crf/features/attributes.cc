@@ -34,7 +34,8 @@ namespace NLP {
         char str[1];
 
         static Hash::Hash hash(const char *type, const std::string &str) {
-          Hash::Hash hash(str + ' ' + type);
+          std::string s = str + ' ' + type;
+          Hash::Hash hash(s);
           return hash;
         }
 
@@ -89,14 +90,17 @@ namespace NLP {
         }
 
         bool find(const char *type, const std::string &str, Context &c) {
-          for (AttribEntry *l = this; l != NULL; l = l->next)
+          for (AttribEntry *l = this; l != NULL; l = l->next) {
             if (l->equal(type, str) && l->value > 0) {
               for(Features::iterator i = l->features.begin(); i != l->features.end(); ++i) {
                 if(i->klasses == c.klasses)
                   c.features.push_back(&(*i));
+                //else if(i->klasses.prev.id() == Sentinel::val && c.klasses.curr == c.klasses.curr)
+                  //c.features.push_back(&(*i)); [> single tag features <]
+              }
               return true;
-              }  
             }
+          }
           return false;
         }
 
@@ -109,7 +113,14 @@ namespace NLP {
           assert(index != 0);
           for (Features::const_iterator i = features.begin(); i != features.end(); ++i)
             if (i->freq)
-              out << index << ' ' << i->klasses.prev_id() << ' ' << i->klasses.curr_id() << ' ' << i->freq << '\n';
+              out << index << ' ' << i->klasses.prev_id() << ' ' << i->klasses.curr_id() << ' ' << i->freq << ' ' << i->lambda << '\n';
+        }
+
+        void save_weights(std::ostream &out) const {
+          assert(index != 0);
+          for (Features::const_iterator i = features.begin(); i != features.end(); ++i)
+            if (i->freq)
+              out << i->lambda << '\n';
         }
 
         uint64_t nfeatures(void) const {
@@ -130,14 +141,22 @@ namespace NLP {
             i->est = 0.0;
         }
 
+        double sum_lambda_sq(void) {
+          double lambda_sq = 0.0;
+          for (Features::iterator i = features.begin(); i != features.end(); ++i)
+            lambda_sq += (i->lambda * i->lambda);
+          return lambda_sq;
+        }
+
         void copy_lambdas(const lbfgsfloatval_t *x, size_t &index) {
           for (Features::iterator i = features.begin(); i != features.end(); ++i)
             i->lambda = x[index++];
         }
 
-        void copy_gradients(lbfgsfloatval_t *x, size_t &index) {
+        void copy_gradients(lbfgsfloatval_t *x, double inv_sigma_sq, size_t &index) {
           for (Features::iterator i = features.begin(); i != features.end(); ++i)
-            x[index++] = i->freq - i->est;
+
+            x[index++] = i->freq - i->est - (i->lambda * inv_sigma_sq);
         }
 
     };
@@ -164,12 +183,13 @@ namespace NLP {
         }
 
         void add(const char *type, const std::string &str, TagPair &tp) {
-          size_t bucket = AttribEntry::hash(type, str).value() % Base::_nbuckets;
-          AttribEntry *entry = Base::_buckets[bucket]->find(type, str);
+          size_t bucket = AttribEntry::hash(type, str).value() % _nbuckets;
+          //std::cout << "adding " << type << " " << str << " for " << tp.prev.id() << ' ' << tp.curr.id() << std::endl;
+          AttribEntry *entry = _buckets[bucket]->find(type, str);
           if (entry)
             return entry->increment(tp);
 
-          entry = AttribEntry::create(Base::_pool, type, str, Base::_buckets[bucket]);
+          entry = AttribEntry::create(Base::_pool, type, str, _buckets[bucket]);
           _buckets[bucket] = entry;
           _entries.push_back(entry);
           ++_size;
@@ -223,18 +243,24 @@ namespace NLP {
             throw IOException("could not parse word or frequency information for attributes", filename, nlines);
         }
 
-        void save_features(std::ostream &out, const std::string &preface) {
-          out << preface << '\n';
-          for (Entries::const_iterator i = _entries.begin(); i != _entries.end(); ++i)
-            (*i)->save_features(out);
-        }
-
         void save_attributes(std::ostream &out, const std::string &preface) {
           compact();
           sort_by_rev_value();
           out << preface << '\n';
           for (Entries::const_iterator i = _entries.begin(); i != _entries.end(); ++i)
             (*i)->save_attribute(out);
+        }
+
+        void save_features(std::ostream &out, const std::string &preface) {
+          out << preface << '\n';
+          for (Entries::const_iterator i = _entries.begin(); i != _entries.end(); ++i)
+            (*i)->save_features(out);
+        }
+
+        void save_weights(std::ostream &out, const std::string &preface) {
+          out << preface << '\n';
+          for (Entries::const_iterator i = _entries.begin(); i != _entries.end(); ++i)
+            (*i)->save_weights(out);
         }
 
         uint64_t nfeatures(void) const {
@@ -249,16 +275,23 @@ namespace NLP {
             (*i)->reset_estimations();
         }
 
+        double sum_lambda_sq(void) {
+          double lambda_sq = 0.0;
+          for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
+            lambda_sq += (*i)->sum_lambda_sq();
+          return lambda_sq;
+        }
+
         void copy_lambdas(const lbfgsfloatval_t *x) {
           size_t index = 0;
           for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
             (*i)->copy_lambdas(x, index);
         }
 
-        void copy_gradients(lbfgsfloatval_t *x) {
+        void copy_gradients(lbfgsfloatval_t *x, double inv_sigma_sq) {
           size_t index = 0;
           for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
-            (*i)->copy_gradients(x, index);
+            (*i)->copy_gradients(x, inv_sigma_sq, index);
         }
 
         size_t size(void) const { return Base::_size; }
@@ -293,8 +326,16 @@ namespace NLP {
       _impl->save_features(out, preface);
     }
 
+    void Attributes::save_weights(const std::string &filename, const std::string &preface) {
+      std::ofstream out(filename.c_str());
+      if (!out)
+        throw IOException("unable to open file for writing", filename);
+      _impl->save_weights(out, preface);
+    }
+
     void Attributes::save_attributes(std::ostream &out, const std::string &preface) { _impl->save_attributes(out, preface); }
     void Attributes::save_features(std::ostream &out, const std::string &preface) { _impl->save_features(out, preface); }
+    void Attributes::save_weights(std::ostream &out, const std::string &preface) { _impl->save_weights(out, preface); }
 
     void Attributes::operator()(const char *type, const std::string &str, TagPair &tp) { _impl->add(type, str, tp); }
 
@@ -306,8 +347,10 @@ namespace NLP {
     void Attributes::reset_estimations(void) { _impl->reset_estimations(); }
 
     uint64_t Attributes::nfeatures(void) const { return _impl->nfeatures(); }
+
+    double Attributes::sum_lambda_sq(void) { return _impl->sum_lambda_sq(); }
     void Attributes::copy_lambdas(const lbfgsfloatval_t *x) { _impl->copy_lambdas(x);; }
-    void Attributes::copy_gradient(lbfgsfloatval_t *x) { _impl->copy_gradients(x);; }
+    void Attributes::copy_gradients(lbfgsfloatval_t *x, double inv_sigma_sq) { _impl->copy_gradients(x, inv_sigma_sq);; }
 
     size_t Attributes::size(void) const { return _impl->size(); }
   }

@@ -12,43 +12,39 @@
 
 namespace NLP { namespace CRF {
 
-const Type FeatureTypes::words = {"word features", "w", 0};
-const Type FeatureTypes::pos = {"pos features", "p", 1};
-
 FeatureTypes::FeatureTypes(const TagSet &tags)
   : config::OpGroup("types", "Feature types config"), tags(tags),
-    use_words(*this, "words", "use word features", new WordGen(FeatureTypes::words)),
-    use_pos(*this, "pos", "use pos features", new PosGen(FeatureTypes::pos)) { }
+    use_words(*this, "words", "use word features", new WordGen(Types::words)),
+    use_pos(*this, "pos", "use pos features", new PosGen(Types::pos)),
+    use_prev_words(*this, "prev_words", "use previous word features", new PrevWordGen(Types::words)),
+    use_next_words(*this, "next_words", "use next word features", new NextWordGen(Types::words)),
+    use_prev_pos(*this, "prev_pos", "use previous pos features", new PrevPosGen(Types::pos)),
+    use_next_pos(*this, "next_pos", "use next pos features", new NextPosGen(Types::pos)) { }
 
 void FeatureTypes::get_tagpair(Sentence &sent, TagPair &tp, int i) {
-  if (i == sent.words.size()) {
-    tp.prev = tags.canonize(sent.entities[i-1]);
-    tp.curr = Tag((uint16_t)0);
-  }
-  else if (i == 0) {
+  if (i == 0)
     tp.prev = Tag((uint16_t)0);
-    tp.curr = tags.canonize(sent.entities[i]);
-  }
-  else {
+  else
     tp.prev = tags.canonize(sent.entities[i-1]);
-    tp.curr = tags.canonize(sent.entities[i]);
-  }
+  tp.curr = tags.canonize(sent.entities[i]);
 }
 
 void FeatureTypes::generate(Attributes &attributes, Sentence &sent, Contexts &contexts, const bool extract) {
-  TagPair tp;
 
-  for(int i = 0; i <= sent.words.size(); ++i) {
-    get_tagpair(sent, tp, i);
-    if (extract) {
-      use_words.generate(attributes, sent, tp, i);
-      use_pos.generate(attributes, sent, tp, i);
-    }
-    else {
-      Context context(tp);
-      contexts.push_back(context);
-      use_words.generate(attributes, sent, contexts.back(), i);
-      use_pos.generate(attributes, sent, contexts.back(), i);
+  for(int i = 0; i < sent.words.size(); ++i) {
+    for (Children::iterator j = _children.begin(); j != _children.end(); ++j) {
+      OpType *op = reinterpret_cast<OpType *>(*j);
+      if ((*op)()) {
+        TagPair tp;
+        get_tagpair(sent, tp, i);
+        if (extract)
+          op->generate(attributes, sent, tp, i);
+        else {
+          contexts[i].klasses = tp;
+          contexts[i].index = i+1;
+          op->generate(attributes, sent, contexts[i], i);
+        }
+      }
     }
   }
 }

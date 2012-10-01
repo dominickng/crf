@@ -8,7 +8,7 @@ CONFIG_OBJECTS = src/lib/config/base.o src/lib/config/group.o src/lib/config/opt
 CRF_OBJECTS = src/lib/word.o src/lib/lexicon.o src/lib/tagset.o src/lib/crf/tagger.o src/lib/crf/ner.o
 
 FEATURE_OBJECTS = src/lib/crf/features/attributes.o src/lib/crf/features/feature_types.o \
-		  src/lib/crf/features/feature_gen.o
+		  src/lib/crf/features/feature_gen.o src/lib/crf/features/type.o
 
 REQUIRED_OBJECTS = $(IO_OBJECTS) $(CRF_OBJECTS) $(FEATURE_OBJECTS)
 

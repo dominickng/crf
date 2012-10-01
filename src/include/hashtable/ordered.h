@@ -60,7 +60,7 @@ namespace Util {
         virtual ~OrderedHashTable(void) { }
 
         virtual Entry *insert(const Key &key, const Hash hash, const size_t bucket) {
-          Entry * e = Base::insert(key, hash, bucket);
+          Entry *e = Base::insert(key, hash, bucket);
           _entries.push_back(e);
           return e;
         }

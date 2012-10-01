@@ -14,7 +14,7 @@
 namespace NLP { namespace CRF {
 
 const std::string NER::name = "ner";
-const std::string NER::desc = "desc";
+const std::string NER::desc = "description";
 
 class NER::Impl : public Tagger::Impl {
   protected:
@@ -23,8 +23,6 @@ class NER::Impl : public Tagger::Impl {
     virtual void _pass1(Reader &reader) {
       Sentence sent;
       while (reader.next(sent)) {
-        if (sent.words.size() > longest_sent)
-          longest_sent = sent.words.size();
         for (size_t i = 0; i < sent.size(); ++i) {
           lexicon.add(sent.words[i]);
           tags.add(sent.entities[i]);
@@ -51,7 +49,7 @@ class NER::Impl : public Tagger::Impl {
     virtual void _pass3(Reader &reader, Instances &instances) {
       Sentence sent;
       while (reader.next(sent)) {
-        Contexts contexts;
+        Contexts contexts(sent.words.size(), tags.size());
         instances.push_back(contexts);
         feature_types.generate(attributes, sent, instances.back(), false);
         sent.reset();

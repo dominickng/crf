@@ -22,10 +22,13 @@ namespace NLP {
         public:
           TagSet tags;
           OpType use_words;
-          const static Type words;
-
           OpType use_pos;
-          const static Type pos;
+
+          OpType use_prev_words;
+          OpType use_next_words;
+
+          OpType use_prev_pos;
+          OpType use_next_pos;
 
           FeatureTypes(const TagSet &tags);
 

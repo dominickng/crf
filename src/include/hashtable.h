@@ -1,7 +1,6 @@
 #ifndef _HASHTABLE
 #define _HASHTABLE
 
-#include "std.h"
 #include "hash.h"
 #include "pool.h"
 #include "hashtable/size.h"

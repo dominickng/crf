@@ -11,6 +11,7 @@ namespace NLP {
             config::OpPath tags;
             config::OpPath attributes;
             config::OpPath features;
+            config::OpPath weights;
             config::Op<double> sigma;
             config::Op<uint64_t> niterations;
             Config(const std::string &name, const std::string &desc)
@@ -20,6 +21,7 @@ namespace NLP {
             tags(*this, "tags", "location to save the tag file", "//tags", &model),
             attributes(*this, "attributes", "location to save the attributes file", "//attributes", &model),
             features(*this, "features", "location to save the features file", "//features", &model),
+            weights(*this, "weights", "location to save the weights file", "//weights", &model),
             sigma(*this, "sigma", "sigma value for regularization", 0.707, true),
             niterations(*this, "niterations", "number of training iterations", 1, false)
           { }
@@ -45,14 +47,17 @@ namespace NLP {
 
     class Tagger::Impl : public Util::Shared {
       protected:
-        void reset_estimations(void);
         size_t tag_index(const Tag &t, const size_t j) const;
         size_t psi_index(const TagPair &t, const uint64_t index) const;
         virtual lbfgsfloatval_t log_likelihood(void);
+
+        lbfgsfloatval_t _evaluate(const lbfgsfloatval_t *x,
+            lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step);
+
         virtual double psi(Context &context, TagPair &tp);
-        virtual void compute_psis(Contexts &contexts, PDF &psis);
-        virtual void forward(Contexts &contexts, PDF &alphas, PDF &psis);
-        virtual void backward(Contexts &contexts, PDF &betas, PDF &psis, const uint64_t index);
+        virtual void compute_psis(Contexts &contexts, PDFs &psis);
+        virtual void forward(Contexts &contexts, PDFs &psis, PDF &scale, const uint64_t index);
+        virtual void backward(Contexts &contexts, PDFs &psis, PDF &scale, const uint64_t index);
 
         virtual void _pass1(Reader &reader) = 0;
         virtual void _pass2(Reader &reader) = 0;
@@ -66,14 +71,14 @@ namespace NLP {
         Instances instances;
         PDF Z;
         size_t npairs;
-        size_t longest_sent;
         const std::string preface;
         double inv_sigma_sq;
+        double log_norm;
 
         Impl(Config &cfg, const std::string &preface)
           : Util::Shared(), cfg(cfg), lexicon(), tags(), attributes(),
             feature_types(tags), instances(), Z(), npairs(),
-            preface(preface), inv_sigma_sq() { }
+            preface(preface), inv_sigma_sq(), log_norm() { }
 
         virtual ~Impl(void) { /* nothing */ }
 
