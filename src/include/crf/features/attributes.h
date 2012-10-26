@@ -36,6 +36,11 @@ namespace NLP {
         double sum_lambda_sq(void);
         void copy_lambdas(const lbfgsfloatval_t *x);
         void copy_gradients(lbfgsfloatval_t *x, double inv_sigma_sq);
+        bool inc_next_gradient(double val);
+        bool dec_gradient(double val);
+        void print_current_gradient(double val, double inv_sigma_sq);
+        void print(double inv_sigma_sq);
+        void prep_finite_differences(void);
 
         size_t size(void) const;
     };

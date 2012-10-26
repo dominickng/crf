@@ -99,8 +99,8 @@ namespace NLP {
 
   TagSet::TagSet(void) :
     _impl(new Impl()) {
-      insert(Sentinel::str, 0);
       insert(None::str, 0);
+      insert(Sentinel::str, 0);
   }
 
   TagSet::TagSet(const std::string &filename)

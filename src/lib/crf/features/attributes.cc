@@ -57,11 +57,12 @@ namespace NLP {
 
         void increment(TagPair &tp) {
           ++value;
-          for (Features::iterator i = features.begin(); i != features.end(); ++i)
+          for (Features::iterator i = features.begin(); i != features.end(); ++i) {
             if (i->klasses == tp) {
-              ++i->freq;
+              ++(i->freq);
               return;
             }
+          }
           insert(tp);
         }
 
@@ -95,8 +96,8 @@ namespace NLP {
               for(Features::iterator i = l->features.begin(); i != l->features.end(); ++i) {
                 if(i->klasses == c.klasses)
                   c.features.push_back(&(*i));
-                //else if(i->klasses.prev.id() == Sentinel::val && c.klasses.curr == c.klasses.curr)
-                  //c.features.push_back(&(*i)); [> single tag features <]
+                else if(i->klasses.prev == None::val && i->klasses.curr == c.klasses.curr)
+                  c.features.push_back(&(*i)); //[> single tag features <]
               }
               return true;
             }
@@ -155,9 +156,14 @@ namespace NLP {
 
         void copy_gradients(lbfgsfloatval_t *x, double inv_sigma_sq, size_t &index) {
           for (Features::iterator i = features.begin(); i != features.end(); ++i)
-
-            x[index++] = i->freq - i->est - (i->lambda * inv_sigma_sq);
+            x[index++] = -(i->freq - i->est - (i->lambda * inv_sigma_sq));
         }
+
+        void print(double inv_sigma_sq) {
+          for (Features::iterator i = features.begin(); i != features.end(); ++i)
+            std::cout << "gradient: " << -(i->freq - i->est - (i->lambda * inv_sigma_sq)) << " lambda: " << i->lambda << std::endl;
+        }
+
 
     };
 
@@ -166,6 +172,9 @@ namespace NLP {
     class Attributes::Impl : public ImplBase, public Util::Shared {
       private:
         std::string preface;
+        Entries::iterator e;
+        Features::iterator f;
+        double prev_lambda;
 
       public:
         Impl(const size_t nbuckets, const size_t pool_size)
@@ -294,7 +303,44 @@ namespace NLP {
             (*i)->copy_gradients(x, inv_sigma_sq, index);
         }
 
+        bool inc_next_gradient(double val) {
+          if (e == _entries.end() && (f+1) == (*e)->features.end()) {
+            f->lambda = prev_lambda;
+            return false;
+          }
+          else if (++f != (*e)->features.begin()) {
+            (f-1)->lambda = prev_lambda;
+            if (f == (*e)->features.end()) {
+              if (++e == _entries.end())
+                return false;
+              f = (*(++e))->features.begin();
+            }
+          }
+          prev_lambda = f->lambda;
+          f->lambda += val;
+          return true;
+        }
+
+        bool dec_gradient(double val) {
+          f->lambda = prev_lambda - val;
+          return true;
+        }
+
+        void prep_finite_differences(void) {
+          e = _entries.begin();
+          f = (*e)->features.begin() - 1;
+        }
+
+        void print_current_gradient(double val, double inv_sigma_sq) {
+          std::cout << "actual: " << -(f->freq - f->est - (prev_lambda * inv_sigma_sq)) << " estimated: " << val << std::endl;
+        }
+
         size_t size(void) const { return Base::_size; }
+
+        void print(double inv_sigma_sq) {
+          for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
+            (*i)->print(inv_sigma_sq);
+        }
     };
 
     Attributes::Attributes(const size_t nbuckets, const size_t pool_size)
@@ -351,6 +397,12 @@ namespace NLP {
     double Attributes::sum_lambda_sq(void) { return _impl->sum_lambda_sq(); }
     void Attributes::copy_lambdas(const lbfgsfloatval_t *x) { _impl->copy_lambdas(x);; }
     void Attributes::copy_gradients(lbfgsfloatval_t *x, double inv_sigma_sq) { _impl->copy_gradients(x, inv_sigma_sq);; }
+
+    bool Attributes::inc_next_gradient(double val) { return _impl->inc_next_gradient(val); }
+    bool Attributes::dec_gradient(double val) { return _impl->dec_gradient(val); }
+    void Attributes::print_current_gradient(double val, double inv_sigma_sq) { _impl->print_current_gradient(val, inv_sigma_sq); }
+    void Attributes::print(double inv_sigma_sq) { _impl->print(inv_sigma_sq); }
+    void Attributes::prep_finite_differences(void) { _impl->prep_finite_differences(); }
 
     size_t Attributes::size(void) const { return _impl->size(); }
   }

@@ -1,5 +1,5 @@
 BINARIES = bin/test bin/train_ner
-CORE_OBJECTS = src/lib/base.o src/lib/version.o src/lib/input.o
+CORE_OBJECTS = src/lib/base.o src/lib/version.o src/lib/input.o src/lib/prob.o
 PORT_OBJECTS = src/lib/port/colour.o src/lib/port/unix_common.o
 IO_OBJECTS = src/lib/io/reader_factory.o src/lib/io/reader_conll.o
 

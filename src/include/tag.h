@@ -28,8 +28,8 @@ namespace NLP {
       operator uint16_t(void) const { return _id; }
       inline uint16_t id(void) const { return _id; }
 
-      inline bool operator==(const Tag &other) { return _id == other._id; }
-      inline bool operator!=(const Tag &other) { return _id != other._id; }
+      //inline bool operator==(const Tag &other) { return _id == other._id; }
+      //inline bool operator!=(const Tag &other) { return _id != other._id; }
 
       inline Tag& operator++(void) {
         ++_id;
@@ -61,7 +61,8 @@ namespace NLP {
     Tag curr;
 
     TagPair(void) : prev((uint16_t)0), curr((uint16_t)0) { }
-    TagPair(Tag prev, Tag curr) : prev(prev), curr(curr) { }
+    TagPair(uint16_t prev, uint16_t curr) : prev(prev), curr(curr) { }
+    //TagPair(Tag prev, Tag curr) : prev(prev), curr(curr) { }
 
     size_t index(const size_t ntags) const {
       return prev.id() * ntags + curr.id();
@@ -78,7 +79,7 @@ namespace NLP {
       return prev == other.prev && curr == other.curr;
     }
     inline bool operator!=(const TagPair &other) const {
-      return prev != other.prev || curr != other.curr;
+      return *this != other;
     }
 
   };
