@@ -30,6 +30,8 @@ namespace Util {
             const bool requires_arg=false);
         virtual ~OptionBase(void) { }
 
+        const std::string &name(void) { return _name; }
+
         inline bool requires_arg(void) const { return _requires_arg; }
         virtual void help(std::ostream &out, const std::string &prefix, const unsigned int depth) const = 0;
         virtual OptionBase *process(const std::string &orig_key, const std::string &key) = 0;

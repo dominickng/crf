@@ -58,16 +58,13 @@ double Tagger::Impl::log_likelihood(void) {
 double Tagger::Impl::psi(Context &c, TagPair &tp) {
   double psi = 0.0;
   for (FeaturePtrs::iterator j = c.features.begin(); j != c.features.end(); ++j)
-    if ((*j)->klasses == tp)
-      psi += (*j)->lambda;
+    psi += (*j)->lambda;
   return exp(psi);
 }
 
 void Tagger::Impl::compute_psis(Contexts &contexts, PSIs &psis) {
   for(int i = 0; i < contexts.size(); ++i) {
-    TagPair klasses = contexts[i].klasses;
-    psis[i][klasses.prev][klasses.curr] = psi(contexts[i], klasses);
-    klasses.prev = None::val;
+    TagPair &klasses = contexts[i].klasses;
     psis[i][klasses.prev][klasses.curr] = psi(contexts[i], klasses);
   }
 }
@@ -75,31 +72,39 @@ void Tagger::Impl::compute_psis(Contexts &contexts, PSIs &psis) {
 void Tagger::Impl::forward(Contexts &contexts, PDFs &alphas, PSIs &psis, PDF &scale) {
   double sum = 0.0;
 
-  for (Tag curr((uint16_t)2); curr < tags.size(); ++curr) {
-    TagPair tp(0, curr);
-    double val = psis[1][0][curr];
+  //for(int i = 0; i < contexts.size(); ++i){
+    //std::cout << tags.str(contexts[i].klasses.curr) << ' ';
+    //for (int j = 0; j < psis[i].size(); ++j){
+      //for (int k = 0; k < psis[i][j].size(); ++k){
+        //std::cout << psis[i][j][k] << ' ';
+      //}
+    //}
+    //std::cout << std::endl;
+  //}
+
+  for (Tag curr(2); curr < tags.size(); ++curr) {
+    double val = psis[1][Sentinel::val][curr];
     alphas[1][curr] = val;
     sum += val;
-    //std::cout << "0 alpha after log " << tags.str(curr) << ' ' << val << ' ' << std::endl;
   }
   if (sum == 0)
     sum = 1.0;
   scale[1] = 1.0 / sum;
   vector_scale(alphas[1], scale[1]);
+  //std::cout << "sum: " << sum << std::endl;
 
-  //for(PDFs::iterator it = psis.begin(); it != psis.end(); ++it) {
-    //for(PDF::iterator jt = it->begin(); jt != it->end(); ++jt)
-      //std::cout << *jt << ' ';
-    //std::cout << std::endl;
+  //for (Tag curr(2); curr < tags.size(); ++curr) {
+    //std::cout << alphas[1][curr] << std::endl;
+    //assert(!isinf(alphas[1][curr]) && !std::isnan(alphas[1][curr]));
   //}
+  //std::cout << std::endl;
 
-  sum = 0.0;
   for (size_t i = 2; i < contexts.size() - 1; ++i) {
-    for (Tag curr((uint16_t)2); curr < tags.size(); ++curr) {
-      for (Tag prev((uint16_t)2); prev < tags.size(); ++prev) {
-        TagPair tp(prev, curr);
+    sum = 0.0;
+    for (Tag curr(2); curr < tags.size(); ++curr) {
+      for (Tag prev(2); prev < tags.size(); ++prev) {
         double val = alphas[i-1][prev] * psis[i][prev][curr];
-        //std::cout << tags.str(prev) << ' ' << tags.str(curr) << ' ' << alphas[i-1][prev.id()] << ' ' << psis[i][tp.index(tags.size())] << std::endl;
+        //std::cout << tags.str(prev) << ' ' << tags.str(curr) << ' ' << alphas[i-1][prev] << ' ' << psis[i][prev][curr] << std::endl;
         alphas[i][curr] += val;
         sum += val;
 
@@ -116,14 +121,12 @@ void Tagger::Impl::forward(Contexts &contexts, PDFs &alphas, PSIs &psis, PDF &sc
     if (sum == 0)
       sum = 1.0;
     scale[i] = 1.0 / sum;
+    //std::cout << "sum: " << sum << std::endl;
     vector_scale(alphas[i], scale[i]);
-    for (Tag curr((uint16_t)0); curr < tags.size(); ++curr) {
-      //std::cout << i << " alpha before log " << tags.str(curr) << ' ' << alphas[i][curr.id()] << ' ' << std::endl;
-    //alphas[i][curr.id()] = log(alphas[i][curr.id()]);
-      //std::cout << i << " alpha after log " << tags.str(curr) << ' ' << alphas[i][curr.id()] << ' ' << std::endl;
-
-      assert(!isinf(alphas[i][curr]) && !std::isnan(alphas[i][curr]));
-    }
+    //for (Tag curr(0); curr < tags.size(); ++curr) {
+      //std::cout << tags.str(curr) << ' ' << alphas[i][curr] << std::endl;
+      //assert(!isinf(alphas[i][curr]) && !std::isnan(alphas[i][curr]));
+    //}
     //std::cout << std::endl;
   }
   //std::cout << alphas[contexts.size()][0] << std::endl;
@@ -134,22 +137,20 @@ void Tagger::Impl::forward(Contexts &contexts, PDFs &alphas, PSIs &psis, PDF &sc
 }
 
 void Tagger::Impl::backward(Contexts &contexts, PDFs &betas, PSIs &psis, PDF &scale) {
-  for (Tag curr((uint16_t)2); curr < tags.size(); ++curr) {
-    TagPair tp(curr, 0);
-    double val = psis[contexts.size() - 2][tp.curr][0];
+  for (Tag curr(2); curr < tags.size(); ++curr) {
+    double val = psis[contexts.size() - 1][curr][Sentinel::val];
     betas[contexts.size() - 2][curr] = val;
   }
   vector_scale(betas[contexts.size() - 2], scale[contexts.size() - 2]);
 
   for (int i = contexts.size() - 3; i >= 1; --i) {
-    for (Tag curr((uint16_t)2); curr < tags.size(); ++curr) {
-      for (Tag next((uint16_t)2); next < tags.size(); ++next) {
-        TagPair tp(curr, next);
-        betas[i][curr] += betas[i+1][next] * psis[i][curr][next];
+    for (Tag curr(2); curr < tags.size(); ++curr) {
+      for (Tag next(2); next < tags.size(); ++next) {
+        betas[i][curr] += betas[i+1][next] * psis[i+1][curr][next];
       }
     }
     vector_scale(betas[i], scale[i]);
-    for (Tag curr((uint16_t)0); curr < tags.size(); ++curr) {
+    for (Tag curr(0); curr < tags.size(); ++curr) {
       //betas[i][curr.id()] = log(betas[i][curr.id()]);
       //std::cout << i << " beta after log " << tags.str(curr) << ' ' << betas[i][curr.id()] << ' ' << std::endl;
       assert(!isinf(betas[i][curr]) && !std::isnan(betas[i][curr]));
@@ -203,8 +204,8 @@ lbfgsfloatval_t Tagger::Impl::_evaluate(const lbfgsfloatval_t *x,
       //std::cout << std::endl;
     }
   }
-  attributes.prep_finite_differences();
-  finite_differences();
+  //attributes.prep_finite_differences();
+  //finite_differences();
 
   attributes.copy_gradients(g, inv_sigma_sq);
   //attributes.print(inv_sigma_sq);

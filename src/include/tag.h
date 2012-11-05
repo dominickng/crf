@@ -16,7 +16,7 @@ namespace NLP {
       Tag(Sentinel) : _id(1) { }
 
       Tag(const uint16_t id) : _id(id) { }
-      explicit Tag(const uint64_t id) : _id(_check(id)) { }
+      //explicit Tag(const uint64_t id) : _id(_check(id)) { }
 
       Tag(const Tag &other) : _id(other._id) { }
 
@@ -60,7 +60,7 @@ namespace NLP {
     Tag prev;
     Tag curr;
 
-    TagPair(void) : prev((uint16_t)0), curr((uint16_t)0) { }
+    TagPair(void) : prev(0), curr(0) { }
     TagPair(uint16_t prev, uint16_t curr) : prev(prev), curr(curr) { }
     //TagPair(Tag prev, Tag curr) : prev(prev), curr(curr) { }
 

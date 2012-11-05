@@ -30,22 +30,22 @@ namespace NLP {
           : contexts(size + 2), alphas(), betas(), psis(), scale() {
           //+ 2 for start and end states
           for (int i = 0; i < size + 2; ++i) {
-            alphas.push_back(PDF(ntags, 1.0));
-            betas.push_back(PDF(ntags, 1.0));
+            alphas.push_back(PDF(ntags, 0.0));
+            betas.push_back(PDF(ntags, 0.0));
             scale.push_back(1.0);
             psis.push_back(PDFs(0));
             for (int j = 0; j < ntags; ++j)
-              psis[i].push_back(PDF(ntags, 0.0));
+              psis[i].push_back(PDF(ntags, 1.0));
           }
         }
 
         void reset(void) {
           std::fill(scale.begin(), scale.end(), 1.0);
           for (int i = 0; i < alphas.size(); ++i) {
-            std::fill(alphas[i].begin(), alphas[i].end(), 1.0);
-            std::fill(betas[i].begin(), betas[i].end(), 1.0);
+            std::fill(alphas[i].begin(), alphas[i].end(), 0.0);
+            std::fill(betas[i].begin(), betas[i].end(), 0.0);
             for (int j = 0; j < psis[i].size(); ++j)
-              std::fill(psis[i][j].begin(), psis[i][j].end(), 0.0);
+              std::fill(psis[i][j].begin(), psis[i][j].end(), 1.0);
           }
         }
 

@@ -82,7 +82,7 @@ namespace Util {
 
     class OpFlag : public Op<bool> {
       protected:
-        virtual void _set(const std::string &) {  _value = !_default; }
+        virtual void _set(const std::string &) { _value = !_default; }
 
         virtual void help(std::ostream &out, const std::string &prefix,
             const unsigned int depth) const {
