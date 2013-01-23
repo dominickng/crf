@@ -23,29 +23,40 @@ namespace NLP {
         mutable PDFs alphas;
         mutable PDFs betas;
         mutable PSIs psis;
+        mutable PSIs ind_psis;
+        mutable PDFs trans_probs;
         mutable PDF scale;
 
         Contexts(void) : contexts(), alphas(), betas(), psis() { }
         Contexts(const size_t size, const size_t ntags)
-          : contexts(size + 2), alphas(), betas(), psis(), scale() {
-          //+ 2 for start and end states
-          for (int i = 0; i < size + 2; ++i) {
+          : contexts(size), alphas(), betas(), psis(), ind_psis(), trans_probs(), scale() {
+          for (int i = 0; i < ntags; ++i)
+            trans_probs.push_back(PDF(ntags, 0.0));
+          for (int i = 0; i < size; ++i) {
             alphas.push_back(PDF(ntags, 0.0));
             betas.push_back(PDF(ntags, 0.0));
             scale.push_back(1.0);
             psis.push_back(PDFs(0));
-            for (int j = 0; j < ntags; ++j)
+            ind_psis.push_back(PDFs(0));
+            for (int j = 0; j < ntags; ++j) {
               psis[i].push_back(PDF(ntags, 1.0));
+              ind_psis[i].push_back(PDF(ntags, 0.0));
+            }
           }
         }
 
         void reset(void) {
           std::fill(scale.begin(), scale.end(), 1.0);
+          for (int i = 0; i < trans_probs.size(); ++i)
+            std::fill(trans_probs[i].begin(), trans_probs[i].end(), 0.0);
+
           for (int i = 0; i < alphas.size(); ++i) {
             std::fill(alphas[i].begin(), alphas[i].end(), 0.0);
             std::fill(betas[i].begin(), betas[i].end(), 0.0);
-            for (int j = 0; j < psis[i].size(); ++j)
+            for (int j = 0; j < psis[i].size(); ++j) {
               std::fill(psis[i][j].begin(), psis[i][j].end(), 1.0);
+              std::fill(ind_psis[i][j].begin(), ind_psis[i][j].end(), 0.0);
+            }
           }
         }
 

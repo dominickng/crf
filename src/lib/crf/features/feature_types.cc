@@ -23,26 +23,17 @@ FeatureTypes::FeatureTypes(const TagSet &tags)
 
 void FeatureTypes::get_tagpair(Sentence &sent, TagPair &tp, int i) {
   if (i == 0) {
-    tp.prev = Tag((uint16_t)0);
-    tp.curr = Tag((uint16_t)1);
-  }
-  else if (i == 1) {
-    tp.prev = Tag((uint16_t)1);
+    tp.prev = Tag(Sentinel::val);
     tp.curr = tags.canonize(sent.entities[0]);
   }
-  else if (i > sent.words.size()) {
-    tp.prev = tags.canonize(sent.entities[i-2]);
-    tp.curr = Tag((uint16_t)1);
-  }
   else {
-    tp.prev = tags.canonize(sent.entities[i-2]);
-    tp.curr = tags.canonize(sent.entities[i-1]);
+    tp.prev = tags.canonize(sent.entities[i-1]);
+    tp.curr = tags.canonize(sent.entities[i]);
   }
 }
 
 void FeatureTypes::generate(Attributes &attributes, Sentence &sent, Contexts &contexts, const bool extract) {
-
-  for(int i = 0; i < sent.words.size() + 2; ++i) {
+  for(int i = 0; i < sent.words.size(); ++i) {
     for (Children::iterator j = _children.begin(); j != _children.end(); ++j) {
       OpType *op = reinterpret_cast<OpType *>(*j);
       if ((*op)()) {

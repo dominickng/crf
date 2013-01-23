@@ -52,8 +52,8 @@ namespace NLP {
         lbfgsfloatval_t _evaluate(const lbfgsfloatval_t *x,
             lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step);
 
-        virtual double psi(Context &c, TagPair &tp);
-        virtual void compute_psis(Contexts &contexts, PSIs &psis);
+        virtual void compute_psis(Contexts &contexts, PSIs &full_psis, PSIs &ind_psis);
+        virtual void print_psis(Contexts &contexts, PSIs &psis);
         virtual void forward(Contexts &contexts, PDFs &alphas, PSIs &psis, PDF &scale);
         virtual void backward(Contexts &contexts, PDFs &betas, PSIs &psis, PDF &scale);
 
@@ -81,7 +81,7 @@ namespace NLP {
         virtual void train(Reader &reader);
         virtual void extract(Reader &reader, Instances &instances);
 
-        virtual void finite_differences(void);
+        virtual void finite_differences(lbfgsfloatval_t *g, bool overwrite=false);
 
         static lbfgsfloatval_t evaluate(void *instance,
             const lbfgsfloatval_t *x, lbfgsfloatval_t *g, const int n,

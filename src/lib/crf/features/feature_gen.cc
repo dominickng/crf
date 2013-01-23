@@ -12,37 +12,29 @@ namespace NLP { namespace CRF {
 WordGen::WordGen(const Type &type) : FeatureGen(type) { }
 
 void WordGen::operator()(Attributes &attributes, Sentence &sent, TagPair tp, int j) {
-  if (j > 0 && j <= sent.words.size()) {
-    Raw word = sent.words[j-1];
-    attributes(type.id, word, tp);
-    tp.prev = None::val; /* unigram */
-    attributes(type.id, word, tp);
-  }
+  Raw word = sent.words[j];
+  attributes(type.id, word, tp);
+  //tp.prev = None::val; [> unigram <]
+  //attributes(type.id, word, tp);
 }
 
 void WordGen::operator()(Attributes &attributes, Sentence &sent, Context &c, int j) {
-  if (j > 0 && j <= sent.words.size()) {
-    Raw word = sent.words[j-1];
-    attributes(type.id, word, c);
-  }
+  Raw word = sent.words[j];
+  attributes(type.id, word, c);
 }
 
 PosGen::PosGen(const Type &type) : FeatureGen(type) { }
 
 void PosGen::operator()(Attributes &attributes, Sentence &sent, TagPair tp, int j) {
-  if (j > 0 && j <= sent.words.size()) {
-    Raw word = sent.pos[j-1];
-    attributes(type.id, word, tp);
-    tp.prev = None::val; /* unigram */
-    attributes(type.id, word, tp);
-  }
+  Raw word = sent.pos[j];
+  attributes(type.id, word, tp);
+  //tp.prev = None::val; [> unigram <]
+  //attributes(type.id, word, tp);
 }
 
 void PosGen::operator()(Attributes &attributes, Sentence &sent, Context &c, int j) {
-  if (j > 0 && j <= sent.words.size()) {
-    Raw word = sent.pos[j-1];
-    attributes(type.id, word, c);
-  }
+  Raw word = sent.pos[j];
+  attributes(type.id, word, c);
 }
 
 PrevWordGen::PrevWordGen(const Type &type) : FeatureGen(type) { }

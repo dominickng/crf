@@ -93,12 +93,9 @@ namespace NLP {
         bool find(const char *type, const std::string &str, Context &c) {
           for (AttribEntry *l = this; l != NULL; l = l->next) {
             if (l->equal(type, str) && l->value > 0) {
-              for(Features::iterator i = l->features.begin(); i != l->features.end(); ++i) {
-                if(i->klasses == c.klasses)
+              for(Features::iterator i = l->features.begin(); i != l->features.end(); ++i)
+                if(i->klasses == c.klasses || (i->klasses.prev == None::val && i->klasses.curr == c.klasses.curr))
                   c.features.push_back(&(*i));
-                else if(i->klasses.prev == None::val && i->klasses.curr == c.klasses.curr)
-                  c.features.push_back(&(*i)); //[> single tag features <]
-              }
               return true;
             }
           }
@@ -193,7 +190,6 @@ namespace NLP {
 
         void add(const char *type, const std::string &str, TagPair &tp) {
           size_t bucket = AttribEntry::hash(type, str).value() % _nbuckets;
-          //std::cout << "adding " << type << " " << str << " for " << tp.prev.id() << ' ' << tp.curr.id() << std::endl;
           AttribEntry *entry = _buckets[bucket]->find(type, str);
           if (entry)
             return entry->increment(tp);
@@ -313,7 +309,7 @@ namespace NLP {
             if (f == (*e)->features.end()) {
               if (++e == _entries.end())
                 return false;
-              f = (*(++e))->features.begin();
+              f = (*e)->features.begin();
             }
           }
           prev_lambda = f->lambda;
@@ -332,7 +328,9 @@ namespace NLP {
         }
 
         void print_current_gradient(double val, double inv_sigma_sq) {
-          std::cout << "actual: " << -(f->freq - f->est - (prev_lambda * inv_sigma_sq)) << " estimated: " << val << std::endl;
+          std::cout << "freq: " << f->freq << " est: " << f->est;
+          std::cout << " lambda: " << prev_lambda << " actual: " << -(f->freq - f->est - (prev_lambda * inv_sigma_sq));
+          std::cout << " estimated: " << val << " <" << f->klasses.prev << ' ' << f->klasses.curr << "> " << (*e)->str <<  std::endl;
         }
 
         size_t size(void) const { return Base::_size; }
