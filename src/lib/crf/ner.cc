@@ -36,9 +36,9 @@ class NER::Impl : public Tagger::Impl {
 
     virtual void _pass2(Reader &reader) {
       Sentence sent;
-      Contexts contexts; //not used
+      Contexts contexts; //not used in this pass
       while (reader.next(sent)) {
-        feature_types.generate(attributes, sent, contexts, true);
+        feature_types.generate(attributes, sent, contexts, sent.entities, true);
         sent.reset();
       }
 
@@ -51,7 +51,7 @@ class NER::Impl : public Tagger::Impl {
       while (reader.next(sent)) {
         Contexts contexts(sent.words.size(), tags.size());
         instances.push_back(contexts);
-        feature_types.generate(attributes, sent, instances.back(), false);
+        feature_types.generate(attributes, sent, instances.back(), sent.entities, false);
         sent.reset();
       }
     }

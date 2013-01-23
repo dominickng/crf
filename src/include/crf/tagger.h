@@ -56,6 +56,7 @@ namespace NLP {
         virtual void print_psis(Contexts &contexts, PSIs &psis);
         virtual void forward(Contexts &contexts, PDFs &alphas, PSIs &psis, PDF &scale);
         virtual void backward(Contexts &contexts, PDFs &betas, PSIs &psis, PDF &scale);
+        virtual void print_fwd_bwd(Contexts &contexts, PDFs &pdfs, PDF &scale);
 
         virtual void _pass1(Reader &reader) = 0;
         virtual void _pass2(Reader &reader) = 0;

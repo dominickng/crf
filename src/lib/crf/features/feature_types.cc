@@ -21,24 +21,24 @@ FeatureTypes::FeatureTypes(const TagSet &tags)
     use_prev_pos(*this, "prev_pos", "use previous pos features", new PrevPosGen(Types::pos)),
     use_next_pos(*this, "next_pos", "use next pos features", new NextPosGen(Types::pos)) { }
 
-void FeatureTypes::get_tagpair(Sentence &sent, TagPair &tp, int i) {
+void FeatureTypes::get_tagpair(Raws &raws, TagPair &tp, int i) {
   if (i == 0) {
     tp.prev = Tag(Sentinel::val);
-    tp.curr = tags.canonize(sent.entities[0]);
+    tp.curr = tags.canonize(raws[0]);
   }
   else {
-    tp.prev = tags.canonize(sent.entities[i-1]);
-    tp.curr = tags.canonize(sent.entities[i]);
+    tp.prev = tags.canonize(raws[i-1]);
+    tp.curr = tags.canonize(raws[i]);
   }
 }
 
-void FeatureTypes::generate(Attributes &attributes, Sentence &sent, Contexts &contexts, const bool extract) {
+void FeatureTypes::generate(Attributes &attributes, Sentence &sent, Contexts &contexts, Raws &raws, const bool extract) {
   for(int i = 0; i < sent.words.size(); ++i) {
     for (Children::iterator j = _children.begin(); j != _children.end(); ++j) {
       OpType *op = reinterpret_cast<OpType *>(*j);
       if ((*op)()) {
         TagPair tp;
-        get_tagpair(sent, tp, i);
+        get_tagpair(raws, tp, i);
         if (extract)
           op->generate(attributes, sent, tp, i);
         else {

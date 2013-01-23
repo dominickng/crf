@@ -95,8 +95,25 @@ void Tagger::Impl::print_psis(Contexts &contexts, PSIs &psis) {
   }
 }
 
+void Tagger::Impl::print_fwd_bwd(Contexts &contexts, PDFs &pdfs, PDF &scale) {
+  std::cout << std::setw(16) << ' ';
+  for(int i = 0; i < contexts.size(); ++i)
+    std::cout << std::setw(16) << tags.str(contexts[i].klasses.curr);
+  std::cout << std::endl;
+  for(Tag curr(0); curr < tags.size(); ++curr) {
+    std::cout << std::setw(16) << tags.str(curr);
+    for(int i = 0; i < contexts.size(); ++i)
+      std::cout << std::setw(16) << pdfs[i][curr];
+    std::cout << std::endl;
+  }
+  std::cout << std::setw(16) << "scale:";
+  for(int i = 0; i < contexts.size(); ++i)
+    std::cout << std::setw(16) << scale[i];
+
+  std::cout << '\n' << std::endl;
+}
+
 void Tagger::Impl::forward(Contexts &contexts, PDFs &alphas, PSIs &psis, PDF &scale) {
-  //std::cout << "forward" << std::endl;
   double sum = 0.0;
 
   for (Tag curr(2); curr < tags.size(); ++curr) {
@@ -105,17 +122,11 @@ void Tagger::Impl::forward(Contexts &contexts, PDFs &alphas, PSIs &psis, PDF &sc
     sum += val;
     //std::cout << tags.str(curr) << ' ' << val << ' ' << sum << std::endl;
   }
-  if (sum == 0)
+  if (sum == 0.0)
     sum = 1.0;
   scale[0] = 1.0 / sum;
   vector_scale(alphas[0], scale[0]);
   //std::cout << "sum: " << sum << std::endl;
-
-  //for (Tag curr(2); curr < tags.size(); ++curr) {
-    //std::cout << alphas[1][curr] << std::endl;
-    //assert(!isinf(alphas[1][curr]) && !std::isnan(alphas[1][curr]));
-  //}
-  //std::cout << std::endl;
 
   for (size_t i = 1; i < contexts.size(); ++i) {
     sum = 0.0;
@@ -128,7 +139,7 @@ void Tagger::Impl::forward(Contexts &contexts, PDFs &alphas, PSIs &psis, PDF &sc
         sum += val;
       }
     }
-    if (sum == 0)
+    if (sum == 0.0)
       sum = 1.0;
     scale[i] = 1.0 / sum;
     //std::cout << "sum: " << sum << std::endl;
@@ -139,20 +150,13 @@ void Tagger::Impl::forward(Contexts &contexts, PDFs &alphas, PSIs &psis, PDF &sc
     //}
     //std::cout << std::endl;
   }
-  //std::cout << alphas[contexts.size()][0] << std::endl;
-  //Z[index] = exp(alphas[contexts.size()][0]);
   log_z += -vector_sum_log(scale);
-  //std::cout << Z[index] << std::endl;
-  //assert(!isinf(Z[index]) && !std::isnan(Z[index]));
 }
 
 void Tagger::Impl::backward(Contexts &contexts, PDFs &betas, PSIs &psis, PDF &scale) {
   //std::cout << "backward" << std::endl;
-  for (Tag curr(2); curr < tags.size(); ++curr) {
-    //double val = psis[contexts.size() - 1][curr][Sentinel::val];
-    double val = 1;
-    betas[contexts.size() - 1][curr] = val;
-  }
+  for (Tag curr(2); curr < tags.size(); ++curr)
+    betas[contexts.size() - 1][curr] = 1.0;
   vector_scale(betas[contexts.size() - 1], scale[contexts.size() - 1]);
   //std::cout << "scale: " << scale[contexts.size() - 2] << std::endl;
   //for (Tag curr(2); curr < tags.size(); ++curr) {
@@ -211,8 +215,10 @@ lbfgsfloatval_t Tagger::Impl::_evaluate(const lbfgsfloatval_t *x,
     PDF &scale(i->scale);
 
     compute_psis(contexts, full_psis, ind_psis);
+    print_psis(contexts, full_psis);
     forward(contexts, alphas, full_psis, scale);
     backward(contexts, betas, full_psis, scale);
+    print_fwd_bwd(contexts, alphas, scale);
 
     for (int j = 0; j < i->size(); ++j) {
       TagPair &klasses = contexts[j].klasses;
@@ -227,8 +233,8 @@ lbfgsfloatval_t Tagger::Impl::_evaluate(const lbfgsfloatval_t *x,
       //std::cout << std::endl;
     }
   }
-  //attributes.prep_finite_differences();
-  //finite_differences(g, false);
+  attributes.prep_finite_differences();
+  finite_differences(g, false);
 
   attributes.copy_gradients(g, inv_sigma_sq);
   //attributes.print(inv_sigma_sq);

@@ -40,7 +40,7 @@ namespace NLP {
             ind_psis.push_back(PDFs(0));
             for (int j = 0; j < ntags; ++j) {
               psis[i].push_back(PDF(ntags, 1.0));
-              ind_psis[i].push_back(PDF(ntags, 0.0));
+              ind_psis[i].push_back(PDF(ntags, 1.0));
             }
           }
         }
@@ -55,7 +55,7 @@ namespace NLP {
             std::fill(betas[i].begin(), betas[i].end(), 0.0);
             for (int j = 0; j < psis[i].size(); ++j) {
               std::fill(psis[i][j].begin(), psis[i][j].end(), 1.0);
-              std::fill(ind_psis[i][j].begin(), ind_psis[i][j].end(), 0.0);
+              std::fill(ind_psis[i][j].begin(), ind_psis[i][j].end(), 1.0);
             }
           }
         }

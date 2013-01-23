@@ -32,8 +32,8 @@ namespace NLP {
 
           FeatureTypes(const TagSet &tags);
 
-          void get_tagpair(Sentence &sent, TagPair &tp, int i);
-          void generate(Attributes &attributes, Sentence &sent, Contexts &contexts, const bool extract);
+          void get_tagpair(Raws &raws, TagPair &tp, int i);
+          void generate(Attributes &attributes, Sentence &sent, Contexts &contexts, Raws &raws, const bool extract);
       };
   }
 }
