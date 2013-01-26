@@ -12,11 +12,14 @@ namespace NLP {
       TagSet(const std::string &filename, std::istream &input);
       TagSet(const TagSet &other);
 
+      TagSet &operator=(const TagSet &other);
+
       void add(const std::string &raw, const uint64_t freq=1);
       void insert(const std::string &raw, const uint64_t freq=1);
 
       void load(const std::string &filename);
       void load(const std::string &filename, std::istream &input);
+      void save(const std::string &preface);
       void save(const std::string &filename, const std::string &preface);
       void save(std::ostream &out, const std::string &preface);
 

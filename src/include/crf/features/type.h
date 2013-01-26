@@ -4,10 +4,13 @@ namespace NLP {
         const char *desc;
         const char *id;
         uint64_t index;
+
+        bool equals(const Type &other) const {
+          return index == other.index;
+        }
       };
 
       namespace Types {
-
         extern const Type words;
         extern const Type pos;
         extern const Type prevword;

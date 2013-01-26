@@ -5,35 +5,30 @@ namespace NLP {
       class OpType : public config::OpFlag {
         protected:
           FeatureGen *_gen;
+          FeatureDict *_dict;
 
         public:
           OpType(config::OpGroup &group, const std::string &name,
               const std::string &desc, FeatureGen *gen,
               const bool default_value=true)
-            : config::OpFlag(group, name, desc, default_value), _gen(gen) { }
+            : config::OpFlag(group, name, desc, default_value), _gen(gen),
+          _dict(0) { }
 
-          ~OpType(void) { delete _gen; }
+          ~OpType(void) {
+            delete _gen;
+          }
+
+          void reg(FeatureDict *dict) {
+            _dict = dict;
+          }
+
+          bool has_type(const Type &type) {
+            return type.equals(_gen->type);
+          }
 
           template <typename TPC>
           void generate(Attributes &attributes, Sentence &sent, TPC &tpc, int index) { (*_gen)(attributes, sent, tpc, index); }
       };
 
-      class FeatureTypes : public config::OpGroup {
-        public:
-          TagSet tags;
-          OpType use_words;
-          OpType use_pos;
-
-          OpType use_prev_words;
-          OpType use_next_words;
-
-          OpType use_prev_pos;
-          OpType use_next_pos;
-
-          FeatureTypes(const TagSet &tags);
-
-          void get_tagpair(Raws &raws, TagPair &tp, int i);
-          void generate(Attributes &attributes, Sentence &sent, Contexts &contexts, Raws &raws, const bool extract);
-      };
   }
 }

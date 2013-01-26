@@ -7,7 +7,7 @@ namespace Util { namespace config {
 
 OpBase::OpBase(OpGroup &group, const std::string &name, const std::string &desc,
     const bool has_default, const bool requires_arg) :
-  OptionBase(name, desc, requires_arg), _has_default(has_default), _is_set(false) {
+  OptionBase(name, desc, requires_arg), _has_default(has_default) {
   group.add(this);
 }
 
@@ -24,8 +24,10 @@ void OpBase::set(const std::string &value) {
 
 void OpBase::validate(void) {
   if (!_is_set) {
-    if (_has_default)
+    if (_has_default) {
       set_default();
+      _is_set = true;
+    }
     else
       throw ConfigException("Required argument not set", _name);
   }

@@ -19,6 +19,7 @@ namespace NLP {
 
       void load(const std::string &filename);
       void load(const std::string &filename, std::istream &input);
+      void save(const std::string &preface);
       void save(const std::string &filename, const std::string &preface);
       void save(std::ostream &out, const std::string &preface);
 

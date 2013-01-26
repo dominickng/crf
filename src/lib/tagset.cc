@@ -9,18 +9,16 @@ namespace NLP {
   typedef HT::StringEntry<uint16_t> Entry;
   typedef HT::OrderedHashTable<Entry, std::string> ImplBase;
   class TagSet::Impl : public ImplBase, public Util::Shared {
-    private:
-      std::string preface;
-
     public:
-      Impl(void) : ImplBase(HT::TINY, HT::TINY), Shared(), preface() { }
+      std::string preface;
+      std::string filename;
+
+      Impl(void) : ImplBase(HT::TINY, HT::TINY), Shared(), preface(), filename() { }
       Impl(const std::string &filename)
-        : ImplBase(HT::TINY, HT::TINY), Shared(), preface() {
-        load(filename);
-      }
+        : ImplBase(HT::TINY, HT::TINY), Shared(), preface(), filename(filename) { }
 
       Impl(const std::string &filename, std::istream &input)
-        : ImplBase(HT::TINY, HT::TINY), Shared(), preface() {
+        : ImplBase(HT::TINY, HT::TINY), Shared(), preface(), filename(filename) {
         load(filename, input);
       }
 
@@ -111,12 +109,27 @@ namespace NLP {
 
   TagSet::TagSet(const TagSet &other) : _impl(share(other._impl)) { }
 
+  TagSet &TagSet::operator=(const TagSet &other){
+    if (_impl != other._impl){
+      release(_impl);
+      _impl = share(other._impl);
+    }
+
+    return *this;
+  }
+
   void TagSet::add(const std::string &raw, const uint64_t freq) { _impl->add(raw, freq); }
   void TagSet::insert(const std::string &raw, const uint64_t freq) { _impl->insert(raw, freq); }
 
   void TagSet::load(const std::string &filename) { _impl->load(filename); }
   void TagSet::load(const std::string &filename, std::istream &input) { _impl->load(filename, input); }
 
+  void TagSet::save(const std::string &preface) {
+    std::ofstream out(_impl->filename.c_str());
+    if (!out)
+      throw IOException("unable to open file for writing", _impl->filename);
+    _impl->save(out, preface);
+  }
   void TagSet::save(const std::string &filename, const std::string &preface) {
     std::ofstream out(filename.c_str());
     if (!out)

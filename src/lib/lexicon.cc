@@ -9,20 +9,19 @@ namespace NLP {
   typedef HT::StringEntry<uint64_t> Entry;
   typedef HT::OrderedHashTable<Entry, std::string> ImplBase;
   class Lexicon::Impl : public ImplBase, public Util::Shared {
-    private:
-      std::string preface;
-
     public:
+      std::string preface;
+      std::string filename;
+
       Impl(const size_t nbuckets, const size_t pool_size)
-        : ImplBase(nbuckets, pool_size), Shared(), preface() { }
+        : ImplBase(nbuckets, pool_size), Shared(), preface(), filename() { }
       Impl(const std::string &filename, const size_t nbuckets,
-          const size_t pool_size) : ImplBase(nbuckets, pool_size), Shared(), preface() {
-        load(filename);
-      }
+          const size_t pool_size) : ImplBase(nbuckets, pool_size), Shared(),
+          preface(), filename(filename) { }
 
       Impl(const std::string &filename, std::istream &input,
           const size_t nbuckets, const size_t pool_size) :
-        ImplBase(nbuckets, pool_size), Shared(), preface() {
+        ImplBase(nbuckets, pool_size), Shared(), preface(), filename(filename) {
           load(filename, input);
         }
 
@@ -112,6 +111,12 @@ namespace NLP {
   void Lexicon::load(const std::string &filename) { _impl->load(filename); }
   void Lexicon::load(const std::string &filename, std::istream &input) { _impl->load(filename, input); }
 
+  void Lexicon::save(const std::string &preface) {
+    std::ofstream out(_impl->filename.c_str());
+    if (!out)
+      throw IOException("unable to open file for writing", _impl->filename);
+    _impl->save(out, preface);
+  }
   void Lexicon::save(const std::string &filename, const std::string &preface) {
     std::ofstream out(filename.c_str());
     if (!out)

@@ -7,11 +7,26 @@ namespace NLP {
 
         class Config : public Tagger::Config {
           public:
+            config::OpPath pos;
+
             Config(const std::string &name="ner",
                 const std::string &desc="ner CRF tagger config")
-              : Tagger::Config(name, desc) { }
+              : Tagger::Config(name, desc),
+                pos(*this, "pos", "location to save the pos tag file", "//postags", &model)
+                { }
         };
-        NER(NER::Config &cfg, const std::string &preface);
+
+        class FeatureTypes : public Tagger::FeatureTypes {
+          public:
+            OpType use_pos;
+            OpType use_prev_pos;
+            OpType use_next_pos;
+
+            FeatureTypes(void);
+
+        };
+
+        NER(NER::Config &cfg, NER::FeatureTypes &types, const std::string &preface);
 
         void train(Reader &reader);
         void extract(Reader &reader, Instances &instances);

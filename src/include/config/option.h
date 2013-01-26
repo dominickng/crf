@@ -5,7 +5,6 @@ namespace Util {
       // must be part of some OpGroup
       protected:
         const bool _has_default;
-        bool _is_set;
 
         virtual void _set(const std::string &value) = 0;
         virtual void _validate(void) = 0;
@@ -25,15 +24,12 @@ namespace Util {
         virtual void validate(void);
 
         inline bool has_default(void) const { return _has_default; }
-        inline bool is_set(void) const { return _is_set; }
     };
 
     template <typename T>
     class Op : public OpBase {
       // templated class of ops that take args of a particular type
       protected:
-        const T _default;
-        T _value;
 
         virtual void _set(const std::string &value) {
           std::istringstream s(value);
@@ -44,6 +40,9 @@ namespace Util {
         virtual void _validate(void) { }
 
       public:
+        const T _default;
+        T _value;
+
         Op(OpGroup &group, const std::string &name, const std::string &desc,
             const bool requires_arg=true) :
           OpBase(group, name, desc, false, requires_arg), _default(), _value() { }
@@ -253,12 +252,12 @@ namespace Util {
 
         OpPath(OpGroup &group, const std::string &name, const std::string &desc,
             const std::string &default_value, const OpPath *base=0) :
-          Op<std::string>(group, name, desc, default_value, false),
+          Op<std::string>(group, name, desc, default_value, true),
           _base(base), _derived() { }
 
         virtual ~OpPath(void) { }
 
-        inline const std::string &operator()(void) const {
+        const std::string &operator()(void) const {
           if (_base && _value.size() > 2 && _value[0] == port::PATH_SEP
               && _value[1] == port::PATH_SEP) {
             _derived = (*_base)() + port::PATH_SEP + Op<std::string>::_value.substr(2);

@@ -17,7 +17,8 @@ ConfigException::what(void) const throw() {
 
 
 OptionBase::OptionBase(const std::string &name, const std::string &desc,
-    const bool requires_arg) : _name(name), _desc(desc), _requires_arg(requires_arg) {
+    const bool requires_arg) : _name(name), _desc(desc),
+      _requires_arg(requires_arg), _is_set(false) {
   if (name.empty())
     throw ConfigException("Option names cannot be empty", _name);
 

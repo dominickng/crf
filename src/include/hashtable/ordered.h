@@ -52,6 +52,10 @@ namespace Util {
 
         Entries _entries;
 
+        Entry *operator[](const uint64_t index) {
+          return _entries[index];
+        }
+
       public:
         OrderedHashTable(const size_t nbuckets=BASE_SIZE,
             const size_t pool_size=SMALL) :

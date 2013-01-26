@@ -14,8 +14,8 @@ WordGen::WordGen(const Type &type) : FeatureGen(type) { }
 void WordGen::operator()(Attributes &attributes, Sentence &sent, TagPair tp, int j) {
   Raw word = sent.words[j];
   attributes(type.id, word, tp);
-  //tp.prev = None::val;
-  //attributes(type.id, word, tp);
+  tp.prev = None::val;
+  attributes(type.id, word, tp);
 }
 
 void WordGen::operator()(Attributes &attributes, Sentence &sent, Context &c, int j) {
@@ -28,8 +28,8 @@ PosGen::PosGen(const Type &type) : FeatureGen(type) { }
 void PosGen::operator()(Attributes &attributes, Sentence &sent, TagPair tp, int j) {
   Raw word = sent.pos[j];
   attributes(type.id, word, tp);
-  //tp.prev = None::val;
-  //attributes(type.id, word, tp);
+  tp.prev = None::val;
+  attributes(type.id, word, tp);
 }
 
 void PosGen::operator()(Attributes &attributes, Sentence &sent, Context &c, int j) {

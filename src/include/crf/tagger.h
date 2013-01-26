@@ -23,12 +23,28 @@ namespace NLP {
             features(*this, "features", "location to save the features file", "//features", &model),
             weights(*this, "weights", "location to save the weights file", "//weights", &model),
             sigma(*this, "sigma", "sigma value for regularization", 0.707, true),
-            niterations(*this, "niterations", "number of training iterations", 1, false)
-          { }
+            niterations(*this, "niterations", "number of training iterations", 1, false) { }
 
             virtual ~Config(void) { /* nothing */ }
-
         };
+
+        class FeatureTypes : public config::OpGroup {
+          public:
+            typedef std::vector<OpType *> Actives;
+            OpType use_words;
+            OpType use_prev_words;
+            OpType use_next_words;
+            Actives actives;
+
+            FeatureTypes(void);
+
+            void get_tagpair(TagSet &tags, Raws &raws, TagPair &tp, int i);
+            void generate(Attributes &attributes, TagSet &tags, Sentence &sent, Contexts &contexts, Raws &raws, const bool extract);
+            void reg(const Type &type, FeatureDict &dict);
+            virtual void validate(void);
+        };
+
+        enum { GREEDY, FWDBWD, VITERBI };
 
         FeatureTypes &feature_types(void) { return _feature_types; }
 
@@ -42,7 +58,6 @@ namespace NLP {
         Tagger(Tagger::Config &cfg, const std::string &preface, Impl *impl);
         Tagger(const Tagger &other);
         virtual ~Tagger(void) { release(_impl); }
-
     };
 
     class Tagger::Impl : public Util::Shared {
@@ -52,7 +67,9 @@ namespace NLP {
         lbfgsfloatval_t _evaluate(const lbfgsfloatval_t *x,
             lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step);
 
-        virtual void compute_psis(Contexts &contexts, PSIs &full_psis, PSIs &ind_psis);
+        virtual void reg(void);
+
+        virtual void compute_psis(Contexts &contexts, PSIs &psis);
         virtual void print_psis(Contexts &contexts, PSIs &psis);
         virtual void forward(Contexts &contexts, PDFs &alphas, PSIs &psis, PDF &scale);
         virtual void backward(Contexts &contexts, PDFs &betas, PSIs &psis, PDF &scale);
@@ -66,16 +83,19 @@ namespace NLP {
         Lexicon lexicon;
         TagSet tags;
         Attributes attributes;
-        FeatureTypes feature_types;
+        FeatureTypes &feature_types;
         Instances instances;
+
+        WordDict w_dict;
+
         const std::string preface;
         double inv_sigma_sq;
         double log_z;
 
-        Impl(Config &cfg, const std::string &preface)
-          : Util::Shared(), cfg(cfg), lexicon(), tags(), attributes(),
-            feature_types(tags), instances(), preface(preface),
-            inv_sigma_sq(), log_z(0.0) { }
+        Impl(Config &cfg, FeatureTypes &types, const std::string &preface)
+          : Util::Shared(), cfg(cfg), lexicon(cfg.lexicon()), tags(cfg.tags()),
+            attributes(), feature_types(types), instances(), w_dict(lexicon),
+            preface(preface), inv_sigma_sq(), log_z(0.0) { }
 
         virtual ~Impl(void) { /* nothing */ }
 
