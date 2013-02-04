@@ -12,14 +12,10 @@ by Naoaki Okazaki.
 
 ## Compiling instructions
 
-* Unpack the code
+* Clone the repository or download the code
+* `mkdir ext`
 * Build libLBFGS and install it in the `ext` directory, like this:
-  ```ext/
-    lbfgs/
-      include/
-      lib/
-      share/
-  ```
+  `ext/lbfgs/{include,lib,share}`
 * Compile with `make`. Binaries will be placed in the `bin` directory
 * Run `bin/ner --help` for a description of program options. The software
   will currently only read the CoNLL 2003 NER shared task formatted input.
