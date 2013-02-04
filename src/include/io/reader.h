@@ -2,18 +2,18 @@ namespace NLP {
   class Reader {
     protected:
       const std::string uri;
-      std::istream &input;
+      std::istream &in;
 
     public:
-      Reader(const std::string &uri, std::istream &input)
-        : uri(uri), input(input) { }
+      Reader(const std::string &uri, std::istream &in)
+        : uri(uri), in(in) { }
 
       virtual bool next(Sentence &sent) = 0;
 
       virtual void reset(void) {
-        input.clear();
-        input.seekg(0, std::ios::beg);
-        if (!input)
+        in.clear();
+        in.seekg(0, std::ios::beg);
+        if (!in)
           throw IOException("input stream could not be seeked to the beginning", uri);
       };
 

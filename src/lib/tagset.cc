@@ -30,7 +30,7 @@ namespace NLP {
         Base::add(raw)->value = freq;
       }
 
-      void load(const std::string &filename) {
+      void load(void) {
         std::ifstream input(filename.c_str());
         if (!input)
           throw IOException("Unable to open lexicon file", filename);
@@ -102,7 +102,10 @@ namespace NLP {
   }
 
   TagSet::TagSet(const std::string &filename)
-    : _impl(new Impl(filename)) { }
+    : _impl(new Impl(filename)) {
+      insert(None::str, 0);
+      insert(Sentinel::str, 0);
+  }
 
   TagSet::TagSet(const std::string &filename, std::istream &input)
     : _impl(new Impl(filename, input)) { }
@@ -121,7 +124,7 @@ namespace NLP {
   void TagSet::add(const std::string &raw, const uint64_t freq) { _impl->add(raw, freq); }
   void TagSet::insert(const std::string &raw, const uint64_t freq) { _impl->insert(raw, freq); }
 
-  void TagSet::load(const std::string &filename) { _impl->load(filename); }
+  void TagSet::load(void) { _impl->load(); }
   void TagSet::load(const std::string &filename, std::istream &input) { _impl->load(filename, input); }
 
   void TagSet::save(const std::string &preface) {

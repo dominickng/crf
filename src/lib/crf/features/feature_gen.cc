@@ -37,136 +37,42 @@ void PosGen::operator()(Attributes &attributes, Sentence &sent, Context &c, int 
   attributes(type.id, word, c);
 }
 
-PrevWordGen::PrevWordGen(const Type &type) : FeatureGen(type) { }
+OffsetWordGen::OffsetWordGen(const Type &type, const int offset) : OffsetGen(type, offset) { }
 
-void PrevWordGen::operator()(Attributes &attributes, Sentence &sent, TagPair tp, int j) {
-  Raw word;
+void OffsetWordGen::operator()(Attributes &attributes, Sentence &sent, TagPair tp, int j) {
   TagPair _tp(None::val, tp.curr);
-  j -= 1;
+  j += offset;
 
-  if (j >= 0) {
-    word = sent.words[j--];
-    attributes(Types::prevword.id, word, tp);
-    attributes(Types::prevword.id, word, _tp);
-    if (j >= 0) {
-      word = sent.words[j];
-      attributes(Types::prevprevword.id, word, tp);
-      attributes(Types::prevprevword.id, word, _tp);
-    }
+  if (j >= 0 && j < sent.size()) {
+    attributes(type.id, sent.words[j], tp);
+    attributes(type.id, sent.words[j], _tp);
   }
 }
 
-void PrevWordGen::operator()(Attributes &attributes, Sentence &sent, Context &c, int j) {
-  Raw word;
-  j -= 1;
+void OffsetWordGen::operator()(Attributes &attributes, Sentence &sent, Context &c, int j) {
+  j += offset;
 
-  if (j >= 0) {
-    word = sent.words[j--];
-    attributes(Types::prevword.id, word, c);
-    if (j >= 0) {
-      word = sent.words[j];
-      attributes(Types::prevprevword.id, word, c);
-    }
-  }
+  if (j >= 0 && j < sent.size())
+    attributes(type.id, sent.words[j], c);
 }
 
-NextWordGen::NextWordGen(const Type &type) : FeatureGen(type) { }
+OffsetPosGen::OffsetPosGen(const Type &type, const int offset) : OffsetGen(type, offset) { }
 
-void NextWordGen::operator()(Attributes &attributes, Sentence &sent, TagPair tp, int j) {
-  Raw word;
+void OffsetPosGen::operator()(Attributes &attributes, Sentence &sent, TagPair tp, int j) {
   TagPair _tp(None::val, tp.curr);
-  j += 1;
+  j += offset;
 
-  if (j < sent.words.size()) {
-    word = sent.words[j++];
-    attributes(Types::nextword.id, word, tp);
-    attributes(Types::nextword.id, word, _tp);
-    if (j < sent.words.size()) {
-      word = sent.words[j];
-      attributes(Types::nextnextword.id, word, tp);
-      attributes(Types::nextnextword.id, word, _tp);
-    }
+  if (j >= 0 && j < sent.size()) {
+    attributes(type.id, sent.pos[j], tp);
+    attributes(type.id, sent.pos[j], _tp);
   }
 }
 
-void NextWordGen::operator()(Attributes &attributes, Sentence &sent, Context &c, int j) {
-  Raw word;
-  j += 1;
+void OffsetPosGen::operator()(Attributes &attributes, Sentence &sent, Context &c, int j) {
+  j += offset;
 
-  if (j < sent.words.size()) {
-    word = sent.words[j++];
-    attributes(Types::nextword.id, word, c);
-    if (j < sent.words.size()) {
-      word = sent.words[j];
-      attributes(Types::nextnextword.id, word, c);
-    }
-  }
-}
-
-PrevPosGen::PrevPosGen(const Type &type) : FeatureGen(type) { }
-
-void PrevPosGen::operator()(Attributes &attributes, Sentence &sent, TagPair tp, int j) {
-  Raw pos;
-  TagPair _tp(None::val, tp.curr);
-  j -= 1;
-
-  if (j >= 0) {
-    pos = sent.pos[j--];
-    attributes(Types::prevpos.id, pos, tp);
-    attributes(Types::prevpos.id, pos, _tp);
-    if (j >= 0) {
-      pos = sent.pos[j];
-      attributes(Types::prevprevpos.id, pos, tp);
-      attributes(Types::prevprevpos.id, pos, _tp);
-    }
-  }
-}
-
-void PrevPosGen::operator()(Attributes &attributes, Sentence &sent, Context &c, int j) {
-  Raw pos;
-  j -= 1;
-
-  if (j >= 0) {
-    pos = sent.pos[j--];
-    attributes(Types::prevpos.id, pos, c);
-    if (j >= 0) {
-      pos = sent.pos[j];
-      attributes(Types::prevprevpos.id, pos, c);
-    }
-  }
-}
-
-NextPosGen::NextPosGen(const Type &type) : FeatureGen(type) { }
-
-void NextPosGen::operator()(Attributes &attributes, Sentence &sent, TagPair tp, int j) {
-  Raw pos;
-  TagPair _tp(None::val, tp.curr);
-  j += 1;
-
-  if (j < sent.pos.size()) {
-    pos = sent.pos[j++];
-    attributes(Types::nextpos.id, pos, tp);
-    attributes(Types::nextpos.id, pos, _tp);
-    if (j < sent.pos.size()) {
-      pos = sent.pos[j];
-      attributes(Types::nextnextpos.id, pos, tp);
-      attributes(Types::nextnextpos.id, pos, _tp);
-    }
-  }
-}
-
-void NextPosGen::operator()(Attributes &attributes, Sentence &sent, Context &c, int j) {
-  Raw pos;
-  j += 1;
-
-  if (j < sent.pos.size()) {
-    pos = sent.pos[j++];
-    attributes(Types::nextpos.id, pos, c);
-    if (j < sent.pos.size()) {
-      pos = sent.pos[j];
-      attributes(Types::nextnextpos.id, pos, c);
-    }
-  }
+  if (j >= 0 && j < sent.size())
+    attributes(type.id, sent.pos[j], c);
 }
 
 } }

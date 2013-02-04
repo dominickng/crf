@@ -6,10 +6,10 @@
 
 namespace NLP {
   ReaderFactory::ReaderFactory(const std::string &name, const std::string &uri,
-      std::istream &input, const std::string &fmt)
-        : Reader(uri, input), fmt(fmt), reader(0) {
+      std::istream &in, const std::string &fmt)
+        : Reader(uri, in), fmt(fmt), reader(0) {
         if (name == "conll")
-          reader = new CoNLLReader(uri, input);
+          reader = new CoNLLReader(uri, in);
       }
 
   bool ReaderFactory::next(Sentence &sent) {

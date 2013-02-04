@@ -4,6 +4,7 @@
 #include "config/base.h"
 #include "config/group.h"
 #include "config/option.h"
+#include "config/info.h"
 
 namespace Util {
   namespace config {

@@ -25,9 +25,15 @@ namespace Util {
         virtual OptionBase *process(const std::string &orig_key, const std::string &key);
         virtual void set(const std::string &value);
         virtual void validate(void);
+
+        virtual void save(std::string &path, const std::string &preface);
+        virtual void save(std::ostream &out, const std::string &prefix);
+        virtual void load(std::istream &in);
+        virtual bool read_config(std::string &filename);
     };
 
     class Config : public OpGroup {
+      protected:
         virtual void help(std::ostream &out, const std::string &prefix, const unsigned int depth) const;
 
       public:
@@ -40,5 +46,6 @@ namespace Util {
         OptionBase *process(const std::string &orig_key, const std::string &key);
         bool process(const int argc, const char *const argv[], std::ostream &out=std::cerr);
     };
+
   }
 }

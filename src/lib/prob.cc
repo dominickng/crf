@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <vector>
+#include "base.h"
 #include "prob.h"
 
 namespace NLP {

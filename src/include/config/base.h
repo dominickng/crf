@@ -40,6 +40,9 @@ namespace Util {
         virtual OptionBase *process(const std::string &orig_key, const std::string &key) = 0;
         virtual void set(const std::string &value) = 0;
         virtual void validate(void) = 0;
+
+        virtual void save(std::ostream &out, const std::string &prefix) = 0;
+        virtual void load(std::istream &in) = 0;
     };
   }
 }

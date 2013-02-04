@@ -20,15 +20,17 @@ namespace NLP {
           public:
             OpType use_pos;
             OpType use_prev_pos;
+            OpType use_prev_prev_pos;
             OpType use_next_pos;
+            OpType use_next_next_pos;
 
             FeatureTypes(void);
-
         };
 
         NER(NER::Config &cfg, NER::FeatureTypes &types, const std::string &preface);
 
         void train(Reader &reader);
+        void tag(Reader &reader, Writer &writer);
         void extract(Reader &reader, Instances &instances);
 
       private:

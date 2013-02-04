@@ -14,6 +14,8 @@ namespace NLP {
             config::OpPath weights;
             config::Op<double> sigma;
             config::Op<uint64_t> niterations;
+            config::Op<std::string> ifmt;
+            config::Op<std::string> ofmt;
             Config(const std::string &name, const std::string &desc)
               : config::OpGroup(name, desc),
             model(*this, "model", "location to save the model"),
@@ -23,7 +25,10 @@ namespace NLP {
             features(*this, "features", "location to save the features file", "//features", &model),
             weights(*this, "weights", "location to save the weights file", "//weights", &model),
             sigma(*this, "sigma", "sigma value for regularization", 0.707, true),
-            niterations(*this, "niterations", "number of training iterations", 1, false) { }
+            niterations(*this, "niterations", "number of training iterations", 1, false),
+            ifmt(*this, "ifmt", "input file format", "%w|%p|%e \n", false),
+            ofmt(*this, "ofmt", "output file format", "%w|%p|%e \n", false)
+          { }
 
             virtual ~Config(void) { /* nothing */ }
         };
@@ -31,20 +36,36 @@ namespace NLP {
         class FeatureTypes : public config::OpGroup {
           public:
             typedef std::vector<OpType *> Actives;
+            typedef std::map<std::string, OpType *> Registry;
             OpType use_words;
             OpType use_prev_words;
+            OpType use_prev_prev_words;
             OpType use_next_words;
+            OpType use_next_next_words;
             Actives actives;
+            Registry registry;
 
             FeatureTypes(void);
 
             void get_tagpair(TagSet &tags, Raws &raws, TagPair &tp, int i);
             void generate(Attributes &attributes, TagSet &tags, Sentence &sent, Contexts &contexts, Raws &raws, const bool extract);
-            void reg(const Type &type, FeatureDict &dict);
+            void generate(PDFs &dist);
+            Attribute &load(const std::string &type, std::istream &in);
+            virtual void reg(const Type &type, FeatureDict &dict);
             virtual void validate(void);
         };
 
-        enum { GREEDY, FWDBWD, VITERBI };
+        class Model : public config::Info {
+          public:
+            config::Op<uint64_t> nattributes;
+            config::Op<uint64_t> nfeatures;
+            Model(const std::string &name, const std::string &desc, const config::OpPath &base)
+              : config::Info(name, desc, base),
+              nattributes(*this, "nattributes", "the number of attributes", 0, true),
+              nfeatures(*this, "nfeatures", "the number of features", 0, true) { }
+
+            virtual ~Model(void) { }
+        };
 
         FeatureTypes &feature_types(void) { return _feature_types; }
 
@@ -68,6 +89,8 @@ namespace NLP {
             lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step);
 
         virtual void reg(void);
+        virtual void _add_features(Attribute attrib, PDFs &dist);
+        virtual void add_features(Sentence &sent, PDFs &dist, size_t i);
 
         virtual void compute_psis(Contexts &contexts, PSIs &psis);
         virtual void print_psis(Contexts &contexts, PSIs &psis);
@@ -85,6 +108,8 @@ namespace NLP {
         Attributes attributes;
         FeatureTypes &feature_types;
         Instances instances;
+        Weights weights;
+        Attribs2Weights attribs2weights;
 
         WordDict w_dict;
 
@@ -98,6 +123,24 @@ namespace NLP {
             preface(preface), inv_sigma_sq(), log_z(0.0) { }
 
         virtual ~Impl(void) { /* nothing */ }
+
+        virtual void _read_weights(Model &model);
+        virtual void _read_attributes(Model &model);
+        virtual void _load_model(Model &model) {
+          model.read_config();
+          _read_weights(model);
+          _read_attributes(model);
+        }
+
+        virtual void load(void) {
+          lexicon.load();
+          tags.load();
+          Model model("info", "model info", cfg.model);
+          reg();
+          _load_model(model);
+        }
+
+        virtual void tag(Reader &reader, Writer &writer) = 0;
 
         virtual void train(Reader &reader);
         virtual void extract(Reader &reader, Instances &instances);

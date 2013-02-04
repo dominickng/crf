@@ -1,15 +1,15 @@
-BINARIES = bin/test bin/train_ner
+BINARIES = bin/test bin/train_ner bin/ner
 CORE_OBJECTS = src/lib/base.o src/lib/version.o src/lib/input.o src/lib/prob.o
 PORT_OBJECTS = src/lib/port/colour.o src/lib/port/unix_common.o
-IO_OBJECTS = src/lib/io/reader_factory.o src/lib/io/reader_conll.o
+IO_OBJECTS = src/lib/io/reader_factory.o src/lib/io/reader_conll.o src/lib/io/format.o src/lib/io/writer_factory.o src/lib/io/writer_format.o
 
-CONFIG_OBJECTS = src/lib/config/base.o src/lib/config/group.o src/lib/config/option.o
+CONFIG_OBJECTS = src/lib/config/base.o src/lib/config/group.o src/lib/config/option.o src/lib/config/info.o
 
 CRF_OBJECTS = src/lib/word.o src/lib/lexicon.o src/lib/tagset.o src/lib/crf/tagger.o src/lib/crf/ner.o
 
 FEATURE_OBJECTS = src/lib/crf/features/attributes.o src/lib/crf/features/feature_types.o \
 		  src/lib/crf/features/feature_gen.o src/lib/crf/features/type.o \
-		  src/lib/crf/features/feature_word.o src/lib/crf/features/feature_tag.o
+		  src/lib/crf/features/feature_word.o
 
 REQUIRED_OBJECTS = $(IO_OBJECTS) $(CRF_OBJECTS) $(FEATURE_OBJECTS)
 
@@ -32,3 +32,5 @@ bin/test: src/main/test.o $(CORE_OBJECTS) $(PORT_OBJECTS) $(CONFIG_OBJECTS) $(RE
 bin/train_ner: src/main/train_ner.o $(CORE_OBJECTS) $(PORT_OBJECTS) $(CONFIG_OBJECTS) $(REQUIRED_OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
+bin/ner: src/main/ner.o $(CORE_OBJECTS) $(PORT_OBJECTS) $(CONFIG_OBJECTS) $(REQUIRED_OBJECTS)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)

@@ -5,7 +5,7 @@ namespace NLP {
       Reader *reader;
     public:
       ReaderFactory(const std::string &name, const std::string &uri,
-          std::istream &input, const std::string &fmt);
+          std::istream &in, const std::string &fmt);
 
       virtual bool next(Sentence &sent);
 

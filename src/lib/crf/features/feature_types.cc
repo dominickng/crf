@@ -15,9 +15,11 @@ namespace NLP { namespace CRF {
 Tagger::FeatureTypes::FeatureTypes(void)
   : config::OpGroup("types", "feature types config"),
     use_words(*this, "words", "use word features", new WordGen(Types::words)),
-    use_prev_words(*this, "prev_words", "use previous word features", new PrevWordGen(Types::words)),
-    use_next_words(*this, "next_words", "use next word features", new NextWordGen(Types::words)),
-    actives() { }
+    use_prev_words(*this, "prev_words", "use previous 0 word features", new OffsetWordGen(Types::prevword, -1)),
+    use_prev_prev_words(*this, "prev_prev_words", "use previous 2 word features", new OffsetWordGen(Types::prevprevword, -2)),
+    use_next_words(*this, "next_words", "use next 1 word features", new OffsetWordGen(Types::nextword, 1)),
+    use_next_next_words(*this, "next_word_words", "use next 2 word features", new OffsetWordGen(Types::nextnextword, 2)),
+    actives(), registry() { }
 
 void Tagger::FeatureTypes::get_tagpair(TagSet &tags, Raws &raws, TagPair &tp, int i) {
   if (i == 0) {
@@ -54,6 +56,7 @@ void Tagger::FeatureTypes::reg(const Type &type, FeatureDict &dict) {
   for (Actives::iterator it = actives.begin(); it != actives.end(); ++it) {
     if ((*it)->has_type(type)) {
       (*it)->reg(&dict);
+      registry[type.id] = *it;
       return;
     }
   }
@@ -66,6 +69,10 @@ void Tagger::FeatureTypes::validate(void) {
     if ((*op)())
       actives.push_back(op);
   }
+}
+
+Attribute &Tagger::FeatureTypes::load(const std::string &type, std::istream &in) {
+  return registry[type]->load(type, in);
 }
 
 } }

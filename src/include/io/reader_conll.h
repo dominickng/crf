@@ -5,7 +5,7 @@ namespace NLP {
       size_t _len;
       char _buffer[BUFFER_SIZE];
       uint64_t _nlines;
-      using Reader::input;
+      using Reader::in;
 
       bool next_line(void);
 

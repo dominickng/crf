@@ -73,6 +73,15 @@ namespace Util {
 
         inline void operator()(const T &v) { _value = v; }
         inline const T &operator()(void) const { return _value; }
+
+        virtual void save(std::ostream &out, const std::string &prefix) {
+          out << _name << " = " << _value << '\n';
+        }
+
+        virtual void load(std::istream &in) {
+          in >> _value;
+        }
+
     };
 
     template <> inline void Op<std::string>::_set(const std::string &value) {
@@ -119,15 +128,19 @@ namespace Util {
 
         virtual void _decode_options(std::istream &s) {
           T option;
+          std::istringstream ss;
+          std::string buffer;
 
           while (s) {
-            std::getline(s, option, _sep);
+            std::getline(s, buffer, _sep);
             if (s.fail()) {
               if (s.eof())
                 break;
               else
                 throw ConfigException("Invalid default value", Op<T>::_name, _options_string);
             }
+            ss.str(buffer);
+            ss >> option;
             _options.push_back(option);
           }
         }
@@ -217,8 +230,13 @@ namespace Util {
 
         virtual ~OpList(void) { }
 
-        typename std::vector<T>::iterator begin(void) { return OpRestricted<T>::_options.begin(); }
-        typename std::vector<T>::iterator end(void) { return OpRestricted<T>::_options.end(); }
+        typedef typename std::vector<T>::iterator iterator;
+        typedef typename std::vector<T>::const_iterator const_iterator;
+
+        iterator begin(void) { return OpRestricted<T>::_options.begin(); }
+        iterator end(void) { return OpRestricted<T>::_options.end(); }
+        const_iterator begin(void) const { return OpRestricted<T>::_options.begin(); }
+        const_iterator end(void) const { return OpRestricted<T>::_options.end(); }
 
         virtual void help(std::ostream &out, const std::string &prefix,
             const unsigned int depth) const {
@@ -237,6 +255,20 @@ namespace Util {
             throw ConfigException("Option has no default value", OpRestricted<T>::_name);
           std::istringstream s(_defaults);
           OpRestricted<T>::_decode_options(s);
+        }
+
+        virtual void save(std::ostream &out, const std::string &prefix) {
+          out << OpRestricted<T>::_name << " = ";
+          for (const_iterator it = begin(); it != end(); ++it) {
+            if (it != begin())
+              out << OpRestricted<T>::_sep;
+            out << *it;
+          }
+          out << '\n';
+        }
+
+        virtual void load(std::istream &in) {
+          OpRestricted<T>::_decode_options(in);
         }
     };
 
@@ -339,6 +371,14 @@ namespace Util {
         virtual void set(const std::string &value) { _aliased.set(value); _is_set = true; };
         virtual void set_default(void) { _aliased.set_default(); };
         virtual void validate(void) { _aliased.validate(); };
+
+        virtual void save(std::ostream &out, const std::string &prefix) {
+          _aliased.save(out, prefix);
+        }
+
+        virtual void load(std::istream &in) {
+          return _aliased.load(in);
+        }
     };
   }
 }

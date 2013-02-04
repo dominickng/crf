@@ -231,7 +231,6 @@ namespace NLP {
           uint64_t nfeatures, nlines = 0;
 
           read_preface(filename, input, preface, nlines);
-          input >> nfeatures;
 
           std::string type;
           std::string str;
@@ -251,14 +250,12 @@ namespace NLP {
           compact();
           sort_by_rev_value();
           out << preface << '\n';
-          out << size() << '\n';
           for (Entries::const_iterator i = _entries.begin(); i != _entries.end(); ++i)
             (*i)->save_attribute(out);
         }
 
         void save_features(std::ostream &out, const std::string &preface) {
           out << preface << '\n';
-          out << nfeatures() << '\n';
           for (Entries::const_iterator i = _entries.begin(); i != _entries.end(); ++i)
             (*i)->save_features(out);
         }

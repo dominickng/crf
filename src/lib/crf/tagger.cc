@@ -7,6 +7,8 @@
 #include "shared.h"
 #include "lexicon.h"
 #include "tagset.h"
+#include "crf/nodepool.h"
+#include "crf/lattice.h"
 #include "crf/features.h"
 #include "crf/tagger.h"
 
@@ -17,8 +19,100 @@ inline bool isinf(T value) {
 
 namespace NLP { namespace CRF {
 
+void Tagger::Impl::_read_weights(Model &model) {
+  uint64_t prev_klass, curr_klass, freq, attrib = 0, nlines = 0;
+  uint64_t previous = static_cast<uint64_t>(-1);
+  double lambda;
+  std::string preface;
+  const std::string &filename = cfg.features();
+
+  std::ifstream in(filename.c_str());
+  if (!in)
+    throw IOException("could not open file", filename);
+
+  read_preface(filename, in, preface, nlines);
+  weights.reserve(model.nfeatures());
+
+  while (in >> attrib >> prev_klass >> curr_klass >> freq >> lambda) {
+    ++nlines;
+    weights.push_back(Weight(TagPair(prev_klass, curr_klass), lambda));
+    if (attrib != previous) {
+      attribs2weights.push_back(&weights.back());
+      previous = attrib;
+    }
+  }
+
+  if (!in.eof())
+    throw IOException("could not parse weight tuple", cfg.features(), nlines);
+  if (weights.size() != model.nfeatures())
+    throw IOException("number of weights read is not equal to configuration value", cfg.features(), nlines);
+  attribs2weights.push_back(&weights.back() + 1);
+  if (attribs2weights.size() != model.nattributes() + 1)
+    throw IOException("number of attributes read is not equal to configuration value", cfg.features(), nlines);
+}
+
+void Tagger::Impl::_read_attributes(Model &model) {
+  uint64_t freq = 0, nlines = 0, id = 0;
+  std::string preface, type;
+  const std::string &filename = cfg.attributes();
+
+  std::ifstream in(filename.c_str());
+  if (!in)
+    throw IOException("could not open file", filename);
+
+  read_preface(filename, in, preface, nlines);
+
+  while (in >> type) {
+    ++nlines;
+    if (id >= model.nattributes())
+      throw IOException("attribute id >= nattributes", filename, nlines);
+    Attribute &attrib = feature_types.load(type, in);
+
+    if (!(in >> freq))
+      throw IOException("could not read freq", filename, nlines);
+    if (in.get() != '\n')
+      throw IOException("expected newline after attribute freq", filename, nlines);
+
+    attrib.begin = attribs2weights[id];
+    attrib.end = attribs2weights[id + 1];
+    ++id;
+  }
+
+  if (!in.eof())
+    throw IOException("could not parse weight tuple", cfg.features(), nlines);
+  if (id != model.nattributes())
+    throw IOException("number of attributes read is not equal to configuration value", cfg.attributes(), nlines);
+}
+
+void Tagger::Impl::_add_features(Attribute attrib, PDFs &dist) {
+  for (Weight *w = attrib.begin; w != attrib.end; ++w) {
+    if (w->klasses.prev == None::val)
+      for (Tag t = 0; t < tags.size(); ++t)
+        dist[t][w->klasses.curr] += w->lambda;
+    else
+      dist[w->klasses.prev][w->klasses.curr] += w->lambda;
+  }
+}
+
+void Tagger::Impl::add_features(Sentence &sent, PDFs &dist, size_t i) {
+  if (feature_types.use_words())
+    _add_features(w_dict.get(Types::words, sent.words[i]), dist);
+  int index = i+1;
+  if (index < sent.words.size() && feature_types.use_next_words()) {
+    _add_features(w_dict.get(Types::nextword, sent.words[index++]), dist);
+    if (index < sent.words.size())
+      _add_features(w_dict.get(Types::nextnextword, sent.words[index]), dist);
+  }
+  index = i-1;
+  if (index >= 0 && feature_types.use_prev_words()) {
+    _add_features(w_dict.get(Types::prevword, sent.words[index--]), dist);
+    if (index >= 0)
+      _add_features(w_dict.get(Types::prevprevword, sent.words[index]), dist);
+  }
+}
+
 void Tagger::Impl::train(Reader &reader) {
-  reg();
+  Model model("info", "Tagger model info file", cfg.model);
   extract(reader, instances);
   inv_sigma_sq = 1.0 / (cfg.sigma() * cfg.sigma());
   const size_t n = attributes.nfeatures();
@@ -37,6 +131,9 @@ void Tagger::Impl::train(Reader &reader) {
 
   std::cerr << "L-BFGS optimization terminated with status code " << ret << std::endl;
   lbfgs_free(x);
+  model.nattributes(attributes.size());
+  model.nfeatures(attributes.nfeatures());
+  model.save(preface);
   attributes.save_features(cfg.features(), preface);
 }
 

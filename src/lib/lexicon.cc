@@ -33,7 +33,7 @@ namespace NLP {
         Base::add(raw)->value = freq;
       }
 
-      void load(const std::string &filename) {
+      void load(void) {
         std::ifstream input(filename.c_str());
         if (!input)
           throw IOException("Unable to open lexicon file", filename);
@@ -108,7 +108,7 @@ namespace NLP {
   void Lexicon::add(const std::string &raw, const uint64_t freq) { _impl->add(raw, freq); }
   void Lexicon::insert(const std::string &raw, const uint64_t freq) { _impl->insert(raw, freq); }
 
-  void Lexicon::load(const std::string &filename) { _impl->load(filename); }
+  void Lexicon::load(void) { _impl->load(); }
   void Lexicon::load(const std::string &filename, std::istream &input) { _impl->load(filename, input); }
 
   void Lexicon::save(const std::string &preface) {

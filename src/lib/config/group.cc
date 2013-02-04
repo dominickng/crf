@@ -50,6 +50,59 @@ void OpGroup::validate(void) {
     (*child)->validate();
 }
 
+void OpGroup::save(std::string &path, const std::string &preface) {
+  std::ofstream out(path.c_str());
+
+  if (!out)
+    throw ConfigException("cannot open file for writing", path);
+  out << preface << '\n';
+
+  save(out, _name);
+}
+
+void OpGroup::save(std::ostream &out, const std::string &prefix) {
+  for (std::vector<OptionBase *>::const_iterator child = _children.begin(); child != _children.end(); ++child) {
+    out << prefix << '-' << _name << '-';
+    (*child)->save(out, prefix);
+    out << '\n';
+  }
+}
+
+void OpGroup::load(std::istream &in) {
+  std::string key;
+  std::string buffer;
+
+  while(in >> key) {
+    OptionBase *const p = process(key, key);
+    if (!p)
+      throw ConfigException("Option not found", key);
+
+    if (p->requires_arg()) {
+      if(!(in >> buffer) || buffer != "=")
+        throw ConfigException("Malformed config file entry, expected equals sign", key);
+      if(!(in >> buffer))
+        throw ConfigException("Malformed config file entry, expected option value", key);
+      p->set(buffer);
+    }
+    else
+      p->set(key);
+  }
+  validate();
+}
+
+bool OpGroup::read_config(std::string &filename) {
+  std::string preface;
+  uint64_t nlines;
+  std::ifstream in(filename.c_str());
+
+  if (!in)
+    throw ConfigException("cannot open config file for reading", filename);
+
+  NLP::read_preface("config file", in, preface, nlines);
+  load(in);
+  return true;
+}
+
 void Config::help(std::ostream &out, const std::string &prefix, const unsigned int depth) const {
   if (depth != 0)
     out << std::endl;

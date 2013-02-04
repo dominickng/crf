@@ -6,14 +6,14 @@
 
 namespace NLP {
 
-  CoNLLReader::CoNLLReader(const std::string &uri, std::istream &input)
-    : Reader(uri, input), _nlines(0), _len(0) { }
+  CoNLLReader::CoNLLReader(const std::string &uri, std::istream &in)
+    : Reader(uri, in), _nlines(0), _len(0) { }
 
   bool CoNLLReader::next_line(void) {
-    input.getline(_buffer, sizeof(_buffer), '\n');
-    _len = input.gcount();
+    in.getline(_buffer, sizeof(_buffer), '\n');
+    _len = in.gcount();
 
-    if (input.eof() && _len == 0)
+    if (in.eof() && _len == 0)
       return false;
 
     if (_buffer[_len - 1] == '\x0d')
@@ -21,7 +21,7 @@ namespace NLP {
 
     ++_nlines;
 
-    if (!input)
+    if (!in)
       throw IOException("unexpected input reading problem");
 
     return true;
@@ -31,7 +31,7 @@ namespace NLP {
     if (!next_line())
       return false;
 
-    char cols[4] = { 'w', 'p', 'c', 'n', };
+    char cols[4] = { 'w', 'p', 'c', 'e', };
     while (_len != 1) {
       char *begin = _buffer;
       char *current = begin;

@@ -10,6 +10,13 @@ namespace NLP {
         const Type &type;
     };
 
+    class OffsetGen : public FeatureGen {
+      public:
+        const int offset;
+        OffsetGen(const Type &type, const int offset) :
+          FeatureGen(type), offset(offset) { }
+    };
+
     class WordGen : public FeatureGen {
       public:
         WordGen(const Type &type);
@@ -30,40 +37,20 @@ namespace NLP {
 
     };
 
-    class PrevWordGen : public FeatureGen {
+    class OffsetWordGen : public OffsetGen {
       public:
-        PrevWordGen(const Type &type);
-        virtual ~PrevWordGen(void) { }
+        OffsetWordGen(const Type &type, const int offset);
+        virtual ~OffsetWordGen(void) { }
 
         virtual void operator()(Attributes &attributes, Sentence &sent, TagPair tp, int j);
         virtual void operator()(Attributes &attributes, Sentence &sent, Context &c, int j);
 
     };
 
-    class NextWordGen : public FeatureGen {
+    class OffsetPosGen : public OffsetGen {
       public:
-        NextWordGen(const Type &type);
-        virtual ~NextWordGen(void) { }
-
-        virtual void operator()(Attributes &attributes, Sentence &sent, TagPair tp, int j);
-        virtual void operator()(Attributes &attributes, Sentence &sent, Context &c, int j);
-
-    };
-
-    class PrevPosGen : public FeatureGen {
-      public:
-        PrevPosGen(const Type &type);
-        virtual ~PrevPosGen(void) { }
-
-        virtual void operator()(Attributes &attributes, Sentence &sent, TagPair tp, int j);
-        virtual void operator()(Attributes &attributes, Sentence &sent, Context &c, int j);
-
-    };
-
-    class NextPosGen : public FeatureGen {
-      public:
-        NextPosGen(const Type &type);
-        virtual ~NextPosGen(void) { }
+        OffsetPosGen(const Type &type, const int offset);
+        virtual ~OffsetPosGen(void) { }
 
         virtual void operator()(Attributes &attributes, Sentence &sent, TagPair tp, int j);
         virtual void operator()(Attributes &attributes, Sentence &sent, Context &c, int j);

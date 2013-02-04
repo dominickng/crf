@@ -18,12 +18,14 @@ namespace NLP {
             delete _gen;
           }
 
-          void reg(FeatureDict *dict) {
-            _dict = dict;
-          }
+          void reg(FeatureDict *dict) { _dict = dict; }
 
-          bool has_type(const Type &type) {
-            return type.equals(_gen->type);
+          bool has_type(const Type &type) { return type.equals(_gen->type); }
+
+          bool has_type(const std::string &type) { return type == _gen->type.id; }
+
+          Attribute &load(const std::string &type, std::istream &in) {
+            return _dict->load(type, in);
           }
 
           template <typename TPC>
