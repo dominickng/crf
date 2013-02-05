@@ -18,7 +18,7 @@ namespace NLP {
     cfg.add(&tagger_cfg);
     if(cfg.process(argc, argv)) {
       TAGGER tagger(tagger_cfg, types_cfg, preface);
-      ReaderFactory reader("conll", input(), input.file(), "");
+      ReaderFactory reader(TAGGER::reader, input(), input.file(), tagger_cfg.ifmt());
       tagger.train(reader);
     }
 

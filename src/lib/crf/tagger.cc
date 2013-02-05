@@ -124,8 +124,8 @@ void Tagger::Impl::train(Reader &reader) {
     x[i] = 1.0;
   lbfgs_parameter_init(&param);
   //param.linesearch = LBFGS_LINESEARCH_BACKTRACKING;
-  param.delta = 1e-8;
-  param.past = 2;
+  //param.delta = 1e-8;
+  //param.past = 2;
 
   int ret = lbfgs(n, x, NULL, evaluate, progress, (void *)this, &param);
 
@@ -296,7 +296,7 @@ lbfgsfloatval_t Tagger::Impl::_evaluate(const lbfgsfloatval_t *x,
     }
   }
   //attributes.prep_finite_differences();
-  //finite_differences(g, false);
+  //finite_differences(g, true);
 
   attributes.copy_gradients(g, inv_sigma_sq);
   //attributes.print(inv_sigma_sq);
@@ -333,9 +333,10 @@ void Tagger::Impl::finite_differences(lbfgsfloatval_t *g, bool overwrite) {
     //double minus_llhood = -log_likelihood();
     //std::cout << plus_llhood << ' ' << minus_llhood << ' ' << plus_llhood - minus_llhood << std::endl;
     double val = (plus_llhood - llhood) / (step * EPSILON);
-    attributes.print_current_gradient(val, inv_sigma_sq);
     if(overwrite)
       g[i++] = val;
+    else
+      attributes.print_current_gradient(val, inv_sigma_sq);
   }
 }
 

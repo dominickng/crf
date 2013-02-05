@@ -17,6 +17,7 @@ namespace NLP { namespace CRF {
 
 const std::string NER::name = "ner";
 const std::string NER::desc = "description";
+const std::string NER::reader = "conll";
 
 NER::FeatureTypes::FeatureTypes(void) :
   Tagger::FeatureTypes(),

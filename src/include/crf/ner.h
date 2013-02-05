@@ -4,15 +4,20 @@ namespace NLP {
       public:
         const static std::string name;
         const static std::string desc;
+        const static std::string reader;
 
         class Config : public Tagger::Config {
           public:
             config::OpPath pos;
+            config::Op<std::string> ifmt;
+            config::Op<std::string> ofmt;
 
             Config(const std::string &name="ner",
                 const std::string &desc="ner CRF tagger config")
               : Tagger::Config(name, desc),
-                pos(*this, "pos", "location to save the pos tag file", "//postags", &model)
+                pos(*this, "pos", "location to save the pos tag file", "//postags", &model),
+                ifmt(*this, "ifmt", "input file format", "%w|%p|%e \n", false),
+                ofmt(*this, "ofmt", "output file format", "%w|%p|%e \n", false)
                 { }
         };
 

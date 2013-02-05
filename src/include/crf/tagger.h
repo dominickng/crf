@@ -14,8 +14,6 @@ namespace NLP {
             config::OpPath weights;
             config::Op<double> sigma;
             config::Op<uint64_t> niterations;
-            config::Op<std::string> ifmt;
-            config::Op<std::string> ofmt;
             Config(const std::string &name, const std::string &desc)
               : config::OpGroup(name, desc),
             model(*this, "model", "location to save the model"),
@@ -25,9 +23,7 @@ namespace NLP {
             features(*this, "features", "location to save the features file", "//features", &model),
             weights(*this, "weights", "location to save the weights file", "//weights", &model),
             sigma(*this, "sigma", "sigma value for regularization", 0.707, true),
-            niterations(*this, "niterations", "number of training iterations", 1, false),
-            ifmt(*this, "ifmt", "input file format", "%w|%p|%e \n", false),
-            ofmt(*this, "ofmt", "output file format", "%w|%p|%e \n", false)
+            niterations(*this, "niterations", "number of training iterations", 1, false)
           { }
 
             virtual ~Config(void) { /* nothing */ }

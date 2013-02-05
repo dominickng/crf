@@ -4,6 +4,7 @@
 #include "io/format.h"
 #include "io/reader.h"
 #include "io/reader_factory.h"
+#include "io/reader_format.h"
 #include "io/reader_conll.h"
 
 #include "io/writer.h"
