@@ -2,6 +2,7 @@ namespace NLP {
   class FormatReader : public Reader {
     private:
       Format format;
+      std::string preface;
       const static size_t BUFFER_SIZE = 1024 * 1024;
       size_t _len;
       char _buffer[BUFFER_SIZE];

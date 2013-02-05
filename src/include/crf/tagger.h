@@ -55,10 +55,13 @@ namespace NLP {
           public:
             config::Op<uint64_t> nattributes;
             config::Op<uint64_t> nfeatures;
+            config::Op<uint64_t> max_size;
             Model(const std::string &name, const std::string &desc, const config::OpPath &base)
               : config::Info(name, desc, base),
               nattributes(*this, "nattributes", "the number of attributes", 0, true),
-              nfeatures(*this, "nfeatures", "the number of features", 0, true) { }
+              nfeatures(*this, "nfeatures", "the number of features", 0, true),
+              max_size(*this, "max_size", "the size of the largest sentence", 0, true)
+          { }
 
             virtual ~Model(void) { }
         };
@@ -93,6 +96,7 @@ namespace NLP {
         virtual void forward(Contexts &contexts, PDFs &alphas, PSIs &psis, PDF &scale);
         virtual void backward(Contexts &contexts, PDFs &betas, PSIs &psis, PDF &scale);
         virtual void print_fwd_bwd(Contexts &contexts, PDFs &pdfs, PDF &scale);
+        virtual void reset(PDFs &alphas, PDFs &betas, PSIs &psis, PDF &scale);
 
         virtual void _pass1(Reader &reader) = 0;
         virtual void _pass2(Reader &reader) = 0;
@@ -106,6 +110,7 @@ namespace NLP {
         Instances instances;
         Weights weights;
         Attribs2Weights attribs2weights;
+        Model model;
 
         WordDict w_dict;
 
@@ -115,8 +120,10 @@ namespace NLP {
 
         Impl(Config &cfg, FeatureTypes &types, const std::string &preface)
           : Util::Shared(), cfg(cfg), lexicon(cfg.lexicon()), tags(cfg.tags()),
-            attributes(), feature_types(types), instances(), w_dict(lexicon),
-            preface(preface), inv_sigma_sq(), log_z(0.0) { }
+            attributes(), feature_types(types), instances(), weights(),
+            attribs2weights(),
+            model("info", "Tagger model info file", cfg.model),
+            w_dict(lexicon), preface(preface), inv_sigma_sq(), log_z(0.0) { }
 
         virtual ~Impl(void) { /* nothing */ }
 

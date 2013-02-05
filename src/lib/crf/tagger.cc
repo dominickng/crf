@@ -112,7 +112,6 @@ void Tagger::Impl::add_features(Sentence &sent, PDFs &dist, size_t i) {
 }
 
 void Tagger::Impl::train(Reader &reader) {
-  Model model("info", "Tagger model info file", cfg.model);
   extract(reader, instances);
   inv_sigma_sq = 1.0 / (cfg.sigma() * cfg.sigma());
   const size_t n = attributes.nfeatures();
@@ -260,20 +259,40 @@ int Tagger::Impl::progress(void *instance, const lbfgsfloatval_t *x,
   return 0;
 }
 
+void Tagger::Impl::reset(PDFs &alphas, PDFs &betas, PSIs &psis, PDF &scale) {
+  std::fill(scale.begin(), scale.end(), 1.0);
+
+  for (int i = 0; i < alphas.size(); ++i) {
+    std::fill(alphas[i].begin(), alphas[i].end(), 0.0);
+    std::fill(betas[i].begin(), betas[i].end(), 0.0);
+    for (int j = 0; j < psis[i].size(); ++j)
+      std::fill(psis[i][j].begin(), psis[i][j].end(), 1.0);
+  }
+}
+
 lbfgsfloatval_t Tagger::Impl::_evaluate(const lbfgsfloatval_t *x,
     lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step) {
   attributes.copy_lambdas(x);
   attributes.reset_estimations();
 
   log_z = 0.0;
+  PDFs alphas;
+  PDFs betas;
+  PSIs psis;
+  PDF scale;
+
+  for (int i = 0; i < model.max_size(); ++i) {
+    alphas.push_back(PDF(tags.size(), 0.0));
+    betas.push_back(PDF(tags.size(), 0.0));
+    scale.push_back(1.0);
+    psis.push_back(PDFs(0));
+    for (int j = 0; j < tags.size(); ++j)
+      psis[i].push_back(PDF(tags.size(), 1.0));
+  }
+
   for (Instances::iterator i = instances.begin(); i != instances.end(); ++i) {
     Contexts &contexts = *i;
-    contexts.reset();
-
-    PDFs &alphas(i->alphas);
-    PDFs &betas(i->betas);
-    PSIs &psis(i->psis);
-    PDF &scale(i->scale);
+    reset(alphas, betas, psis, scale);
 
     compute_psis(contexts, psis);
     //print_psis(contexts, psis);

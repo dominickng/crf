@@ -8,7 +8,9 @@
 namespace NLP {
 
   FormatReader::FormatReader(const std::string &uri, std::istream &in, const std::string &fmt)
-    : Reader(uri, in), format(fmt), _nlines(0), _len(0) { }
+    : Reader(uri, in), preface(), format(fmt), _nlines(0), _len(0) {
+      read_preface(uri, in, preface, _nlines, false);
+  }
 
   bool FormatReader::next_line(void) {
     in.getline(_buffer, sizeof(_buffer), '\n');

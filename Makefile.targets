@@ -13,12 +13,12 @@ FEATURE_OBJECTS = src/lib/crf/features/attributes.o src/lib/crf/features/feature
 
 REQUIRED_OBJECTS = $(IO_OBJECTS) $(CRF_OBJECTS) $(FEATURE_OBJECTS)
 
-.PHONY: all deps clean bin
+.PHONY: all deps clean
 
-all: bin $(BINARIES)
+all: dirs $(BINARIES)
 
-bin:
-	mkdir -p bin
+dirs: .FORCE
+	@mkdir -p bin working
 
 clean:
 	find . -name "*.o" | xargs rm
@@ -43,3 +43,6 @@ bin/train_pos: src/main/train_pos.o $(CORE_OBJECTS) $(PORT_OBJECTS) $(CONFIG_OBJ
 
 bin/pos: src/main/pos.o $(CORE_OBJECTS) $(PORT_OBJECTS) $(CONFIG_OBJECTS) $(REQUIRED_OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+.FORCE:
+

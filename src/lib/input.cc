@@ -7,22 +7,24 @@ namespace NLP {
   void read_preface(const std::string &uri, std::istream &input,
       std::string &preface, uint64_t &nlines, const bool required) {
     char c = input.peek();
-    if (c != '#')
-      if (!required)
+    if (c != '#') {
+      if (required)
         throw IOException("file does not start with the expected preface", uri);
+    }
+    else {
+      std::string buffer;
+      while (getline(input, buffer)) {
+        ++nlines;
+        if (buffer.length() == 0)
+          break;
+        if (buffer[0] != '#')
+          throw IOException("line within preface that does not start with #", uri);
+        if (buffer.find(PREFACE_HEADER) == 0)
+          continue;
 
-    std::string buffer;
-    while (getline(input, buffer)) {
-      ++nlines;
-      if (buffer.length() == 0)
-        break;
-      if (buffer[0] != '#')
-        throw IOException("line within preface that does not start with #", uri);
-      if (buffer.find(PREFACE_HEADER) == 0)
-        continue;
-
-      preface += buffer;
-      preface += '\n';
+        preface += buffer;
+        preface += '\n';
+      }
     }
   }
 

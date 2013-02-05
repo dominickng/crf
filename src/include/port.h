@@ -6,5 +6,7 @@ namespace Util {
     extern const char *OFF;
 
     extern const char PATH_SEP;
+
+    extern void make_directory(const std::string &dir);
   }
 }

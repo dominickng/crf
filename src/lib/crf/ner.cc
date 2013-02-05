@@ -74,11 +74,14 @@ class NER::Impl : public Tagger::Impl {
 
     virtual void _pass1(Reader &reader) {
       Sentence sent;
+      uint64_t max_size = 0;
       while (reader.next(sent)) {
         for (size_t i = 0; i < sent.size(); ++i) {
           lexicon.add(sent.words[i]);
           pos.add(sent.pos[i]);
           tags.add(sent.entities[i]);
+          if (sent.size() > max_size)
+            max_size = sent.size();
         }
         sent.reset();
       }
@@ -86,6 +89,7 @@ class NER::Impl : public Tagger::Impl {
       lexicon.save(preface);
       pos.save(preface);
       tags.save(preface);
+      model.max_size(max_size);
     }
 
     virtual void _pass2(Reader &reader) {
@@ -102,7 +106,7 @@ class NER::Impl : public Tagger::Impl {
     virtual void _pass3(Reader &reader, Instances &instances) {
       Sentence sent;
       while (reader.next(sent)) {
-        Contexts contexts(sent.words.size(), tags.size());
+        Contexts contexts(sent.words.size());
         instances.push_back(contexts);
         feature_types.generate(attributes, tags, sent, instances.back(), sent.entities, false);
         sent.reset();
