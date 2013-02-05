@@ -13,9 +13,12 @@ FEATURE_OBJECTS = src/lib/crf/features/attributes.o src/lib/crf/features/feature
 
 REQUIRED_OBJECTS = $(IO_OBJECTS) $(CRF_OBJECTS) $(FEATURE_OBJECTS)
 
-.PHONY: all deps clean
+.PHONY: all deps clean bin
 
-all: $(BINARIES)
+all: bin $(BINARIES)
+
+bin:
+	mkdir -p bin
 
 clean:
 	find . -name "*.o" | xargs rm
