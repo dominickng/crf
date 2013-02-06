@@ -12,14 +12,15 @@ bool FormatWriter::next(Sentence &sent) {
     return false;
 
   out << format.sent_pre;
-  for (int i = 0; i < sent.size() - 1; ++i) {
-    for (int j = 0; j < format.fields.size(); ++j)
+  int i, j;
+  for (i = 0; i < sent.size() - 1; ++i) {
+    for (j = 0; j < format.fields.size() - 1; ++j)
       out << sent.get_single(format.fields[j])[i] << format.separators[j];
-    out << format.word_sep;
+    out << sent.get_single(format.fields[j])[i] << format.word_sep;
   }
-  for (int j = 0; j < format.fields.size(); ++j)
+  for (j = 0; j < format.fields.size() - 1; ++j)
     out << sent.get_single(format.fields[j])[sent.size() - 1] << format.separators[j];
-  out << format.sent_post;
+  out << sent.get_single(format.fields[j])[sent.size() - 1] << format.sent_post;
 
   return true;
 }
