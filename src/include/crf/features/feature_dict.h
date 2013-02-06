@@ -26,7 +26,7 @@ namespace NLP {
         FeatureDict(void) { }
         virtual ~FeatureDict(void) { };
 
-        virtual Attribute &load(const std::string &type, std::istream &in) = 0;
+        virtual Attribute &load(const Type &type, std::istream &in) = 0;
     };
 
     class WordDict : public FeatureDict {
@@ -36,7 +36,7 @@ namespace NLP {
         WordDict(const WordDict &other);
         virtual ~WordDict(void);
 
-        virtual Attribute &load(const std::string &type, std::istream &in);
+        virtual Attribute &load(const Type &type, std::istream &in);
         Attribute get(const Type &type, Raw &raw);
         Attribute &insert(const Type &type, Raw &raw);
 
@@ -51,12 +51,12 @@ namespace NLP {
           : tags(tags), attributes() { }
         virtual ~TagDict(void) { };
 
-        virtual Attribute &load(const std::string &type, std::istream &in) {
+        virtual Attribute &load(const Type &type, std::istream &in) {
           if (!attributes.size())
             attributes.resize(tags.size());
           Raw value;
           in >> value;
-          return insert(type, value);
+          return insert(type.id, value);
         }
 
         Attribute get(const Type &type, Raw &raw) {

@@ -72,7 +72,7 @@ void Tagger::FeatureTypes::validate(void) {
 }
 
 Attribute &Tagger::FeatureTypes::load(const std::string &type, std::istream &in) {
-  return registry[type]->load(type, in);
+  return registry[type]->_load(in);
 }
 
 } }

@@ -58,8 +58,9 @@ namespace NLP {
 
         Attribute find(const char *type, const Word &value) {
           for (WordEntry *l = this; l != NULL; l = l->next) {
-            if(l->equal(type, value))
+            if(l->equal(type, value)) {
               return l->attrib;
+            }
           }
           return NONE;
         }
@@ -90,7 +91,7 @@ namespace NLP {
         }
 
         Attribute find(const char *type, const Word &value) const {
-          return ImplBase::_buckets[WordEntry::hash(type, value).value() % ImplBase::_nbuckets]->find(type, value);
+          return _buckets[WordEntry::hash(type, value).value() % _nbuckets]->find(type, value);
         }
     };
 
@@ -105,11 +106,11 @@ namespace NLP {
       release(_impl);
     }
 
-    Attribute &WordDict::load(const std::string &type, std::istream &in) {
+    Attribute &WordDict::load(const Type &type, std::istream &in) {
       Raw value;
       in >> value;
 
-      return _impl->insert(type.c_str(), _impl->lexicon[value]);
+      return _impl->insert(type.id, _impl->lexicon[value]);
     }
 
     Attribute WordDict::get(const Type &type, Raw &raw) {

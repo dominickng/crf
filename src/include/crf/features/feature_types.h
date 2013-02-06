@@ -24,8 +24,8 @@ namespace NLP {
 
           bool has_type(const std::string &type) { return type == _gen->type.id; }
 
-          Attribute &load(const std::string &type, std::istream &in) {
-            return _dict->load(type, in);
+          Attribute &_load(std::istream &in) {
+            return _dict->load(_gen->type, in);
           }
 
           template <typename TPC>
