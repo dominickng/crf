@@ -29,7 +29,7 @@ namespace NLP {
         Lattice(uint64_t nklasses)
           : pool(new NodePool<Node>()), nodes(), max(0), nklasses(nklasses),
             nklasses2(nklasses * nklasses) {
-          nodes.reserve(nklasses * 50);
+          nodes.reserve(nklasses * 100);
         }
 
         ~Lattice(void) { delete pool; }
@@ -46,6 +46,7 @@ namespace NLP {
           }
           else {
             size_t size = nodes.size() - 1;
+            const Node *new_max = NULL;
             for (int i = 2; i < nklasses; ++i) {
               double best_score = -std::numeric_limits<double>::max();
               Node *best_prev = NULL;
@@ -58,11 +59,12 @@ namespace NLP {
               }
               Node *n = new (pool) Node(best_prev, best_prev->tag, i, best_score);
               nodes.push_back(n);
-              if (max->score < n->score)
-                max = n;
+              if (!new_max || new_max->score < n->score)
+                new_max = n;
             }
+            max = new_max;
+            max->prev = prev_max;
           }
-          max->prev = prev_max;
         }
 
         void best(TagSet &tags, Raws &raws, int size) {
