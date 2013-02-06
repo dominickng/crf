@@ -30,7 +30,9 @@ namespace Util {
         BaseHashTable(const size_t nbuckets=BASE_SIZE,
             const size_t pool_size=SMALL) :
           _nbuckets(nbuckets), _size(0), _used_buckets(0),
-          _pool(new Pool(pool_size)), _buckets(new Entry*[_nbuckets]) { }
+          _pool(new Pool(pool_size)), _buckets(new Entry*[_nbuckets]) {
+            memset(_buckets, 0, _nbuckets * sizeof(Entry *));
+        }
 
         virtual ~BaseHashTable(void) {
           delete _pool;

@@ -19,7 +19,7 @@ namespace NLP {
     if(cfg.process(argc, argv)) {
       Util::port::make_directory(tagger_cfg.model());
       TAGGER tagger(tagger_cfg, types_cfg, preface);
-      ReaderFactory reader(TAGGER::reader, input(), input.file(), tagger_cfg.ifmt());
+      ReaderFactory reader(TAGGER::reader, input(), input.file(), tagger_cfg.train_ifmt());
       tagger.train(reader);
     }
 

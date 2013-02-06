@@ -1,3 +1,4 @@
+#define UINT16_MAX 65535
 namespace NLP {
 
   class Tag {

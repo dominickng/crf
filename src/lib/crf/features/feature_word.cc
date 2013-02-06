@@ -57,9 +57,10 @@ namespace NLP {
         }
 
         Attribute find(const char *type, const Word &value) {
-          for (WordEntry *l = this; l != NULL; l = l->next)
+          for (WordEntry *l = this; l != NULL; l = l->next) {
             if(l->equal(type, value))
               return l->attrib;
+          }
           return NONE;
         }
 
@@ -82,7 +83,7 @@ namespace NLP {
 
         Attribute &insert(const char *type, const Word &value) {
           size_t bucket = WordEntry::hash(type, value).value() % _nbuckets;
-          WordEntry *entry = WordEntry::create(ImplBase::_pool, type, value, entry);
+          WordEntry *entry = WordEntry::create(ImplBase::_pool, type, value, _buckets[bucket]);
           _buckets[bucket] = entry;
           ++_size;
           return entry->attrib;

@@ -45,9 +45,9 @@ namespace NLP {
             }
           }
           else {
-            size_t size = nodes.size() + 1;
+            size_t size = nodes.size() - 1;
             for (int i = 2; i < nklasses; ++i) {
-              double best_score = 0.0;
+              double best_score = -std::numeric_limits<double>::max();
               Node *best_prev = NULL;
               for (int j = 2; j < nklasses; ++j) {
                 double score = dist[j][i] + nodes[size - j + 2]->score;
@@ -67,10 +67,11 @@ namespace NLP {
 
         void best(TagSet &tags, Raws &raws, int size) {
           int index = size - 1;
-          raws.reserve(size);
+          const Node *m = max;
+          raws.resize(size);
           while (index >= 0) {
-            raws[index--] = tags.str(max->tag);
-            max = max->prev;
+            raws[index--] = tags.str(m->tag);
+            m = m->prev;
           }
         }
 

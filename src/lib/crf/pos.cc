@@ -40,7 +40,7 @@ class POS::Impl : public Tagger::Impl {
           lattice.viterbi(tags, dist);
         }
         //lattice.print(std::cout, tags, sent.size());
-        lattice.best(tags, sent.entities, sent.words.size());
+        lattice.best(tags, sent.pos, sent.words.size());
         writer.next(sent);
         sent.reset();
         lattice.reset();
