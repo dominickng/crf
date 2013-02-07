@@ -1,3 +1,4 @@
+#include "crf/features/state.h"
 #include "crf/features/type.h"
 #include "crf/features/feature.h"
 #include "crf/features/context.h"

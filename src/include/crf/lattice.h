@@ -63,7 +63,6 @@ namespace NLP {
                 new_max = n;
             }
             max = new_max;
-            max->prev = prev_max;
           }
         }
 

@@ -69,6 +69,8 @@ class NER::Impl : public Tagger::Impl {
         writer.next(sent);
         sent.reset();
         lattice.reset();
+        for (int i = 0; i < tags.size(); ++i)
+          std::fill(dist[i].begin(), dist[i].end(), 0.0);
       }
     }
 

@@ -13,4 +13,7 @@ namespace NLP {
   typedef std::vector<ScoredRaw> ScoredRaws;
   typedef std::vector<ScoredRaws> MultiRaw;
   typedef std::vector<MultiRaw> MultiRaws;
+
+  typedef Util::offset_vector<Word, 2, 2> OffsetWords;
+  typedef Util::offset_vector<Tag, 2, 2> OffsetTags;
 }

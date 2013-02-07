@@ -153,12 +153,12 @@ namespace NLP {
 
         void copy_gradients(lbfgsfloatval_t *x, double inv_sigma_sq, size_t &index) {
           for (Features::iterator i = features.begin(); i != features.end(); ++i)
-            x[index++] = -(i->freq - i->est - (i->lambda * inv_sigma_sq));
+            x[index++] = i->gradient(inv_sigma_sq);
         }
 
         void print(double inv_sigma_sq) {
           for (Features::iterator i = features.begin(); i != features.end(); ++i)
-            std::cout << "gradient: " << -(i->freq - i->est - (i->lambda * inv_sigma_sq)) << " lambda: " << i->lambda << std::endl;
+            std::cout << "gradient: " << i->gradient(inv_sigma_sq) << " lambda: " << i->lambda << std::endl;
         }
     };
 
@@ -327,8 +327,8 @@ namespace NLP {
 
         void print_current_gradient(double val, double inv_sigma_sq) {
           std::cout << "freq: " << f->freq << " est: " << f->est;
-          std::cout << " lambda: " << prev_lambda << " actual: " << -(f->freq - f->est - (prev_lambda * inv_sigma_sq));
-          std::cout << " estimated: " << val << " <" << f->klasses.prev << ' ' << f->klasses.curr << "> " << (*e)->str <<  std::endl;
+          std::cout << " lambda: " << prev_lambda << " gradient: " << f->gradient(inv_sigma_sq);
+          std::cout << " estimated gradient: " << val << " <" << f->klasses.prev << ' ' << f->klasses.curr << "> " << (*e)->str <<  std::endl;
         }
 
         size_t size(void) const { return Base::_size; }

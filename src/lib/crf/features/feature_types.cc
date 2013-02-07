@@ -18,7 +18,7 @@ Tagger::FeatureTypes::FeatureTypes(void)
     use_prev_words(*this, "prev_words", "use previous 0 word features", new OffsetWordGen(Types::prevword, -1)),
     use_prev_prev_words(*this, "prev_prev_words", "use previous 2 word features", new OffsetWordGen(Types::prevprevword, -2)),
     use_next_words(*this, "next_words", "use next 1 word features", new OffsetWordGen(Types::nextword, 1)),
-    use_next_next_words(*this, "next_word_words", "use next 2 word features", new OffsetWordGen(Types::nextnextword, 2)),
+    use_next_next_words(*this, "next_next_words", "use next 2 word features", new OffsetWordGen(Types::nextnextword, 2)),
     actives(), registry() { }
 
 void Tagger::FeatureTypes::get_tagpair(TagSet &tags, Raws &raws, TagPair &tp, int i) {

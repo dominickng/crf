@@ -94,23 +94,26 @@ namespace NLP {
         virtual void compute_psis(Contexts &contexts, PSIs &psis);
         virtual void print_psis(Contexts &contexts, PSIs &psis);
         virtual void forward(Contexts &contexts, PDFs &alphas, PSIs &psis, PDF &scale);
+        virtual void forward_noscale(Contexts &contexts, PDFs &alphas, PSIs &psis);
         virtual void backward(Contexts &contexts, PDFs &betas, PSIs &psis, PDF &scale);
+        virtual void backward_noscale(Contexts &contexts, PDFs &betas, PSIs &psis);
         virtual void print_fwd_bwd(Contexts &contexts, PDFs &pdfs, PDF &scale);
-        virtual void reset(PDFs &alphas, PDFs &betas, PSIs &psis, PDF &scale);
+        virtual void reset(PDFs &alphas, PDFs &betas, PSIs &psis, PDF &scale, const size_t size);
 
         virtual void _pass1(Reader &reader) = 0;
         virtual void _pass2(Reader &reader) = 0;
         virtual void _pass3(Reader &reader, Instances &instances) = 0;
       public:
         Config &cfg;
+        FeatureTypes &feature_types;
+        Model model;
+
         Lexicon lexicon;
         TagSet tags;
         Attributes attributes;
-        FeatureTypes &feature_types;
         Instances instances;
         Weights weights;
         Attribs2Weights attribs2weights;
-        Model model;
 
         WordDict w_dict;
 
@@ -119,10 +122,10 @@ namespace NLP {
         double log_z;
 
         Impl(Config &cfg, FeatureTypes &types, const std::string &preface)
-          : Util::Shared(), cfg(cfg), lexicon(cfg.lexicon()), tags(cfg.tags()),
-            attributes(), feature_types(types), instances(), weights(),
-            attribs2weights(),
+          : Util::Shared(), cfg(cfg), feature_types(types),
             model("info", "Tagger model info file", cfg.model),
+            lexicon(cfg.lexicon()), tags(cfg.tags()),
+            attributes(), instances(), weights(), attribs2weights(),
             w_dict(lexicon), preface(preface), inv_sigma_sq(), log_z(0.0) { }
 
         virtual ~Impl(void) { /* nothing */ }
@@ -148,7 +151,7 @@ namespace NLP {
         virtual void train(Reader &reader);
         virtual void extract(Reader &reader, Instances &instances);
 
-        virtual void finite_differences(lbfgsfloatval_t *g, bool overwrite=false);
+        virtual void finite_differences(Instances &instances, PDFs &alphas, PDFs &betas, PSIs &psis, PDF &scale, lbfgsfloatval_t *g, bool overwrite=false);
 
         static lbfgsfloatval_t evaluate(void *instance,
             const lbfgsfloatval_t *x, lbfgsfloatval_t *g, const int n,

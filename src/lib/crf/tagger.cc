@@ -98,9 +98,9 @@ void Tagger::Impl::add_features(Sentence &sent, PDFs &dist, size_t i) {
   if (feature_types.use_words())
     _add_features(w_dict.get(Types::words, sent.words[i]), dist);
   int index = i+1;
-  if (index < sent.words.size() && feature_types.use_next_words()) {
+  if (index < sent.size() && feature_types.use_next_words()) {
     _add_features(w_dict.get(Types::nextword, sent.words[index++]), dist);
-    if (index < sent.words.size())
+    if (index < sent.size())
       _add_features(w_dict.get(Types::nextnextword, sent.words[index]), dist);
   }
   index = i-1;
@@ -112,8 +112,8 @@ void Tagger::Impl::add_features(Sentence &sent, PDFs &dist, size_t i) {
 }
 
 void Tagger::Impl::train(Reader &reader) {
-  extract(reader, instances);
   inv_sigma_sq = 1.0 / (cfg.sigma() * cfg.sigma());
+  extract(reader, instances);
   const size_t n = attributes.nfeatures();
 
   lbfgsfloatval_t *x = lbfgs_malloc(n);
@@ -146,7 +146,7 @@ double Tagger::Impl::log_likelihood(void) {
     }
   }
   //std::cout << llhood << ' ' << log_z << ' ' << (attributes.sum_lambda_sq() * inv_sigma_sq * 0.5) << std::endl;
-  return llhood - log_z - (attributes.sum_lambda_sq() * inv_sigma_sq * 0.5);
+  return -(llhood - log_z - (attributes.sum_lambda_sq() * inv_sigma_sq * 0.5));
 }
 
 void Tagger::Impl::compute_psis(Contexts &contexts, PSIs &psis) {
@@ -209,7 +209,7 @@ void Tagger::Impl::forward(Contexts &contexts, PDFs &alphas, PSIs &psis, PDF &sc
   if (sum == 0.0)
     sum = 1.0;
   scale[0] = 1.0 / sum;
-  vector_scale(alphas[0], scale[0]);
+  vector_scale(alphas[0], scale[0], tags.size());
   //std::cout << "sum: " << sum << std::endl;
 
   for (size_t i = 1; i < contexts.size(); ++i) {
@@ -226,16 +226,36 @@ void Tagger::Impl::forward(Contexts &contexts, PDFs &alphas, PSIs &psis, PDF &sc
       sum = 1.0;
     scale[i] = 1.0 / sum;
     //std::cout << "sum: " << sum << std::endl;
-    vector_scale(alphas[i], scale[i]);
+    vector_scale(alphas[i], scale[i], tags.size());
   }
-  log_z += -vector_sum_log(scale);
+  log_z += -vector_sum_log(scale, contexts.size());
+  //std::cout << "scale Z: " << -vector_sum_log(scale, contexts.size()) << std::endl;
 }
+
+void Tagger::Impl::forward_noscale(Contexts &contexts, PDFs &alphas, PSIs &psis) {
+  for (Tag curr(2); curr < tags.size(); ++curr) {
+    double val = psis[0][Sentinel::val][curr];
+    alphas[0][curr] = val;
+  }
+
+  for (size_t i = 1; i < contexts.size(); ++i) {
+    for (Tag curr(2); curr < tags.size(); ++curr) {
+      for (Tag prev(2); prev < tags.size(); ++prev) {
+        double val = alphas[i-1][prev] * psis[i][prev][curr];
+        //std::cout << tags.str(prev) << ' ' << tags.str(curr) << ' ' << alphas[i-1][prev] << ' ' << psis[i][prev][curr] << ' ' << val << std::endl;
+        alphas[i][curr] += val;
+      }
+    }
+  }
+  std::cout << "noscale Z: " << log(vector_sum(alphas[contexts.size() - 1], tags.size())) << std::endl;
+}
+
 
 void Tagger::Impl::backward(Contexts &contexts, PDFs &betas, PSIs &psis, PDF &scale) {
   //std::cout << "backward" << std::endl;
   for (Tag curr(2); curr < tags.size(); ++curr)
     betas[contexts.size() - 1][curr] = 1.0;
-  vector_scale(betas[contexts.size() - 1], scale[contexts.size() - 1]);
+  vector_scale(betas[contexts.size() - 1], scale[contexts.size() - 1], tags.size());
 
   for (int i = contexts.size() - 2; i >= 0; --i) {
     for (Tag curr(2); curr < tags.size(); ++curr) {
@@ -244,9 +264,26 @@ void Tagger::Impl::backward(Contexts &contexts, PDFs &betas, PSIs &psis, PDF &sc
         //std::cout << betas[i+1][next] << ' ' << psis[i+1][curr][next] << std::endl;
       }
     }
-    vector_scale(betas[i], scale[i]);
+    vector_scale(betas[i], scale[i], tags.size());
       //assert(!isinf(betas[i][curr]) && !std::isnan(betas[i][curr]));
   }
+}
+
+void Tagger::Impl::backward_noscale(Contexts &contexts, PDFs &betas, PSIs &psis) {
+  for (Tag curr(2); curr < tags.size(); ++curr)
+    betas[contexts.size() - 1][curr] = 1.0;
+
+  for (int i = contexts.size() - 2; i >= 0; --i) {
+    for (Tag curr(2); curr < tags.size(); ++curr) {
+      for (Tag next(2); next < tags.size(); ++next) {
+        betas[i][curr] += betas[i+1][next] * psis[i+1][curr][next];
+      }
+    }
+  }
+  double z = 0.0;
+  for (Tag next(2); next < tags.size(); ++next)
+    z += betas[0][next] * psis[0][Sentinel::val][next];
+  std::cout << "noscale Z: " << log(z) << std::endl;
 }
 
 int Tagger::Impl::progress(void *instance, const lbfgsfloatval_t *x,
@@ -259,10 +296,10 @@ int Tagger::Impl::progress(void *instance, const lbfgsfloatval_t *x,
   return 0;
 }
 
-void Tagger::Impl::reset(PDFs &alphas, PDFs &betas, PSIs &psis, PDF &scale) {
-  std::fill(scale.begin(), scale.end(), 1.0);
+void Tagger::Impl::reset(PDFs &alphas, PDFs &betas, PSIs &psis, PDF &scale, const size_t size) {
+  std::fill(scale.begin(), scale.begin() + size, 1.0);
 
-  for (int i = 0; i < alphas.size(); ++i) {
+  for (int i = 0; i < size; ++i) {
     std::fill(alphas[i].begin(), alphas[i].end(), 0.0);
     std::fill(betas[i].begin(), betas[i].end(), 0.0);
     for (int j = 0; j < psis[i].size(); ++j)
@@ -292,10 +329,18 @@ lbfgsfloatval_t Tagger::Impl::_evaluate(const lbfgsfloatval_t *x,
 
   for (Instances::iterator i = instances.begin(); i != instances.end(); ++i) {
     Contexts &contexts = *i;
-    reset(alphas, betas, psis, scale);
+    reset(alphas, betas, psis, scale, i->size());
 
     compute_psis(contexts, psis);
+
     //print_psis(contexts, psis);
+    //forward_noscale(contexts, alphas, psis);
+    //backward_noscale(contexts, betas, psis);
+    //for (int j = 0; j < alphas.size(); ++j) {
+      //std::fill(alphas[j].begin(), alphas[j].end(), 0.0);
+      //std::fill(betas[j].begin(), betas[j].end(), 0.0);
+    //}
+
     forward(contexts, alphas, psis, scale);
     backward(contexts, betas, psis, scale);
     //print_fwd_bwd(contexts, alphas, scale);
@@ -308,21 +353,21 @@ lbfgsfloatval_t Tagger::Impl::_evaluate(const lbfgsfloatval_t *x,
         double beta = betas[j][klasses.curr];
         (*k)->est += alpha * psis[j][klasses.prev][klasses.curr] * beta;
 
-        //std::cout << j << ' ' << tags.str(klasses.prev) << ' ' << tags.str(klasses.curr) << ' ' << alpha << ' ' << beta << ' ' << full_psis[j][klasses.prev][klasses.curr] << std::endl;
+        //std::cout << j << ' ' << tags.str(klasses.prev) << ' ' << tags.str(klasses.curr) << ' ' << alpha << ' ' << beta << ' ' << psis[j][klasses.prev][klasses.curr] << std::endl;
         //assert(!std::isnan(est));
       }
       //std::cout << std::endl;
     }
   }
   //attributes.prep_finite_differences();
-  //finite_differences(g, true);
+  //finite_differences(instances, alphas, betas, psis, scale, g, false);
 
   attributes.copy_gradients(g, inv_sigma_sq);
   //attributes.print(inv_sigma_sq);
 
   lbfgsfloatval_t llhood = log_likelihood();
   std::cout << "llhood: " << llhood << std::endl;
-  return -llhood;
+  return llhood;
 }
 
 lbfgsfloatval_t Tagger::Impl::evaluate(void *_instance, const lbfgsfloatval_t *x,
@@ -341,17 +386,23 @@ void Tagger::Impl::extract(Reader &reader, Instances &instances) {
   _pass3(reader, instances);
 }
 
-void Tagger::Impl::finite_differences(lbfgsfloatval_t *g, bool overwrite) {
-  double EPSILON = 1.0e-6;
-  double step = 1.0;
+void Tagger::Impl::finite_differences(Instances &instances, PDFs &alphas, PDFs &betas, PSIs &psis, PDF &scale, lbfgsfloatval_t *g, bool overwrite) {
+  double old_log_z = log_z;
+  double EPSILON = 1.0e-4;
   int i = 0;
-  double llhood = -log_likelihood();
-  while (attributes.inc_next_gradient(step * EPSILON)) {
-    double plus_llhood = -log_likelihood();
-    //attributes.dec_gradient(step * EPSILON);
-    //double minus_llhood = -log_likelihood();
-    //std::cout << plus_llhood << ' ' << minus_llhood << ' ' << plus_llhood - minus_llhood << std::endl;
-    double val = (plus_llhood - llhood) / (step * EPSILON);
+  double llhood = log_likelihood();
+  while (attributes.inc_next_gradient(EPSILON)) {
+    log_z = 0.0;
+    // re-estimate log Z
+    for (Instances::iterator i = instances.begin(); i != instances.end(); ++i) {
+      Contexts &contexts = *i;
+      reset(alphas, betas, psis, scale, i->size());
+      compute_psis(contexts, psis);
+      forward(contexts, alphas, psis, scale);
+    }
+
+    double plus_llhood = log_likelihood();
+    double val = (plus_llhood - llhood) / EPSILON;
     if(overwrite)
       g[i++] = val;
     else
