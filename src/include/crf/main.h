@@ -12,6 +12,7 @@ namespace NLP {
     typename TAGGER::FeatureTypes types_cfg;
 
     config::OpAlias model(cfg, "model", "location to store the model", tagger_cfg.model);
+    config::OpAlias sigma(cfg, "sigma", "sigma value for regularization", tagger_cfg.sigma);
     config::OpInput input(cfg, "input", "training data location");
 
     tagger_cfg.add(&types_cfg);
