@@ -389,7 +389,7 @@ void Tagger::Impl::extract(Reader &reader, Instances &instances) {
 void Tagger::Impl::finite_differences(Instances &instances, PDFs &alphas, PDFs &betas, PSIs &psis, PDF &scale, lbfgsfloatval_t *g, bool overwrite) {
   double old_log_z = log_z;
   double EPSILON = 1.0e-4;
-  int i = 0;
+  int index = 0;
   double llhood = log_likelihood();
   while (attributes.inc_next_gradient(EPSILON)) {
     log_z = 0.0;
@@ -404,7 +404,7 @@ void Tagger::Impl::finite_differences(Instances &instances, PDFs &alphas, PDFs &
     double plus_llhood = log_likelihood();
     double val = (plus_llhood - llhood) / EPSILON;
     if(overwrite)
-      g[i++] = val;
+      g[index++] = val;
     else
       attributes.print_current_gradient(val, inv_sigma_sq);
   }
