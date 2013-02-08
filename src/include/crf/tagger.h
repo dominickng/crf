@@ -29,28 +29,6 @@ namespace NLP {
             virtual ~Config(void) { /* nothing */ }
         };
 
-        class FeatureTypes : public config::OpGroup {
-          public:
-            typedef std::vector<OpType *> Actives;
-            typedef std::map<std::string, OpType *> Registry;
-            OpType use_words;
-            OpType use_prev_words;
-            OpType use_prev_prev_words;
-            OpType use_next_words;
-            OpType use_next_next_words;
-            Actives actives;
-            Registry registry;
-
-            FeatureTypes(void);
-
-            void get_tagpair(TagSet &tags, Raws &raws, TagPair &tp, int i);
-            void generate(Attributes &attributes, TagSet &tags, Sentence &sent, Contexts &contexts, Raws &raws, const bool extract);
-            void generate(PDFs &dist);
-            Attribute &load(const std::string &type, std::istream &in);
-            virtual void reg(const Type &type, FeatureDict &dict);
-            virtual void validate(void);
-        };
-
         class Model : public config::Info {
           public:
             config::Op<uint64_t> nattributes;
@@ -66,14 +44,12 @@ namespace NLP {
             virtual ~Model(void) { }
         };
 
-        FeatureTypes &feature_types(void) { return _feature_types; }
-
       protected:
         class Impl;
 
         Impl *_impl;
-        Config &_cfg;
-        FeatureTypes &_feature_types;
+        Config &cfg;
+        Types &types;
 
         Tagger(Tagger::Config &cfg, const std::string &preface, Impl *impl);
         Tagger(const Tagger &other);
@@ -88,8 +64,6 @@ namespace NLP {
             lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step);
 
         virtual void reg(void);
-        virtual void _add_features(Attribute attrib, PDFs &dist);
-        virtual void add_features(Sentence &sent, PDFs &dist, size_t i);
 
         virtual void compute_psis(Contexts &contexts, PSIs &psis);
         virtual void print_psis(Contexts &contexts, PSIs &psis);
@@ -105,8 +79,9 @@ namespace NLP {
         virtual void _pass3(Reader &reader, Instances &instances) = 0;
       public:
         Config &cfg;
-        FeatureTypes &feature_types;
+        Types &types;
         Model model;
+        Registry registry;
 
         Lexicon lexicon;
         TagSet tags;
@@ -121,9 +96,9 @@ namespace NLP {
         double inv_sigma_sq;
         double log_z;
 
-        Impl(Config &cfg, FeatureTypes &types, const std::string &preface)
-          : Util::Shared(), cfg(cfg), feature_types(types),
-            model("info", "Tagger model info file", cfg.model),
+        Impl(Config &cfg, Types &types, const std::string &preface)
+          : Util::Shared(), cfg(cfg), types(types),
+            model("info", "Tagger model info file", cfg.model), registry(),
             lexicon(cfg.lexicon()), tags(cfg.tags()),
             attributes(), instances(), weights(), attribs2weights(),
             w_dict(lexicon), preface(preface), inv_sigma_sq(), log_z(0.0) { }
@@ -141,7 +116,6 @@ namespace NLP {
         virtual void load(void) {
           lexicon.load();
           tags.load();
-          Model model("info", "model info", cfg.model);
           reg();
           _load_model(model);
         }
@@ -161,7 +135,6 @@ namespace NLP {
             const lbfgsfloatval_t *g, const lbfgsfloatval_t fx,
             const lbfgsfloatval_t xnorm, const lbfgsfloatval_t gnorm,
             const lbfgsfloatval_t step, int n, int k, int ls);
-
     };
 
   }

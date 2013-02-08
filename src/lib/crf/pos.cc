@@ -19,9 +19,6 @@ const std::string POS::name = "pos";
 const std::string POS::desc = "description";
 const std::string POS::reader = "format";
 
-POS::FeatureTypes::FeatureTypes(void) :
-  Tagger::FeatureTypes() { }
-
 class POS::Impl : public Tagger::Impl {
   protected:
     typedef Tagger::Impl Base;
@@ -36,7 +33,7 @@ class POS::Impl : public Tagger::Impl {
 
       while (reader.next(sent)) {
         for (int i = 0; i < sent.words.size(); ++i) {
-          add_features(sent, dist, i);
+          registry.add_features(sent, dist, i);
           lattice.viterbi(tags, dist);
         }
         //lattice.print(std::cout, tags, sent.size());
@@ -71,7 +68,7 @@ class POS::Impl : public Tagger::Impl {
       Sentence sent;
       Contexts contexts; //not used in this pass
       while (reader.next(sent)) {
-        feature_types.generate(attributes, tags, sent, contexts, sent.pos, true);
+        registry.generate(attributes, tags, sent, sent.pos, contexts, true);
         sent.reset();
       }
 
@@ -83,18 +80,18 @@ class POS::Impl : public Tagger::Impl {
       while (reader.next(sent)) {
         Contexts contexts(sent.words.size());
         instances.push_back(contexts);
-        feature_types.generate(attributes, tags, sent, instances.back(), sent.pos, false);
+        registry.generate(attributes, tags, sent, sent.pos, instances.back(), false);
         sent.reset();
       }
     }
 
   public:
-    Impl(POS::Config &cfg, POS::FeatureTypes &types, const std::string &preface)
+    Impl(POS::Config &cfg, Types &types, const std::string &preface)
       : Base(cfg, types, preface) { }
 
 };
 
-POS::POS(POS::Config &cfg, POS::FeatureTypes &types, const std::string &preface)
+POS::POS(POS::Config &cfg, Types &types, const std::string &preface)
   : Tagger(cfg, preface, new Impl(cfg, types, preface)) { }
 
 void POS::train(Reader &reader) { _impl->train(reader); }

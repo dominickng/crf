@@ -1,78 +1,117 @@
 #include "base.h"
+#include "config.h"
 #include "hashtable.h"
+#include "lexicon.h"
+#include "tagset.h"
 #include "lbfgs.h"
-#include "crf/features/type.h"
-#include "crf/features/context.h"
-#include "crf/features/feature.h"
-#include "crf/features/attributes.h"
-#include "crf/features/feature_gen.h"
+#include "crf/features.h"
 
 namespace NLP { namespace CRF {
 
-WordGen::WordGen(const Type &type) : FeatureGen(type) { }
+WordGen::WordGen(WordDict &dict) : FeatureGen(), dict(dict) { }
 
-void WordGen::operator()(Attributes &attributes, Sentence &sent, TagPair tp, int j) {
-  Raw word = sent.words[j];
-  attributes(type.id, word, tp);
+Attribute &WordGen::load(const Type &type, std::istream &in) {
+  return dict.load(type, in);
+}
+
+void WordGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) {
+  Raw word = sent.words[i];
+  attributes(type.name, word, tp);
   tp.prev = None::val;
-  attributes(type.id, word, tp);
+  attributes(type.name, word, tp);
 }
 
-void WordGen::operator()(Attributes &attributes, Sentence &sent, Context &c, int j) {
-  Raw word = sent.words[j];
-  attributes(type.id, word, c);
+void WordGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i) {
+  Raw word = sent.words[i];
+  attributes(type.name, word, c);
 }
 
-PosGen::PosGen(const Type &type) : FeatureGen(type) { }
+void WordGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int i) {
+  _add_features(dict.get(type, sent.words[i]), dist);
+}
 
-void PosGen::operator()(Attributes &attributes, Sentence &sent, TagPair tp, int j) {
-  Raw word = sent.pos[j];
-  attributes(type.id, word, tp);
+PosGen::PosGen(TagDict &dict) : FeatureGen(), dict(dict) { }
+
+Attribute &PosGen::load(const Type &type, std::istream &in) {
+  return dict.load(type, in);
+}
+
+void PosGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) {
+  Raw word = sent.pos[i];
+  attributes(type.name, word, tp);
   tp.prev = None::val;
-  attributes(type.id, word, tp);
+  attributes(type.name, word, tp);
 }
 
-void PosGen::operator()(Attributes &attributes, Sentence &sent, Context &c, int j) {
-  Raw word = sent.pos[j];
-  attributes(type.id, word, c);
+void PosGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i) {
+  Raw word = sent.pos[i];
+  attributes(type.name, word, c);
 }
 
-OffsetWordGen::OffsetWordGen(const Type &type, const int offset) : OffsetGen(type, offset) { }
+void PosGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int i) {
+  _add_features(dict.get(type, sent.pos[i]), dist);
+}
 
-void OffsetWordGen::operator()(Attributes &attributes, Sentence &sent, TagPair tp, int j) {
+OffsetWordGen::OffsetWordGen(WordDict &dict, const int offset)
+  : OffsetGen(offset), dict(dict) { }
+
+Attribute &OffsetWordGen::load(const Type &type, std::istream &in) {
+  return dict.load(type, in);
+}
+
+void OffsetWordGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) {
   TagPair _tp(None::val, tp.curr);
-  j += offset;
+  i += offset;
 
-  if (j >= 0 && j < sent.size()) {
-    attributes(type.id, sent.words[j], tp);
-    attributes(type.id, sent.words[j], _tp);
+  if (i >= 0 && i < sent.size()) {
+    attributes(type.name, sent.words[i], tp);
+    attributes(type.name, sent.words[i], _tp);
   }
 }
 
-void OffsetWordGen::operator()(Attributes &attributes, Sentence &sent, Context &c, int j) {
-  j += offset;
+void OffsetWordGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i) {
+  i += offset;
 
-  if (j >= 0 && j < sent.size())
-    attributes(type.id, sent.words[j], c);
+  if (i >= 0 && i < sent.size())
+    attributes(type.name, sent.words[i], c);
 }
 
-OffsetPosGen::OffsetPosGen(const Type &type, const int offset) : OffsetGen(type, offset) { }
+void OffsetWordGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int i) {
+  i += offset;
 
-void OffsetPosGen::operator()(Attributes &attributes, Sentence &sent, TagPair tp, int j) {
+  if (i >= 0 && i < sent.size())
+    _add_features(dict.get(type, sent.words[i]), dist);
+}
+
+OffsetPosGen::OffsetPosGen(TagDict &dict, const int offset)
+  : OffsetGen(offset), dict(dict) { }
+
+Attribute &OffsetPosGen::load(const Type &type, std::istream &in) {
+  return dict.load(type, in);
+}
+
+void OffsetPosGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) {
   TagPair _tp(None::val, tp.curr);
-  j += offset;
+  i += offset;
 
-  if (j >= 0 && j < sent.size()) {
-    attributes(type.id, sent.pos[j], tp);
-    attributes(type.id, sent.pos[j], _tp);
+  if (i >= 0 && i < sent.size()) {
+    attributes(type.name, sent.pos[i], tp);
+    attributes(type.name, sent.pos[i], _tp);
   }
 }
 
-void OffsetPosGen::operator()(Attributes &attributes, Sentence &sent, Context &c, int j) {
-  j += offset;
+void OffsetPosGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i) {
+  i += offset;
 
-  if (j >= 0 && j < sent.size())
-    attributes(type.id, sent.pos[j], c);
+  if (i >= 0 && i < sent.size())
+    attributes(type.name, sent.pos[i], c);
+}
+
+void OffsetPosGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int i) {
+  i += offset;
+
+  if (i >= 0 && i < sent.size())
+    _add_features(dict.get(type, sent.pos[i]), dist);
 }
 
 } }

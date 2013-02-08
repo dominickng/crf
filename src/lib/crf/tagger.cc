@@ -35,7 +35,7 @@ void Tagger::Impl::_read_weights(Model &model) {
 
   while (in >> attrib >> prev_klass >> curr_klass >> freq >> lambda) {
     ++nlines;
-    weights.push_back(Weight(TagPair(prev_klass, curr_klass), lambda));
+    weights.push_back(Weight(prev_klass, curr_klass, lambda));
     if (attrib != previous) {
       attribs2weights.push_back(&weights.back());
       previous = attrib;
@@ -66,7 +66,7 @@ void Tagger::Impl::_read_attributes(Model &model) {
     ++nlines;
     if (id >= model.nattributes())
       throw IOException("attribute id >= nattributes", filename, nlines);
-    Attribute &attrib = feature_types.load(type, in);
+    Attribute &attrib = registry.load(type, in);
 
     if (!(in >> freq))
       throw IOException("could not read freq", filename, nlines);
@@ -84,34 +84,8 @@ void Tagger::Impl::_read_attributes(Model &model) {
     throw IOException("number of attributes read is not equal to configuration value", cfg.attributes(), nlines);
 }
 
-void Tagger::Impl::_add_features(Attribute attrib, PDFs &dist) {
-  for (Weight *w = attrib.begin; w != attrib.end; ++w) {
-    if (w->klasses.prev == None::val)
-      for (Tag t = 0; t < tags.size(); ++t)
-        dist[t][w->klasses.curr] += w->lambda;
-    else
-      dist[w->klasses.prev][w->klasses.curr] += w->lambda;
-  }
-}
-
-void Tagger::Impl::add_features(Sentence &sent, PDFs &dist, size_t i) {
-  if (feature_types.use_words())
-    _add_features(w_dict.get(Types::words, sent.words[i]), dist);
-  int index = i+1;
-  if (index < sent.size() && feature_types.use_next_words()) {
-    _add_features(w_dict.get(Types::nextword, sent.words[index++]), dist);
-    if (index < sent.size())
-      _add_features(w_dict.get(Types::nextnextword, sent.words[index]), dist);
-  }
-  index = i-1;
-  if (index >= 0 && feature_types.use_prev_words()) {
-    _add_features(w_dict.get(Types::prevword, sent.words[index--]), dist);
-    if (index >= 0)
-      _add_features(w_dict.get(Types::prevprevword, sent.words[index]), dist);
-  }
-}
-
 void Tagger::Impl::train(Reader &reader) {
+  reg();
   inv_sigma_sq = 1.0 / (cfg.sigma() * cfg.sigma());
   extract(reader, instances);
   const size_t n = attributes.nfeatures();
@@ -122,7 +96,7 @@ void Tagger::Impl::train(Reader &reader) {
   for(int i = 0; i < n; ++i)
     x[i] = 1.0;
   lbfgs_parameter_init(&param);
-  //param.linesearch = LBFGS_LINESEARCH_BACKTRACKING;
+  param.linesearch = LBFGS_LINESEARCH_BACKTRACKING;
   //param.delta = 1e-8;
   //param.past = 2;
 
@@ -411,17 +385,17 @@ void Tagger::Impl::finite_differences(Instances &instances, PDFs &alphas, PDFs &
 }
 
 void Tagger::Impl::reg(void) {
-  feature_types.reg(Types::words, w_dict);
-  feature_types.reg(Types::prevword, w_dict);
-  feature_types.reg(Types::prevprevword, w_dict);
-  feature_types.reg(Types::nextword, w_dict);
-  feature_types.reg(Types::nextnextword, w_dict);
+  registry.reg(Types::w, types.use_words, new WordGen(w_dict));
+  registry.reg(Types::pw, types.use_prev_words, new OffsetWordGen(w_dict, -1));
+  registry.reg(Types::ppw, types.use_prev_words, new OffsetWordGen(w_dict, -2));
+  registry.reg(Types::nw, types.use_next_words, new OffsetWordGen(w_dict, 1));
+  registry.reg(Types::nnw, types.use_next_words, new OffsetWordGen(w_dict, 2));
 }
 
 Tagger::Tagger(Tagger::Config &cfg, const std::string &preface, Impl *impl)
-  : _impl(impl), _cfg(cfg), _feature_types(_impl->feature_types) { }
+  : _impl(impl), cfg(cfg), types(_impl->types) { }
 
 Tagger::Tagger(const Tagger &other)
-  : _impl(share(other._impl)), _cfg(other._cfg), _feature_types(other._feature_types) { }
+  : _impl(share(other._impl)), cfg(other.cfg), types(other.types) { }
 
 } }

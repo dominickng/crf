@@ -110,15 +110,15 @@ namespace NLP {
       Raw value;
       in >> value;
 
-      return _impl->insert(type.id, _impl->lexicon[value]);
+      return _impl->insert(type.name, _impl->lexicon[value]);
     }
 
     Attribute WordDict::get(const Type &type, Raw &raw) {
-      return _impl->find(type.id, _impl->lexicon[raw]);
+      return _impl->find(type.name, _impl->lexicon[raw]);
     }
 
     Attribute &WordDict::insert(const Type &type, Raw &raw) {
-      return _impl->insert(type.id, _impl->lexicon[raw]);
+      return _impl->insert(type.name, _impl->lexicon[raw]);
     }
 
   }

@@ -93,8 +93,8 @@ namespace NLP {
         bool find(const char *type, const std::string &str, Context &c) {
           for (AttribEntry *l = this; l != NULL; l = l->next) {
             if (l->equal(type, str) && l->value > 0) {
-              for(Features::iterator i = l->features.begin(); i != l->features.end(); ++i)
-                if(i->klasses == c.klasses || (i->klasses.prev == None::val && i->klasses.curr == c.klasses.curr))
+              for (Features::iterator i = l->features.begin(); i != l->features.end(); ++i)
+                if (i->klasses == c.klasses || (i->klasses.prev == None::val && i->klasses.curr == c.klasses.curr))
                   c.features.push_back(&(*i));
               return true;
             }

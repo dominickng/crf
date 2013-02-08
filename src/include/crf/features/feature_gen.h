@@ -2,59 +2,86 @@ namespace NLP {
   namespace CRF {
     class FeatureGen {
       public:
-        FeatureGen(const Type &type) : type(type) { }
+        FeatureGen(void) { }
         virtual ~FeatureGen(void) { }
-        virtual void operator()(Attributes &attributes, Sentence &sent, TagPair tp, int j) = 0;
-        virtual void operator()(Attributes &attributes, Sentence &sent, Context &c, int j) = 0;
 
-        const Type &type;
+        void _add_features(Attribute attrib, PDFs &dist) {
+          for (Weight *w = attrib.begin; w != attrib.end; ++w) {
+            //std::cout << "adding weight " << w->lambda << " for " << tags.str(w->prev) << " -> " << tags.str(w->curr) << std::endl;
+            if (w->prev == None::val)
+              for (Tag t = 0; t < dist.size(); ++t)
+                dist[t][w->curr] += w->lambda;
+            else
+              dist[w->prev][w->curr] += w->lambda;
+          }
+        }
+
+        virtual Attribute &load(const Type &type, std::istream &in) = 0;
+
+        virtual void operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) = 0;
+        virtual void operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i) = 0;
+        virtual void operator()(const Type &type, Sentence &sent, PDFs &dist, int i) = 0;
     };
 
     class OffsetGen : public FeatureGen {
       public:
         const int offset;
-        OffsetGen(const Type &type, const int offset) :
-          FeatureGen(type), offset(offset) { }
+        OffsetGen(const int offset) :
+          FeatureGen(), offset(offset) { }
     };
 
     class WordGen : public FeatureGen {
       public:
-        WordGen(const Type &type);
+        WordGen(WordDict &dict);
         virtual ~WordGen(void) { }
 
-        virtual void operator()(Attributes &attributes, Sentence &sent, TagPair tp, int j);
-        virtual void operator()(Attributes &attributes, Sentence &sent, Context &c, int j);
+        virtual Attribute &load(const Type &type, std::istream &in);
+        virtual void operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i);
+        virtual void operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i);
+        virtual void operator()(const Type &type, Sentence &sent, PDFs &dist, int i);
+
+        WordDict &dict;
 
     };
 
     class PosGen : public FeatureGen {
       public:
-        PosGen(const Type &type);
+        PosGen(TagDict &dict);
         virtual ~PosGen(void) { }
 
-        virtual void operator()(Attributes &attributes, Sentence &sent, TagPair tp, int j);
-        virtual void operator()(Attributes &attributes, Sentence &sent, Context &c, int j);
+        virtual Attribute &load(const Type &type, std::istream &in);
+        virtual void operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i);
+        virtual void operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i);
+        virtual void operator()(const Type &type, Sentence &sent, PDFs &dist, int i);
+
+        TagDict &dict;
 
     };
 
     class OffsetWordGen : public OffsetGen {
       public:
-        OffsetWordGen(const Type &type, const int offset);
+        OffsetWordGen(WordDict &dict, const int offset);
         virtual ~OffsetWordGen(void) { }
 
-        virtual void operator()(Attributes &attributes, Sentence &sent, TagPair tp, int j);
-        virtual void operator()(Attributes &attributes, Sentence &sent, Context &c, int j);
+        virtual Attribute &load(const Type &type, std::istream &in);
+        virtual void operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i);
+        virtual void operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i);
+        virtual void operator()(const Type &type, Sentence &sent, PDFs &dist, int i);
 
+        WordDict &dict;
     };
 
     class OffsetPosGen : public OffsetGen {
       public:
-        OffsetPosGen(const Type &type, const int offset);
+        OffsetPosGen(TagDict &dict, const int offset);
         virtual ~OffsetPosGen(void) { }
 
-        virtual void operator()(Attributes &attributes, Sentence &sent, TagPair tp, int j);
-        virtual void operator()(Attributes &attributes, Sentence &sent, Context &c, int j);
+        virtual Attribute &load(const Type &type, std::istream &in);
+        virtual void operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i);
+        virtual void operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i);
+        virtual void operator()(const Type &type, Sentence &sent, PDFs &dist, int i);
 
+        TagDict &dict;
     };
 
   }

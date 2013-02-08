@@ -23,12 +23,7 @@ namespace NLP {
                 { }
         };
 
-        class FeatureTypes : public Tagger::FeatureTypes {
-          public:
-            FeatureTypes(void);
-        };
-
-        POS(POS::Config &cfg, POS::FeatureTypes &types, const std::string &preface);
+        POS(POS::Config &cfg, Types &types, const std::string &preface);
 
         void train(Reader &reader);
         void tag(Reader &reader, Writer &writer);

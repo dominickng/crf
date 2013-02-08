@@ -3,7 +3,6 @@ namespace NLP {
     class Node {
       public:
         mutable const Node *prev;
-        Tag ptag; //best previous tag
         Tag tag;
         double score;
 
@@ -11,8 +10,8 @@ namespace NLP {
 
         void operator delete(void *, NodePool<Node> *) { }
 
-        Node(const Node *prev, Tag ptag, Tag tag, double score)
-          : prev(prev), ptag(ptag), tag(tag), score(score) { }
+        Node(const Node *prev, Tag tag, double score)
+          : prev(prev), tag(tag), score(score) { }
     };
 
     class Lattice {
@@ -27,7 +26,7 @@ namespace NLP {
 
       public:
         Lattice(uint64_t nklasses)
-          : pool(new NodePool<Node>()), nodes(), max(0), nklasses(nklasses),
+          : pool(new NodePool<Node>()), nodes(), max(NULL), nklasses(nklasses),
             nklasses2(nklasses * nklasses) {
           nodes.reserve(nklasses * 100);
         }
@@ -37,8 +36,8 @@ namespace NLP {
         void viterbi(TagSet &tags, PDFs &dist) {
           const Node *prev_max = max;
           if (nodes.size() == 0) {
-            for (int i = 2; i < nklasses; ++i) {
-              Node *n = new (pool) Node(NULL, Sentinel::val, i, dist[Sentinel::val][i]);
+            for (int curr = 2; curr < nklasses; ++curr) {
+              Node *n = new (pool) Node(NULL, curr, dist[Sentinel::val][curr]);
               nodes.push_back(n);
               if (!max || max->score < n->score)
                 max = n;
@@ -47,17 +46,17 @@ namespace NLP {
           else {
             size_t size = nodes.size() - 1;
             const Node *new_max = NULL;
-            for (int i = 2; i < nklasses; ++i) {
+            for (int curr = 2; curr < nklasses; ++curr) {
               double best_score = -std::numeric_limits<double>::max();
               Node *best_prev = NULL;
-              for (int j = 2; j < nklasses; ++j) {
-                double score = dist[j][i] + nodes[size - j + 2]->score;
+              for (int prev = 2; prev < nklasses; ++prev) {
+                double score = dist[prev][curr] + nodes[size - prev + 2]->score;
                 if (score > best_score) {
                   best_score = score;
-                  best_prev = nodes[size - j + 2];
+                  best_prev = nodes[size - prev + 2];
                 }
               }
-              Node *n = new (pool) Node(best_prev, best_prev->tag, i, best_score);
+              Node *n = new (pool) Node(best_prev, curr, best_score);
               nodes.push_back(n);
               if (!new_max || new_max->score < n->score)
                 new_max = n;

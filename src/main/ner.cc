@@ -12,5 +12,5 @@
 #include "main.h"
 
 int run(int argc, char *argv[]) {
-  return NLP::run_tag<NLP::CRF::NER>(argc, argv);
+  return NLP::CRF::run_tag<NLP::CRF::NER>(argc, argv);
 }

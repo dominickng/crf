@@ -19,37 +19,9 @@ const std::string NER::name = "ner";
 const std::string NER::desc = "description";
 const std::string NER::reader = "conll";
 
-NER::FeatureTypes::FeatureTypes(void) :
-  Tagger::FeatureTypes(),
-  use_pos(*this, "pos", "use pos features", new PosGen(Types::pos)),
-  use_prev_pos(*this, "prev_pos", "use previous pos 1 features", new OffsetPosGen(Types::prevpos, -1)),
-  use_prev_prev_pos(*this, "prev_prev_pos", "use previous 2 pos features", new OffsetPosGen(Types::prevprevpos, -2)),
-  use_next_pos(*this, "next_pos", "use next 1 pos features", new OffsetPosGen(Types::nextpos, 1)),
-  use_next_next_pos(*this, "next_next_pos", "use next 2 pos features", new OffsetPosGen(Types::nextnextpos, 2)) { }
-
 class NER::Impl : public Tagger::Impl {
   protected:
     typedef Tagger::Impl Base;
-
-    virtual void add_features(Sentence &sent, PDFs &dist, size_t i) {
-      Base::add_features(sent, dist, i);
-
-      if (use_pos)
-        _add_features(p_dict.get(Types::pos, sent.pos[i]), dist);
-
-      int index = i+1;
-      if (index < sent.pos.size() && use_next_pos) {
-        _add_features(w_dict.get(Types::nextpos, sent.pos[index++]), dist);
-        if (index < sent.pos.size())
-          _add_features(w_dict.get(Types::nextnextpos, sent.pos[index]), dist);
-      }
-      index = i-1;
-      if (index >= 0 && use_prev_pos) {
-        _add_features(w_dict.get(Types::prevpos, sent.pos[index--]), dist);
-        if (index >= 0)
-          _add_features(w_dict.get(Types::prevprevpos, sent.pos[index]), dist);
-      }
-    }
 
     virtual void tag(Reader &reader, Writer &writer) {
       load();
@@ -61,7 +33,7 @@ class NER::Impl : public Tagger::Impl {
 
       while (reader.next(sent)) {
         for (int i = 0; i < sent.words.size(); ++i) {
-          add_features(sent, dist, i);
+          registry.add_features(sent, dist, i);
           lattice.viterbi(tags, dist);
         }
         //lattice.print(std::cout, tags, sent.size());
@@ -98,7 +70,7 @@ class NER::Impl : public Tagger::Impl {
       Sentence sent;
       Contexts contexts; //not used in this pass
       while (reader.next(sent)) {
-        feature_types.generate(attributes, tags, sent, contexts, sent.entities, true);
+        registry.generate(attributes, tags, sent, sent.entities, contexts, true);
         sent.reset();
       }
 
@@ -110,7 +82,7 @@ class NER::Impl : public Tagger::Impl {
       while (reader.next(sent)) {
         Contexts contexts(sent.words.size());
         instances.push_back(contexts);
-        feature_types.generate(attributes, tags, sent, instances.back(), sent.entities, false);
+        registry.generate(attributes, tags, sent, sent.entities, instances.back(), false);
         sent.reset();
       }
     }
@@ -118,11 +90,11 @@ class NER::Impl : public Tagger::Impl {
     virtual void reg(void) {
       Tagger::Impl::reg();
 
-      feature_types.reg(Types::pos, p_dict);
-      feature_types.reg(Types::prevpos, p_p_dict);
-      feature_types.reg(Types::prevprevpos, pp_p_dict);
-      feature_types.reg(Types::nextpos, n_p_dict);
-      feature_types.reg(Types::nextnextpos, nn_p_dict);
+      registry.reg(Types::p, types.use_pos, new PosGen(p_dict));
+      registry.reg(Types::pp, types.use_prev_pos, new OffsetPosGen(p_p_dict, -1));
+      registry.reg(Types::ppp, types.use_prev_pos, new OffsetPosGen(pp_p_dict, -2));
+      registry.reg(Types::np, types.use_next_pos, new OffsetPosGen(n_p_dict, 1));
+      registry.reg(Types::nnp, types.use_next_pos, new OffsetPosGen(nn_p_dict, 2));
     }
 
     virtual void load(void) {
@@ -142,7 +114,7 @@ class NER::Impl : public Tagger::Impl {
     const bool use_prev_pos;
     const bool use_next_pos;
 
-    Impl(NER::Config &cfg, NER::FeatureTypes &types, const std::string &preface)
+    Impl(NER::Config &cfg, Types &types, const std::string &preface)
       : Base(cfg, types, preface), pos(cfg.pos()), p_dict(pos), p_p_dict(pos),
         pp_p_dict(pos), n_p_dict(pos), nn_p_dict(pos),
         use_pos(types.use_pos()), use_prev_pos(types.use_prev_pos()),
@@ -150,7 +122,7 @@ class NER::Impl : public Tagger::Impl {
 
 };
 
-NER::NER(NER::Config &cfg, NER::FeatureTypes &types, const std::string &preface)
+NER::NER(NER::Config &cfg, Types &types, const std::string &preface)
   : Tagger(cfg, preface, new Impl(cfg, types, preface)) { }
 
 void NER::train(Reader &reader) { _impl->train(reader); }

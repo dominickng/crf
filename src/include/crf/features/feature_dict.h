@@ -1,26 +1,6 @@
 namespace NLP {
   namespace CRF {
 
-    struct Weight {
-      TagPair klasses;
-      double lambda;
-
-      Weight(TagPair klasses, double lambda) : klasses(klasses), lambda(lambda) { }
-    };
-
-    typedef std::vector<Weight> Weights;
-
-    struct Attribute {
-      Weight *begin;
-      Weight *end;
-
-      Attribute(void) : begin(0), end(0) { }
-      Attribute(None) : begin(0), end(0) { }
-      Attribute(Weight *begin, Weight *end) : begin(begin), end(end) { }
-    };
-
-    typedef std::vector<Weight *> Attribs2Weights;
-
     class FeatureDict {
       public:
         FeatureDict(void) { }
@@ -56,7 +36,7 @@ namespace NLP {
             attributes.resize(tags.size());
           Raw value;
           in >> value;
-          return insert(type.id, value);
+          return insert(type.name, value);
         }
 
         Attribute get(const Type &type, Raw &raw) {

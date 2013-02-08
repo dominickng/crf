@@ -38,6 +38,7 @@ namespace NLP {
       }
 
       void load(const std::string &filename, std::istream &input) {
+        clear();
         uint64_t nlines = 0;
 
         read_preface(filename, input, preface, nlines);
