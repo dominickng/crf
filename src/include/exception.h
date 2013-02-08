@@ -25,6 +25,14 @@ public:
   virtual ~IOException(void) throw() { }
 };
 
+// general errors with an error message
+class FormatException : public Exception {
+public:
+  const char c;
+  FormatException(const std::string &msg, const char c) : Exception(msg), c(c) { }
+  FormatException(const FormatException &other) : Exception(other), c(other.c) { }
+  virtual ~FormatException(void) throw() { }
+};
 
 // general errors with an error message
 class ValueException : public Exception {

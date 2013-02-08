@@ -9,9 +9,13 @@ namespace Util {
 
         virtual ~Info(void) { }
 
+        using Config::save;
+        using Config::read_config;
+
         virtual void save(const std::string &preface);
         virtual void save(std::ostream &out, const std::string &prefix);
         virtual bool read_config(void);
     };
   }
+
 }

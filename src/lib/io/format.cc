@@ -28,10 +28,10 @@ void Format::parse(const std::string &format) {
     if (s[1] == '%')
       break;
     if (Sentence::type(s[1]) == Sentence::TYPE_INVALID)
-      throw ValueException("unrecognised format string specifier %" + s[1]);
+      throw FormatException("unrecognised format string specifier %", s[1]);
     fields += s[1];
     if (!s[2])
-      throw ValueException("format string is missing separator after %" + s[1]);
+      throw FormatException("format string is missing separator after %", s[1]);
 
     if (s[2] == '%') {
       if (s[3] == '%')

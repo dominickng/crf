@@ -186,6 +186,10 @@ namespace NLP {
             load(filename, input);
         }
 
+        using ImplBase::add;
+        using ImplBase::insert;
+        using ImplBase::find;
+
         void add(const char *type, const std::string &str, TagPair &tp) {
           size_t bucket = AttribEntry::hash(type, str).value() % _nbuckets;
           AttribEntry *entry = _buckets[bucket]->find(type, str);
@@ -228,7 +232,7 @@ namespace NLP {
         }
 
         void load(const std::string &filename, std::istream &input) {
-          uint64_t nfeatures, nlines = 0;
+          uint64_t nlines = 0;
 
           read_preface(filename, input, preface, nlines);
 

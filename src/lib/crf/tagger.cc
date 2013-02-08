@@ -112,7 +112,6 @@ void Tagger::Impl::train(Reader &reader) {
 
 double Tagger::Impl::log_likelihood(void) {
   double llhood = 0.0;
-  uint64_t nsents = 0;
   for (Instances::iterator i = instances.begin(); i != instances.end(); ++i) {
     for (Contexts::iterator j = i->begin(); j != i->end(); ++j) {
       for (FeaturePtrs::iterator k = j->features.begin(); k != j->features.end(); ++k)
@@ -365,6 +364,7 @@ void Tagger::Impl::finite_differences(Instances &instances, PDFs &alphas, PDFs &
   double EPSILON = 1.0e-4;
   int index = 0;
   double llhood = log_likelihood();
+
   while (attributes.inc_next_gradient(EPSILON)) {
     log_z = 0.0;
     // re-estimate log Z
@@ -382,6 +382,8 @@ void Tagger::Impl::finite_differences(Instances &instances, PDFs &alphas, PDFs &
     else
       attributes.print_current_gradient(val, inv_sigma_sq);
   }
+
+  log_z = old_log_z;
 }
 
 void Tagger::Impl::reg(void) {

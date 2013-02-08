@@ -19,9 +19,9 @@ namespace Util {
 
       public:
         uint64_t index;
-        StringEntry *next;
-        Value value;
         const Hash hash;
+        Value value;
+        StringEntry *next;
         char str[1];
 
         static StringEntry *create(Pool *pool, const uint64_t index,

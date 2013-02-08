@@ -24,6 +24,7 @@ namespace Util {
           for (typename Entries::const_iterator it = Base::_entries.begin();
               it != Base::_entries.end(); ++it)
             Base::add(*it);
+          delete old;
         }
 
         using Base::insert;
@@ -41,6 +42,8 @@ namespace Util {
           _max_load(max_load), _expansion_factor(expansion_factor) { }
 
         virtual ~HashTable(void) { }
+
+        using Base::add;
 
         virtual Entry *add(const Key &key, const Value &value) {
           Hash hash(key);

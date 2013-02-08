@@ -22,6 +22,9 @@ namespace NLP {
         load(filename, input);
       }
 
+      using ImplBase::add;
+      using ImplBase::insert;
+
       void add(const std::string &raw, const uint64_t freq) {
         Base::add(raw)->value += freq;
       }

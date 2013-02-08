@@ -96,6 +96,8 @@ namespace NLP {
           }
         }
 
+        using ImplBase::find;
+
         RegEntry *find(const std::string &type) const {
           return _buckets[RegEntry::hash(type).value() % _nbuckets]->find(type);
         }

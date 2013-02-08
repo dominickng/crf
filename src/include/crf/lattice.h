@@ -22,19 +22,16 @@ namespace NLP {
         Nodes nodes;
         const Node *max;
         const uint64_t nklasses;
-        const uint64_t nklasses2;
 
       public:
         Lattice(uint64_t nklasses)
-          : pool(new NodePool<Node>()), nodes(), max(NULL), nklasses(nklasses),
-            nklasses2(nklasses * nklasses) {
+          : pool(new NodePool<Node>()), nodes(), max(NULL), nklasses(nklasses) {
           nodes.reserve(nklasses * 100);
         }
 
         ~Lattice(void) { delete pool; }
 
         void viterbi(TagSet &tags, PDFs &dist) {
-          const Node *prev_max = max;
           if (nodes.size() == 0) {
             for (int curr = 2; curr < nklasses; ++curr) {
               Node *n = new (pool) Node(NULL, curr, dist[Sentinel::val][curr]);
