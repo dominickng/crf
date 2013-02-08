@@ -13,8 +13,8 @@ namespace NLP {
             config::Op<std::string> ifmt;
             config::Op<std::string> ofmt;
 
-            Config(const std::string &name="ner",
-                const std::string &desc="ner CRF tagger config")
+            Config(const std::string &name="pos",
+                const std::string &desc="pos CRF tagger config")
               : Tagger::Config(name, desc),
                 pos(*this, "pos", "location to save the pos tag file", "//postags", &model),
                 train_ifmt(*this, "train_ifmt", "input file format for training", "%w|%p \n", false),
