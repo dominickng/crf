@@ -124,5 +124,9 @@ namespace NLP {
       return _impl->insert(type.name, _impl->lexicon[raw]);
     }
 
+    void WordDict::print_stats(std::ostream &out) {
+      _impl->print_stats(out);
+    }
+
   }
 }

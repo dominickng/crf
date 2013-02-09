@@ -9,6 +9,14 @@ namespace Util {
         virtual void _set(const std::string &value) = 0;
         virtual void _validate(void) = 0;
 
+        void _print(std::ostream &out, const std::string &str) {
+          for (size_t i = 0; i < str.size(); ++i)
+            if (str[i] == '\n')
+              out << '\\' << 'n';
+            else
+              out << str[i];
+        }
+
       public:
         friend class OpAlias;
         OpBase(OpGroup &group, const std::string &name,

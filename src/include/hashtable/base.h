@@ -61,6 +61,33 @@ namespace Util {
           const Hash hash(key);
           return _buckets[hash.value() % _nbuckets]->find(hash, key);
         }
+
+        void print_stats(std::ostream &out) const {
+          size_t maxchain = 0;
+          size_t nbins = 0;
+          size_t nbytes = 0;
+
+          for (size_t i = 0; i < _nbuckets; i++) {
+            if (_buckets[i]) {
+              uint64_t size = _buckets[i]->nchained();
+              if (maxchain < size)
+                maxchain = size;
+              nbins++;
+            }
+          }
+
+          out << "number of entries " << _size << '\n';
+          out << "number of bins used " << nbins << " (of " << _nbuckets<< ")\n";
+          out << "used bins/nbins " << nbins/static_cast<float>(_nbuckets) << '\n';
+          out << "maximum chain length " << maxchain << '\n';
+          out << "average chain length " << _size/static_cast<float>(nbins) << '\n';
+
+          nbytes = _size * sizeof(Entry);
+          out << "      entry objs " << nbytes << " bytes\n";
+          nbytes += sizeof(_buckets);
+          out << "      bin []     " << sizeof(_buckets) << " bytes\n";
+          out << "total            " << nbytes << " bytes\n";
+        }
     };
   }
 }

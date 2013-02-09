@@ -20,6 +20,8 @@ namespace NLP {
         Attribute get(const Type &type, const Raw &raw);
         Attribute &insert(const Type &type, const Raw &raw);
 
+        void print_stats(std::ostream &out);
+
       private:
         class Impl;
         Impl *_impl;
