@@ -9,6 +9,7 @@
 #include "tagset.h"
 #include "crf/nodepool.h"
 #include "crf/lattice.h"
+#include "crf/state.h"
 #include "crf/features.h"
 #include "crf/tagger.h"
 #include "crf/pos.h"
@@ -23,27 +24,26 @@ class POS::Impl : public Tagger::Impl {
   protected:
     typedef Tagger::Impl Base;
 
-    virtual void tag(Reader &reader, Writer &writer) {
+    virtual void run_tag(Reader &reader, Writer &writer) {
       load();
       Sentence sent;
-      Lattice lattice(tags.size());
-      PDFs dist;
-      for (int i = 0; i < tags.size(); ++i)
-        dist.push_back(PDF(tags.size(), 0.0));
+      State state(tags.size());
 
       while (reader.next(sent)) {
-        for (int i = 0; i < sent.words.size(); ++i) {
-          registry.add_features(sent, dist, i);
-          lattice.viterbi(tags, dist);
-        }
-        //lattice.print(std::cout, tags, sent.size());
-        lattice.best(tags, sent.pos, sent.words.size());
+        tag(state, sent);
         writer.next(sent);
         sent.reset();
-        lattice.reset();
-        for (int i = 0; i < tags.size(); ++i)
-          std::fill(dist[i].begin(), dist[i].end(), 0.0);
+        state.reset();
       }
+    }
+
+    virtual void tag(State &state, Sentence &sent) {
+      for (int i = 0; i < sent.size(); ++i) {
+        registry.add_features(sent, state.dist, i);
+        state.lattice.viterbi(tags, state.dist);
+      }
+      //state.lattice.print(std::cout, tags, sent.size());
+      state.lattice.best(tags, sent.entities, sent.size());
     }
 
     virtual void _pass1(Reader &reader) {
@@ -96,7 +96,9 @@ POS::POS(POS::Config &cfg, Types &types, const std::string &preface)
 
 void POS::train(Reader &reader) { _impl->train(reader); }
 
-void POS::tag(Reader &reader, Writer &writer) { _impl->tag(reader, writer); }
+void POS::run_tag(Reader &reader, Writer &writer) { _impl->run_tag(reader, writer); }
+
+void POS::tag(State &state, Sentence &sent) { _impl->tag(state, sent); }
 
 void POS::extract(Reader &reader, Instances &instances) {
   _impl->extract(reader, instances);

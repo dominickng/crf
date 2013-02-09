@@ -1,3 +1,7 @@
+#include "crf/nodepool.h"
+#include "crf/lattice.h"
+#include "crf/state.h"
+#include "crf/features.h"
 #include "crf/tagger.h"
 #include "crf/pos.h"
 #include "crf/ner.h"

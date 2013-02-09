@@ -8,25 +8,16 @@ namespace NLP {
 
         class Config : public Tagger::Config {
           public:
-            config::OpPath pos;
-            config::Op<std::string> train_ifmt;
-            config::Op<std::string> ifmt;
-            config::Op<std::string> ofmt;
-
             Config(const std::string &name="pos",
                 const std::string &desc="pos CRF tagger config")
-              : Tagger::Config(name, desc),
-                pos(*this, "pos", "location to save the pos tag file", "//postags", &model),
-                train_ifmt(*this, "train_ifmt", "input file format for training", "%w|%p \n", false),
-                ifmt(*this, "ifmt", "input file format", "%w \n", false),
-                ofmt(*this, "ofmt", "output file format", "%w|%p \n", false)
-                { }
+              : Tagger::Config(name, desc) { }
         };
 
         POS(POS::Config &cfg, Types &types, const std::string &preface);
 
         void train(Reader &reader);
-        void tag(Reader &reader, Writer &writer);
+        void run_tag(Reader &reader, Writer &writer);
+        void tag(State &state, Sentence &sent);
         void extract(Reader &reader, Instances &instances);
 
       private:

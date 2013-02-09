@@ -120,7 +120,8 @@ namespace NLP {
           _load_model(model);
         }
 
-        virtual void tag(Reader &reader, Writer &writer) = 0;
+        virtual void run_tag(Reader &reader, Writer &writer) = 0;
+        virtual void tag(State &state, Sentence &sent) = 0;
 
         virtual void train(Reader &reader);
         virtual void extract(Reader &reader, Instances &instances);

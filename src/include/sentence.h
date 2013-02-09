@@ -27,6 +27,7 @@ namespace NLP {
         case '9': return TYPE_OPTIONAL;
         case 'w':
         case 'p':
+        case 'c':
         case 'e': return TYPE_SINGLE;
         case '?': return TYPE_IGNORE;
         default: return TYPE_INVALID;

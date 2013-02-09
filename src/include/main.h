@@ -26,7 +26,7 @@ int main(int argc, char *argv[]) {
   catch (FormatException &e) {
     std::cerr << port::RED << e.msg;
     if (e.c)
-      std::cerr << " " << e.c;
+      std::cerr << e.c;
     std::cerr << port::OFF << std::endl;
     exit(1);
   }

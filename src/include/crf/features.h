@@ -1,5 +1,4 @@
 #include "crf/features/weight.h"
-#include "crf/features/state.h"
 #include "crf/features/types.h"
 #include "crf/features/feature.h"
 #include "crf/features/context.h"
