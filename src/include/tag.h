@@ -53,6 +53,9 @@ namespace NLP {
       inline bool operator<(const size_t x) { return _id < x; }
       inline bool operator<=(const size_t x) { return _id <= x; }
 
+      inline bool operator<(const uint64_t x) { return _id < x; }
+      inline bool operator<=(const uint64_t x) { return _id <= x; }
+
   };
 
   typedef std::vector<Tag> Tags;

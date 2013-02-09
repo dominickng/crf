@@ -99,12 +99,6 @@ namespace NLP {
       size_t size(void) const { return Base::_size; }
   };
 
-  TagSet::TagSet(void) :
-    _impl(new Impl()) {
-      insert(None::str, 0);
-      insert(Sentinel::str, 0);
-  }
-
   TagSet::TagSet(const std::string &filename)
     : _impl(new Impl(filename)) {
       insert(None::str, 0);

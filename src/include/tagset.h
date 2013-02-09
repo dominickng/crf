@@ -7,7 +7,6 @@ namespace NLP {
       Impl *_impl;
 
     public:
-      TagSet(void);
       TagSet(const std::string &filename);
       TagSet(const std::string &filename, std::istream &input);
       TagSet(const TagSet &other);

@@ -95,6 +95,7 @@ namespace NLP {
         const std::string preface;
         double inv_sigma_sq;
         double log_z;
+        uint64_t ntags;
 
         Impl(Config &cfg, Types &types, const std::string &preface)
           : Util::Shared(), cfg(cfg), types(types),
