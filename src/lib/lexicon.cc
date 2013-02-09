@@ -124,6 +124,8 @@ namespace NLP {
 
   Lexicon::Lexicon(const Lexicon &other) : _impl(share(other._impl)) { }
 
+  Lexicon::~Lexicon(void) { release(_impl); }
+
   void Lexicon::add(const std::string &raw, const uint64_t freq) { _impl->add(raw, freq); }
   void Lexicon::insert(const std::string &raw, const uint64_t freq) { _impl->insert(raw, freq); }
 

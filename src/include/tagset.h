@@ -12,6 +12,8 @@ namespace NLP {
       TagSet(const std::string &filename, std::istream &input);
       TagSet(const TagSet &other);
 
+      ~TagSet(void);
+
       TagSet &operator=(const TagSet &other);
 
       void add(const std::string &raw, const uint64_t freq=1);

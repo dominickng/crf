@@ -125,6 +125,8 @@ namespace NLP {
     return *this;
   }
 
+  TagSet::~TagSet(void) { release(_impl); }
+
   void TagSet::add(const std::string &raw, const uint64_t freq) { _impl->add(raw, freq); }
   void TagSet::insert(const std::string &raw, const uint64_t freq) { _impl->insert(raw, freq); }
 

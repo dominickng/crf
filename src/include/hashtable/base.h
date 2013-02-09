@@ -36,7 +36,7 @@ namespace Util {
 
         virtual ~BaseHashTable(void) {
           delete _pool;
-          delete _buckets;
+          delete [] _buckets;
         }
 
         inline size_t size(void) const { return _size; }

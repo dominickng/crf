@@ -14,6 +14,8 @@ namespace NLP {
           const size_t nbuckets=HT::MEDIUM, const size_t pool_size=HT::LARGE);
       Lexicon(const Lexicon &other);
 
+      ~Lexicon(void);
+
       void add(const std::string &raw, const uint64_t freq=1);
       void insert(const std::string &raw, const uint64_t freq=1);
 

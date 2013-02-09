@@ -16,6 +16,8 @@ namespace NLP {
             const size_t nbuckets=HT::MEDIUM, const size_t pool_size=HT::LARGE);
         Attributes(const Attributes &other);
 
+        ~Attributes(void);
+
         void load(const std::string &filename);
         void load(const std::string &filename, std::istream &input);
         void save_attributes(const std::string &filename, const std::string &preface);

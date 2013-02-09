@@ -17,8 +17,6 @@ namespace NLP {
         AttribEntry(const char *type, AttribEntry *next) :
           index(0), value(0), next(next), type(type), features() { }
 
-        ~AttribEntry(void) { }
-
         void *operator new(size_t size, Util::Pool *pool, size_t len) {
           return pool->alloc(size + len - 1);
         }
@@ -32,6 +30,8 @@ namespace NLP {
         const char *type;
         Features features;
         char str[1];
+
+        ~AttribEntry(void) { }
 
         static Hash::Hash hash(const char *type, const std::string &str) {
           std::string s = str + ' ' + type;
@@ -184,6 +184,11 @@ namespace NLP {
             const size_t nbuckets, const size_t pool_size) :
           ImplBase(nbuckets, pool_size), Shared(), preface() {
             load(filename, input);
+        }
+
+        ~Impl(void) {
+          for (Entries::const_iterator i = _entries.begin(); i != _entries.end(); ++i)
+            (*i)->~AttribEntry();
         }
 
         using ImplBase::add;
@@ -355,6 +360,10 @@ namespace NLP {
 
     Attributes::Attributes(const Attributes &other) : _impl(share(other._impl)) { }
 
+    Attributes::~Attributes(void) {
+      release(_impl);
+    }
+
     void Attributes::load(const std::string &filename) { _impl->load(filename); }
     void Attributes::load(const std::string &filename, std::istream &input) { _impl->load(filename, input); }
 
@@ -384,9 +393,7 @@ namespace NLP {
     void Attributes::save_weights(std::ostream &out, const std::string &preface) { _impl->save_weights(out, preface); }
 
     void Attributes::operator()(const char *type, const std::string &str, TagPair &tp) { _impl->add(type, str, tp); }
-
     void Attributes::operator()(const char *type, const std::string &str, uint64_t &id) { _impl->find(type, str, id); }
-
     void Attributes::operator()(const char *type, const std::string &str, Context &c) { _impl->find(type, str, c); }
 
     void Attributes::sort_by_freq(void) { _impl->sort_by_rev_value(); }

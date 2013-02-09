@@ -14,7 +14,11 @@ namespace NLP {
           reader = new FormatReader(uri, in, fmt);
         else if (name == "conll")
           reader = new CoNLLReader(uri, in);
-      }
+  }
+
+  ReaderFactory::~ReaderFactory(void) {
+    delete reader;
+  }
 
   bool ReaderFactory::next(Sentence &sent) {
     return reader->next(sent);

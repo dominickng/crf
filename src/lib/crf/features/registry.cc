@@ -20,10 +20,6 @@ namespace NLP {
         RegEntry(const Type &type, FeatureGen *gen, RegEntry *next) :
           type(type), gen(gen), next(next) { }
 
-        ~RegEntry(void) {
-          delete gen;
-        }
-
         void *operator new(size_t size, Util::Pool *pool) {
           return pool->alloc(size);
         }
@@ -34,6 +30,10 @@ namespace NLP {
         const Type &type;
         FeatureGen *gen;
         RegEntry *next;
+
+        ~RegEntry(void) {
+          delete gen;
+        }
 
         static Hash::Hash hash(const char *type) {
           return Hash::Hash(type);
@@ -84,7 +84,10 @@ namespace NLP {
         Impl(const size_t nbuckets, const size_t pool_size)
           : ImplBase(nbuckets, pool_size), Shared(), _actives() { }
 
-        virtual ~Impl(void) { }
+        virtual ~Impl(void) {
+          for (Entries::iterator j = _actives.begin(); j != _actives.end(); ++j)
+            (*j)->~RegEntry();
+        }
 
         void reg(const Type &type, config::Op<bool> &op, FeatureGen *gen) {
           if (op()) {

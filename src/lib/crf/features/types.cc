@@ -10,11 +10,10 @@ const Type Types::w = {"word feature", "w", 2};
 const Type Types::nw = {"next word", "nw", 3};
 const Type Types::nnw = {" next next word", "nnw", 4};
 
-const Type Types::ppw_pw = {"prev 2 words", "ppc_pw", 0};
-const Type Types::pw_w = {"prev word + curr word", "pc_w", 1};
-const Type Types::w_nw = {"word + next word", "c_nw", 2};
-const Type Types::nw_nnw = {"next 2 words", "nc_nnw", 3};
-
+const Type Types::ppw_pw = {"prev 2 words", "ppw_pw", 0};
+const Type Types::pw_w = {"prev word + curr word", "pw_w", 1};
+const Type Types::w_nw = {"word + next word", "w_nw", 2};
+const Type Types::nw_nnw = {"next 2 words", "nw_nnw", 3};
 
 const Type Types::ppp = {"prev prev pos", "ppp", 0};
 const Type Types::pp = {"prev pos", "pp", 1};

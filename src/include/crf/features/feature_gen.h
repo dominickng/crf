@@ -1,10 +1,7 @@
 namespace NLP {
   namespace CRF {
     class FeatureGen {
-      public:
-        FeatureGen(void) { }
-        virtual ~FeatureGen(void) { }
-
+      protected:
         void _add_features(Attribute attrib, PDFs &dist) {
           for (Weight *w = attrib.begin; w != attrib.end; ++w) {
             //std::cout << "adding weight " << w->lambda << " for " << tags.str(w->prev) << " -> " << tags.str(w->curr) << std::endl;
@@ -15,6 +12,10 @@ namespace NLP {
               dist[w->prev][w->curr] += w->lambda;
           }
         }
+
+      public:
+        FeatureGen(void) { }
+        virtual ~FeatureGen(void) { }
 
         virtual Attribute &load(const Type &type, std::istream &in) = 0;
 
