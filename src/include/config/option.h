@@ -38,7 +38,6 @@ namespace Util {
     class Op : public OpBase {
       // templated class of ops that take args of a particular type
       protected:
-
         virtual void _set(const std::string &value) {
           std::istringstream s(value);
           if (!(s >> _value))
@@ -92,6 +91,21 @@ namespace Util {
 
     template <> inline void Op<std::string>::_set(const std::string &value) {
       _value = value;
+    }
+
+    template <> inline void Op<bool>::_set(const std::string &value) {
+      std::istringstream s(value);
+      if (!(s >> std::boolalpha >> _value >> std::noboolalpha))
+        throw ConfigException("Invalid value", _name, value);
+    }
+
+    template <> inline void Op<bool>::help(std::ostream &out,
+        const std::string &prefix, const unsigned int depth) const {
+          out << prefix << _name << " <arg>: " << _desc;
+
+          if (_has_default)
+            out << " (def=\"" << ((_default) ? "true" : "false") << "\")";
+          out << std::endl;
     }
 
     class OpFlag : public Op<bool> {
