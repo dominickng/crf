@@ -43,7 +43,7 @@ class POS::Impl : public Tagger::Impl {
         state.lattice.viterbi(tags, state.dist);
       }
       //state.lattice.print(std::cout, tags, sent.size());
-      state.lattice.best(tags, sent.entities, sent.size());
+      state.lattice.best(tags, sent.pos, sent.size());
     }
 
     virtual void _pass1(Reader &reader) {
