@@ -12,7 +12,7 @@ bool FormatWriter::next(Sentence &sent) {
     return false;
 
   out << format.sent_pre;
-  int i, j;
+  size_t i, j;
   for (i = 0; i < sent.size() - 1; ++i) {
     for (j = 0; j < format.fields.size() - 1; ++j)
       out << sent.get_single(format.fields[j])[i] << format.separators[j];

@@ -38,7 +38,7 @@ class POS::Impl : public Tagger::Impl {
     }
 
     virtual void tag(State &state, Sentence &sent) {
-      for (int i = 0; i < sent.size(); ++i) {
+      for (size_t i = 0; i < sent.size(); ++i) {
         registry.add_features(sent, state.dist, i);
         state.lattice.viterbi(tags, state.dist);
       }

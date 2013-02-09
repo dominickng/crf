@@ -94,7 +94,7 @@ void Tagger::Impl::train(Reader &reader) {
   lbfgsfloatval_t *x = lbfgs_malloc(n);
   lbfgs_parameter_t param;
 
-  for(int i = 0; i < n; ++i)
+  for(size_t i = 0; i < n; ++i)
     x[i] = 1.0;
   lbfgs_parameter_init(&param);
   //param.linesearch = LBFGS_LINESEARCH_BACKTRACKING;
@@ -124,7 +124,7 @@ double Tagger::Impl::log_likelihood(void) {
 }
 
 void Tagger::Impl::compute_psis(Contexts &contexts, PSIs &psis) {
-  for(int i = 0; i < contexts.size(); ++i) {
+  for (size_t i = 0; i < contexts.size(); ++i) {
     double sum = 0.0;
     Context &c = contexts[i];
     for (FeaturePtrs::iterator j = c.features.begin(); j != c.features.end(); ++j)
@@ -134,17 +134,17 @@ void Tagger::Impl::compute_psis(Contexts &contexts, PSIs &psis) {
 }
 
 void Tagger::Impl::print_psis(Contexts &contexts, PSIs &psis) {
-  for(int i = 0; i < contexts.size(); ++i){
+  for (size_t i = 0; i < contexts.size(); ++i) {
     std::cout << "Position " << i << std::endl;
-    for (int j = 0; j < psis[i].size(); ++j){
+    for (size_t j = 0; j < psis[i].size(); ++j) {
       if(j == 0){
         std::cout << std::setw(16) << ' ';
-        for (int k = 0; k < psis[i][j].size(); ++k)
+        for (size_t k = 0; k < psis[i][j].size(); ++k)
           std::cout << std::setw(16) << tags.str(k);
         std::cout << std::endl;
       }
       std::cout << std::setw(16) << tags.str(j);
-      for (int k = 0; k < psis[i][j].size(); ++k){
+      for (size_t k = 0; k < psis[i][j].size(); ++k){
         std::cout << std::setw(16) << psis[i][j][k] << ' ';
       }
       std::cout << std::endl;
@@ -155,17 +155,17 @@ void Tagger::Impl::print_psis(Contexts &contexts, PSIs &psis) {
 
 void Tagger::Impl::print_fwd_bwd(Contexts &contexts, PDFs &pdfs, PDF &scale) {
   std::cout << std::setw(16) << ' ';
-  for(int i = 0; i < contexts.size(); ++i)
+  for (size_t i = 0; i < contexts.size(); ++i)
     std::cout << std::setw(16) << tags.str(contexts[i].klasses.curr);
   std::cout << std::endl;
   for(Tag curr(0); curr < tags.size(); ++curr) {
     std::cout << std::setw(16) << tags.str(curr);
-    for(int i = 0; i < contexts.size(); ++i)
+    for(size_t i = 0; i < contexts.size(); ++i)
       std::cout << std::setw(16) << pdfs[i][curr];
     std::cout << std::endl;
   }
   std::cout << std::setw(16) << "scale:";
-  for(int i = 0; i < contexts.size(); ++i)
+  for(size_t i = 0; i < contexts.size(); ++i)
     std::cout << std::setw(16) << scale[i];
 
   std::cout << '\n' << std::endl;
@@ -273,10 +273,10 @@ int Tagger::Impl::progress(void *instance, const lbfgsfloatval_t *x,
 void Tagger::Impl::reset(PDFs &alphas, PDFs &betas, PSIs &psis, PDF &scale, const size_t size) {
   std::fill(scale.begin(), scale.begin() + size, 1.0);
 
-  for (int i = 0; i < size; ++i) {
+  for (size_t i = 0; i < size; ++i) {
     std::fill(alphas[i].begin(), alphas[i].end(), 0.0);
     std::fill(betas[i].begin(), betas[i].end(), 0.0);
-    for (int j = 0; j < psis[i].size(); ++j)
+    for (size_t j = 0; j < psis[i].size(); ++j)
       std::fill(psis[i][j].begin(), psis[i][j].end(), 1.0);
   }
 }
@@ -292,12 +292,12 @@ lbfgsfloatval_t Tagger::Impl::_evaluate(const lbfgsfloatval_t *x,
   PSIs psis;
   PDF scale;
 
-  for (int i = 0; i < model.max_size(); ++i) {
+  for (size_t i = 0; i < model.max_size(); ++i) {
     alphas.push_back(PDF(tags.size(), 0.0));
     betas.push_back(PDF(tags.size(), 0.0));
     scale.push_back(1.0);
     psis.push_back(PDFs(0));
-    for (int j = 0; j < tags.size(); ++j)
+    for (size_t j = 0; j < tags.size(); ++j)
       psis[i].push_back(PDF(tags.size(), 1.0));
   }
 
@@ -310,7 +310,7 @@ lbfgsfloatval_t Tagger::Impl::_evaluate(const lbfgsfloatval_t *x,
     //print_psis(contexts, psis);
     //forward_noscale(contexts, alphas, psis);
     //backward_noscale(contexts, betas, psis);
-    //for (int j = 0; j < alphas.size(); ++j) {
+    //for (size_t j = 0; j < alphas.size(); ++j) {
       //std::fill(alphas[j].begin(), alphas[j].end(), 0.0);
       //std::fill(betas[j].begin(), betas[j].end(), 0.0);
     //}
@@ -320,7 +320,7 @@ lbfgsfloatval_t Tagger::Impl::_evaluate(const lbfgsfloatval_t *x,
     //print_fwd_bwd(contexts, alphas, scale);
     //print_fwd_bwd(contexts, betas, scale);
 
-    for (int j = 0; j < i->size(); ++j) {
+    for (size_t j = 0; j < i->size(); ++j) {
       TagPair &klasses = contexts[j].klasses;
       for (FeaturePtrs::iterator k = contexts[j].features.begin(); k != contexts[j].features.end(); ++k) {
         double alpha = (j > 0) ? alphas[j-1][klasses.prev] : 1.0;

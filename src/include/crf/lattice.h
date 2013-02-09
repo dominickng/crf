@@ -33,7 +33,7 @@ namespace NLP {
 
         void viterbi(TagSet &tags, PDFs &dist) {
           if (nodes.size() == 0) {
-            for (int curr = 2; curr < nklasses; ++curr) {
+            for (size_t curr = 2; curr < nklasses; ++curr) {
               Node *n = new (pool) Node(NULL, curr, dist[Sentinel::val][curr]);
               nodes.push_back(n);
               if (!max || max->score < n->score)
@@ -43,10 +43,10 @@ namespace NLP {
           else {
             size_t size = nodes.size() - 1;
             const Node *new_max = NULL;
-            for (int curr = 2; curr < nklasses; ++curr) {
+            for (size_t curr = 2; curr < nklasses; ++curr) {
               double best_score = -std::numeric_limits<double>::max();
               Node *best_prev = NULL;
-              for (int prev = 2; prev < nklasses; ++prev) {
+              for (size_t prev = 2; prev < nklasses; ++prev) {
                 double score = dist[prev][curr] + nodes[size - prev + 2]->score;
                 if (score > best_score) {
                   best_score = score;
@@ -79,7 +79,7 @@ namespace NLP {
         }
 
         void print(std::ostream &out, TagSet &tags, size_t nwords) {
-          for (int i = 0; i < nklasses - 2; ++i) {
+          for (size_t i = 0; i < nklasses - 2; ++i) {
             size_t index = nodes.size() - (nklasses - 2) + i;
             out << std::setw(16) << tags.str(i+2);
             _print(out, nodes[index], max, nwords);

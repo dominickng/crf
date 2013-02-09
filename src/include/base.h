@@ -8,7 +8,7 @@ namespace NLP {
   struct None {
     public:
       const static std::string str;
-      const static int val = 0;
+      const static uint64_t val = 0;
       const static std::string::size_type len = 8;
       None(void) { }
   };
@@ -16,7 +16,7 @@ namespace NLP {
   struct Sentinel {
     public:
       const static std::string str;
-      const static int val = 1;
+      const static uint64_t val = 1;
       const static std::string::size_type len = 12;
       Sentinel(void) { }
   };

@@ -34,7 +34,7 @@ namespace NLP {
         WordEntry *next;
 
         static Hash::Hash hash(const char *type, const Word value) {
-          return Hash::Hash((value.index() >> 2)*7 + (uint64_t)type);
+          return Hash::Hash(value.index() * 31 + (uint64_t)type * 37);
         }
 
         static WordEntry *create(Util::Pool *pool, const uint64_t index,

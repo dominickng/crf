@@ -23,7 +23,7 @@ OptionBase::OptionBase(const std::string &name, const std::string &desc,
     throw ConfigException("Option names cannot be empty", _name);
 
   if (name.size() > 1) {
-    for (int i = 0; i < name.size(); ++i) {
+    for (size_t i = 0; i < name.size(); ++i) {
       if (name[i] == '-')
         throw ConfigException("Option names cannot contain dashes", name);
       if (std::isspace(name[i]))
