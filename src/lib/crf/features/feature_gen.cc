@@ -61,26 +61,38 @@ Attribute &OffsetWordGen::load(const Type &type, std::istream &in) {
 
 void OffsetWordGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) {
   TagPair _tp(None::val, tp.curr);
+  const Raw *word;
   i += offset;
 
-  if (i >= 0 && i < sent.size()) {
-    attributes(type.name, sent.words[i], tp);
-    attributes(type.name, sent.words[i], _tp);
-  }
+  if (i >= 0 && i < sent.size())
+    word = &sent.words[i];
+  else
+    word = &Sentinel::str;
+
+  attributes(type.name, *word, tp);
+  attributes(type.name, *word, _tp);
 }
 
 void OffsetWordGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i) {
+  const Raw *word;
   i += offset;
 
   if (i >= 0 && i < sent.size())
-    attributes(type.name, sent.words[i], c);
+    word = &sent.words[i];
+  else
+    word = &Sentinel::str;
+  attributes(type.name, *word, c);
 }
 
 void OffsetWordGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int i) {
+  const Raw *word;
   i += offset;
 
   if (i >= 0 && i < sent.size())
-    _add_features(dict.get(type, sent.words[i]), dist);
+    word = &sent.words[i];
+  else
+    word = &Sentinel::str;
+  _add_features(dict.get(type, *word), dist);
 }
 
 OffsetPosGen::OffsetPosGen(TagDict &dict, const int offset)
@@ -92,26 +104,39 @@ Attribute &OffsetPosGen::load(const Type &type, std::istream &in) {
 
 void OffsetPosGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) {
   TagPair _tp(None::val, tp.curr);
+  const Raw *raw;
   i += offset;
 
-  if (i >= 0 && i < sent.size()) {
-    attributes(type.name, sent.pos[i], tp);
-    attributes(type.name, sent.pos[i], _tp);
-  }
+  if (i >= 0 && i < sent.size())
+    raw = &sent.pos[i];
+  else
+    raw = &Sentinel::str;
+
+  attributes(type.name, *raw, tp);
+  attributes(type.name, *raw, _tp);
 }
 
 void OffsetPosGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i) {
+  const Raw *raw;
   i += offset;
 
   if (i >= 0 && i < sent.size())
-    attributes(type.name, sent.pos[i], c);
+    raw = &sent.pos[i];
+  else
+    raw = &Sentinel::str;
+
+  attributes(type.name, *raw, c);
 }
 
 void OffsetPosGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int i) {
+  const Raw *raw;
   i += offset;
 
   if (i >= 0 && i < sent.size())
-    _add_features(dict.get(type, sent.pos[i]), dist);
+    raw = &sent.pos[i];
+  else
+    raw = &Sentinel::str;
+  _add_features(dict.get(type, *raw), dist);
 }
 
 } }

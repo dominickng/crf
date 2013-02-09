@@ -68,10 +68,22 @@ namespace NLP {
       }
 
       const Word canonize(const std::string &raw) const {
+        if (raw[0] == '_' && raw[1] == '_') {
+          if (raw == None::str)
+            return NONE;
+          else if (raw == Sentinel::str)
+            return SENTINEL;
+        }
         return Word(reinterpret_cast<uint64_t>(find(raw.c_str())));
       }
 
       const Word canonize(const char *raw) const {
+        if (raw[0] == '_' && raw[1] == '_') {
+          if (raw == None::str)
+            return NONE;
+          else if (raw == Sentinel::str)
+            return SENTINEL;
+        }
         return Word(reinterpret_cast<uint64_t>(find(raw)));
       }
 
@@ -83,6 +95,10 @@ namespace NLP {
       }
 
       const char *str(const Word &word) const {
+        if (word.id() == None::val)
+          return None::str.c_str();
+        else if (word.id() == Sentinel::val)
+          return Sentinel::str.c_str();
         return reinterpret_cast<Entry *>(word.id())->str;
       }
 

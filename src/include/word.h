@@ -41,9 +41,9 @@ namespace NLP {
       inline const char *str(void) const {
         switch (_id) {
           case 0:
-            return None::str;
+            return None::str.c_str();
           case 1:
-            return Sentinel::str;
+            return Sentinel::str.c_str();
           default:
             return _str();
         }

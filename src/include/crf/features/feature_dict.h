@@ -17,8 +17,8 @@ namespace NLP {
         virtual ~WordDict(void);
 
         virtual Attribute &load(const Type &type, std::istream &in);
-        Attribute get(const Type &type, Raw &raw);
-        Attribute &insert(const Type &type, Raw &raw);
+        Attribute get(const Type &type, const Raw &raw);
+        Attribute &insert(const Type &type, const Raw &raw);
 
       private:
         class Impl;
@@ -39,11 +39,11 @@ namespace NLP {
           return insert(type.name, value);
         }
 
-        Attribute get(const Type &type, Raw &raw) {
+        Attribute get(const Type &type, const Raw &raw) {
           return attributes[tags[raw]];
         }
 
-        Attribute &insert(const std::string &type, Raw &raw) {
+        Attribute &insert(const std::string &type, const Raw &raw) {
           return attributes[tags[raw]];
         }
 

@@ -67,14 +67,14 @@ namespace NLP {
       const Tag canonize(const std::string &raw) const {
         Entry *e = find(raw.c_str());
         if (!e)
-          return NONE;
+          return SENTINEL;
         return Tag(e->index);
       }
 
       const Tag canonize(const char *raw) const {
         Entry *e = find(raw);
         if (!e)
-          return NONE;
+          return SENTINEL;
         return Tag(e->index);
       }
 
