@@ -11,7 +11,11 @@ namespace NLP {
         : Writer(uri, out), fmt(fmt), writer(0) {
         if (name == "format")
           writer = new FormatWriter(uri, out, fmt);
-      }
+  }
+
+  WriterFactory::~WriterFactory(void) {
+    delete writer;
+  }
 
   bool WriterFactory::next(Sentence &sent) {
     return writer->next(sent);

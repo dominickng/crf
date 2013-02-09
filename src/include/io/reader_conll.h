@@ -14,6 +14,8 @@ namespace NLP {
     public:
       CoNLLReader(const std::string &uri, std::istream &input);
 
+      virtual ~CoNLLReader(void) { };
+
       virtual bool next(Sentence &sent);
 
       virtual void reset(void);

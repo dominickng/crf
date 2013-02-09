@@ -8,6 +8,8 @@ namespace NLP {
       Writer(const std::string &uri, std::ostream &out)
         : uri(uri), out(out) { }
 
+      virtual ~Writer(void) { }
+
       virtual bool next(Sentence &sent) = 0;
 
       virtual void write_preface(const std::string &preface) {

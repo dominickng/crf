@@ -8,6 +8,8 @@ namespace NLP {
       Reader(const std::string &uri, std::istream &in)
         : uri(uri), in(in) { }
 
+      virtual ~Reader(void) { }
+
       virtual bool next(Sentence &sent) = 0;
 
       virtual void reset(void) {

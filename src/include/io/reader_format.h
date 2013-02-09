@@ -15,6 +15,8 @@ namespace NLP {
     public:
       FormatReader(const std::string &uri, std::istream &input, const std::string &fmt);
 
+      virtual ~FormatReader(void) { }
+
       virtual bool next(Sentence &sent);
 
       virtual void reset(void);

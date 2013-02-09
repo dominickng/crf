@@ -7,6 +7,8 @@ namespace NLP {
       FormatWriter(const std::string &uri, std::ostream &out, const std::string &format) :
         Writer(uri, out), format(format) { }
 
+      virtual ~FormatWriter(void) { }
+
       virtual bool next(Sentence &sent);
 
   };
