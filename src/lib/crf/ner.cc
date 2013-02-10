@@ -95,6 +95,11 @@ class NER::Impl : public Tagger::Impl {
       registry.reg(Types::ppp, types.use_prev_pos, new OffsetPosGen(pp_p_dict, -2));
       registry.reg(Types::np, types.use_next_pos, new OffsetPosGen(n_p_dict, 1));
       registry.reg(Types::nnp, types.use_next_pos, new OffsetPosGen(nn_p_dict, 2));
+
+      registry.reg(Types::ppp_pp, types.use_pos_bigrams, new BigramPosGen(ppp_pp_p_dict, -2));
+      registry.reg(Types::pp_p, types.use_pos_bigrams, new BigramPosGen(pp_p_p_dict, -1));
+      registry.reg(Types::p_np, types.use_pos_bigrams, new BigramPosGen(p_np_p_dict, 0));
+      registry.reg(Types::np_nnp, types.use_pos_bigrams, new BigramPosGen(np_nnp_p_dict, 1));
     }
 
     virtual void load(void) {
@@ -110,13 +115,19 @@ class NER::Impl : public Tagger::Impl {
     TagDict n_p_dict;
     TagDict nn_p_dict;
 
+    BiTagDict ppp_pp_p_dict;
+    BiTagDict pp_p_p_dict;
+    BiTagDict p_np_p_dict;
+    BiTagDict np_nnp_p_dict;
+
     const bool use_pos;
     const bool use_prev_pos;
     const bool use_next_pos;
 
     Impl(NER::Config &cfg, Types &types, const std::string &preface)
       : Base(cfg, types, preface), pos(cfg.pos()), p_dict(pos), p_p_dict(pos),
-        pp_p_dict(pos), n_p_dict(pos), nn_p_dict(pos),
+        pp_p_dict(pos), n_p_dict(pos), nn_p_dict(pos), ppp_pp_p_dict(pos),
+        pp_p_p_dict(pos), p_np_p_dict(pos), np_nnp_p_dict(pos),
         use_pos(types.use_pos()), use_prev_pos(types.use_prev_pos()),
         use_next_pos(types.use_next_pos()) { }
 

@@ -22,7 +22,7 @@ const Type Types::np = {"next pos", "np", 3};
 const Type Types::nnp = {" next next pos", "nnp", 4};
 
 const Type Types::ppp_pp = {"prev 2 pos", "ppp_pp", 0};
-const Type Types::pp_p = {"prev pos + curr pos", "pw_w", 1};
+const Type Types::pp_p = {"prev pos + curr pos", "pp_p", 1};
 const Type Types::p_np = {"pos + next pos", "p_np", 2};
 const Type Types::np_nnp = {"next 2 pos", "np_nnp", 3};
 
