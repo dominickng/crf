@@ -85,5 +85,35 @@ namespace NLP {
         TagDict &dict;
     };
 
+    class BigramWordGen : public OffsetGen {
+      public:
+        BigramWordGen(BiWordDict &dict, const int offset);
+        virtual ~BigramWordGen(void) { }
+
+        virtual Attribute &load(const Type &type, std::istream &in);
+        virtual void operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i);
+        virtual void operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i);
+        virtual void operator()(const Type &type, Sentence &sent, PDFs &dist, int i);
+
+        BiWordDict &dict;
+      private:
+        virtual void _get_raw(Sentence &sent, Raw &raw, int i);
+    };
+
+    class BigramPosGen : public OffsetGen {
+      public:
+        BigramPosGen(BiTagDict &dict, const int offset);
+        virtual ~BigramPosGen(void) { }
+
+        virtual Attribute &load(const Type &type, std::istream &in);
+        virtual void operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i);
+        virtual void operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i);
+        virtual void operator()(const Type &type, Sentence &sent, PDFs &dist, int i);
+
+        BiTagDict &dict;
+      private:
+        virtual void _get_raw(Sentence &sent, Raw &raw, int i);
+    };
+
   }
 }
