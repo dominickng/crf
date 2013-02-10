@@ -8,6 +8,28 @@
 
 namespace NLP { namespace CRF {
 
+void FeatureGen::_add_features(Attribute attrib, PDFs &dist) {
+  for (Weight *w = attrib.begin; w != attrib.end; ++w) {
+    //std::cout << "adding weight " << w->lambda << " for " << tags.str(w->prev) << " -> " << tags.str(w->curr) << std::endl;
+    if (w->prev == None::val)
+      for (Tag t = 0; t < dist.size(); ++t)
+        dist[t][w->curr] += w->lambda;
+    else
+      dist[w->prev][w->curr] += w->lambda;
+  }
+}
+
+const Raw *OffsetGen::_get_raw(Raws &raws, int i) {
+  const Raw *raw;
+  i += offset;
+
+  if (i >= 0 && i < raws.size())
+    raw = &raws[i];
+  else
+    raw = &Sentinel::str;
+  return raw;
+}
+
 WordGen::WordGen(WordDict &dict) : FeatureGen(), dict(dict) { }
 
 Attribute &WordGen::load(const Type &type, std::istream &in) {
@@ -61,37 +83,21 @@ Attribute &OffsetWordGen::load(const Type &type, std::istream &in) {
 
 void OffsetWordGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) {
   TagPair _tp(None::val, tp.curr);
-  const Raw *word;
-  i += offset;
-
-  if (i >= 0 && i < sent.size())
-    word = &sent.words[i];
-  else
-    word = &Sentinel::str;
+  const Raw *word = _get_raw(sent.words, i);
 
   attributes(type.name, *word, tp);
   attributes(type.name, *word, _tp);
 }
 
 void OffsetWordGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i) {
-  const Raw *word;
-  i += offset;
+  const Raw *word = _get_raw(sent.words, i);
 
-  if (i >= 0 && i < sent.size())
-    word = &sent.words[i];
-  else
-    word = &Sentinel::str;
   attributes(type.name, *word, c);
 }
 
 void OffsetWordGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int i) {
-  const Raw *word;
-  i += offset;
+  const Raw *word = _get_raw(sent.words, i);
 
-  if (i >= 0 && i < sent.size())
-    word = &sent.words[i];
-  else
-    word = &Sentinel::str;
   _add_features(dict.get(type, *word), dist);
 }
 
@@ -104,73 +110,56 @@ Attribute &OffsetPosGen::load(const Type &type, std::istream &in) {
 
 void OffsetPosGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) {
   TagPair _tp(None::val, tp.curr);
-  const Raw *raw;
-  i += offset;
-
-  if (i >= 0 && i < sent.size())
-    raw = &sent.pos[i];
-  else
-    raw = &Sentinel::str;
+  const Raw *raw = _get_raw(sent.pos, i);
 
   attributes(type.name, *raw, tp);
   attributes(type.name, *raw, _tp);
 }
 
 void OffsetPosGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i) {
-  const Raw *raw;
-  i += offset;
-
-  if (i >= 0 && i < sent.size())
-    raw = &sent.pos[i];
-  else
-    raw = &Sentinel::str;
+  const Raw *raw = _get_raw(sent.pos, i);
 
   attributes(type.name, *raw, c);
 }
 
 void OffsetPosGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int i) {
-  const Raw *raw;
-  i += offset;
+  const Raw *raw = _get_raw(sent.pos, i);
 
-  if (i >= 0 && i < sent.size())
-    raw = &sent.pos[i];
-  else
-    raw = &Sentinel::str;
   _add_features(dict.get(type, *raw), dist);
 }
 
-BigramWordGen::BigramWordGen(BiWordDict &dict, const int offset)
-  : OffsetGen(offset), dict(dict) { }
-
-Attribute &BigramWordGen::load(const Type &type, std::istream &in) {
-  return dict.load(type, in);
-}
-
-void BigramWordGen::_get_raw(Sentence &sent, Raw &raw, int i) {
+void BigramGen::_get_raw(Raws &raws, Raw &raw, int i) {
   i += offset;
-  if (i >= 0 && i < sent.size()) {
-    raw += sent.words[i++];
+  if (i >= 0 && i < raws.size()) {
+    raw += raws[i++];
     raw += ' ';
-    if (i >= 0 && i < sent.size())
-      raw += sent.words[i];
+    if (i >= 0 && i < raws.size())
+      raw += raws[i];
     else
       raw += Sentinel::str;
   }
   else {
     raw += Sentinel::str;
     raw += ' ';
-    if (++i >= 0 && i < sent.size())
-      raw += sent.words[i];
+    if (++i >= 0 && i < raws.size())
+      raw += raws[i];
     else
       raw += Sentinel::str;
   }
+}
+
+BigramWordGen::BigramWordGen(BiWordDict &dict, const int offset)
+  : BigramGen(offset), dict(dict) { }
+
+Attribute &BigramWordGen::load(const Type &type, std::istream &in) {
+  return dict.load(type, in);
 }
 
 void BigramWordGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) {
   TagPair _tp(None::val, tp.curr);
   Raw raw;
 
-  _get_raw(sent, raw, i);
+  _get_raw(sent.words, raw, i);
 
   attributes(type.name, raw, tp);
   attributes(type.name, raw, _tp);
@@ -179,7 +168,7 @@ void BigramWordGen::operator()(const Type &type, Attributes &attributes, Sentenc
 void BigramWordGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i) {
   Raw raw;
 
-  _get_raw(sent, raw, i);
+  _get_raw(sent.words, raw, i);
 
   attributes(type.name, raw, c);
 }
@@ -206,38 +195,17 @@ void BigramWordGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int
 }
 
 BigramPosGen::BigramPosGen(BiTagDict &dict, const int offset)
-  : OffsetGen(offset), dict(dict) { }
+  : BigramGen(offset), dict(dict) { }
 
 Attribute &BigramPosGen::load(const Type &type, std::istream &in) {
   return dict.load(type, in);
-}
-
-void BigramPosGen::_get_raw(Sentence &sent, Raw &raw, int i) {
-  i += offset;
-  if (i >= 0 && i < sent.size()) {
-    raw += sent.pos[i++];
-    raw += ' ';
-    if (i >= 0 && i < sent.size())
-      raw += sent.pos[i];
-    else
-      raw += Sentinel::str;
-  }
-  else {
-    ++i;
-    raw += Sentinel::str;
-    raw += ' ';
-    if (i >= 0 && i < sent.size())
-      raw += sent.pos[i];
-    else
-      raw += Sentinel::str;
-  }
 }
 
 void BigramPosGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) {
   TagPair _tp(None::val, tp.curr);
   Raw raw;
 
-  _get_raw(sent, raw, i);
+  _get_raw(sent.pos, raw, i);
 
   attributes(type.name, raw, tp);
   attributes(type.name, raw, _tp);
@@ -246,7 +214,7 @@ void BigramPosGen::operator()(const Type &type, Attributes &attributes, Sentence
 void BigramPosGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i) {
   Raw raw;
 
-  _get_raw(sent, raw, i);
+  _get_raw(sent.pos, raw, i);
 
   attributes(type.name, raw, c);
 }

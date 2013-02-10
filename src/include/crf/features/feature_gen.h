@@ -2,16 +2,7 @@ namespace NLP {
   namespace CRF {
     class FeatureGen {
       protected:
-        void _add_features(Attribute attrib, PDFs &dist) {
-          for (Weight *w = attrib.begin; w != attrib.end; ++w) {
-            //std::cout << "adding weight " << w->lambda << " for " << tags.str(w->prev) << " -> " << tags.str(w->curr) << std::endl;
-            if (w->prev == None::val)
-              for (Tag t = 0; t < dist.size(); ++t)
-                dist[t][w->curr] += w->lambda;
-            else
-              dist[w->prev][w->curr] += w->lambda;
-          }
-        }
+        void _add_features(Attribute attrib, PDFs &dist);
 
       public:
         FeatureGen(void) { }
@@ -25,10 +16,14 @@ namespace NLP {
     };
 
     class OffsetGen : public FeatureGen {
+      protected:
+        const Raw *_get_raw(Raws &raws, int i);
+
       public:
         const int offset;
         OffsetGen(const int offset) :
           FeatureGen(), offset(offset) { }
+
     };
 
     class WordGen : public FeatureGen {
@@ -85,7 +80,16 @@ namespace NLP {
         TagDict &dict;
     };
 
-    class BigramWordGen : public OffsetGen {
+    class BigramGen : public OffsetGen {
+      protected:
+        void _get_raw(Raws &raws, Raw &raw, int i);
+
+      public:
+        BigramGen(const int offset) : OffsetGen(offset) { }
+        virtual ~BigramGen(void) { }
+    };
+
+    class BigramWordGen : public BigramGen {
       public:
         BigramWordGen(BiWordDict &dict, const int offset);
         virtual ~BigramWordGen(void) { }
@@ -96,11 +100,9 @@ namespace NLP {
         virtual void operator()(const Type &type, Sentence &sent, PDFs &dist, int i);
 
         BiWordDict &dict;
-      private:
-        virtual void _get_raw(Sentence &sent, Raw &raw, int i);
     };
 
-    class BigramPosGen : public OffsetGen {
+    class BigramPosGen : public BigramGen {
       public:
         BigramPosGen(BiTagDict &dict, const int offset);
         virtual ~BigramPosGen(void) { }
@@ -111,8 +113,6 @@ namespace NLP {
         virtual void operator()(const Type &type, Sentence &sent, PDFs &dist, int i);
 
         BiTagDict &dict;
-      private:
-        virtual void _get_raw(Sentence &sent, Raw &raw, int i);
     };
 
   }
