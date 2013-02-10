@@ -39,8 +39,6 @@ Attribute &WordGen::load(const Type &type, std::istream &in) {
 void WordGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) {
   Raw word = sent.words[i];
   attributes(type.name, word, tp);
-  tp.prev = None::val;
-  attributes(type.name, word, tp);
 }
 
 void WordGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i) {
@@ -52,6 +50,98 @@ void WordGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int i) {
   _add_features(dict.get(type, sent.words[i]), dist);
 }
 
+PrefixGen::PrefixGen(AffixDict &dict)
+  : FeatureGen(), dict(dict) { }
+
+Attribute &PrefixGen::load(const Type &type, std::istream &in) {
+  return dict.load(type, in);
+}
+
+void PrefixGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) {
+  Raw affix, word = sent.words[i];
+  std::string::iterator j = word.begin();
+
+  attributes(type.name, affix += *j, tp);
+  if (++j == word.end()) return;
+  attributes(type.name, affix += *j, tp);
+  if (++j == word.end()) return;
+  attributes(type.name, affix += *j, tp);
+  if (++j == word.end()) return;
+  attributes(type.name, affix += *j, tp);
+}
+
+void PrefixGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i) {
+  Raw affix, word = sent.words[i];
+  std::string::iterator j = word.begin();
+
+  attributes(type.name, affix += *j, c);
+  if (++j == word.end()) return;
+  attributes(type.name, affix += *j, c);
+  if (++j == word.end()) return;
+  attributes(type.name, affix += *j, c);
+  if (++j == word.end()) return;
+  attributes(type.name, affix += *j, c);
+}
+
+void PrefixGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int i) {
+  Raw affix, word = sent.words[i];
+  std::string::iterator j = word.begin();
+
+  _add_features(dict.get(type, affix += *j), dist);
+  if (++j == word.end()) return;
+  _add_features(dict.get(type, affix += *j), dist);
+  if (++j == word.end()) return;
+  _add_features(dict.get(type, affix += *j), dist);
+  if (++j == word.end()) return;
+  _add_features(dict.get(type, affix += *j), dist);
+}
+
+SuffixGen::SuffixGen(AffixDict &dict)
+  : FeatureGen(), dict(dict) { }
+
+Attribute &SuffixGen::load(const Type &type, std::istream &in) {
+  return dict.load(type, in);
+}
+
+void SuffixGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) {
+  Raw affix, word = sent.words[i];
+  std::string::reverse_iterator j = word.rbegin();
+
+  attributes(type.name, affix += *j, tp);
+  if (++j == word.rend()) return;
+  attributes(type.name, affix += *j, tp);
+  if (++j == word.rend()) return;
+  attributes(type.name, affix += *j, tp);
+  if (++j == word.rend()) return;
+  attributes(type.name, affix += *j, tp);
+}
+
+void SuffixGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i) {
+  Raw affix, word = sent.words[i];
+  std::string::reverse_iterator j = word.rbegin();
+
+  attributes(type.name, affix += *j, c);
+  if (++j == word.rend()) return;
+  attributes(type.name, affix += *j, c);
+  if (++j == word.rend()) return;
+  attributes(type.name, affix += *j, c);
+  if (++j == word.rend()) return;
+  attributes(type.name, affix += *j, c);
+}
+
+void SuffixGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int i) {
+  Raw affix, word = sent.words[i];
+  std::string::reverse_iterator j = word.rbegin();
+
+  _add_features(dict.get(type, affix += *j), dist);
+  if (++j == word.rend()) return;
+  _add_features(dict.get(type, affix += *j), dist);
+  if (++j == word.rend()) return;
+  _add_features(dict.get(type, affix += *j), dist);
+  if (++j == word.rend()) return;
+  _add_features(dict.get(type, affix += *j), dist);
+}
+
 PosGen::PosGen(TagDict &dict) : FeatureGen(), dict(dict) { }
 
 Attribute &PosGen::load(const Type &type, std::istream &in) {
@@ -60,8 +150,6 @@ Attribute &PosGen::load(const Type &type, std::istream &in) {
 
 void PosGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) {
   Raw word = sent.pos[i];
-  attributes(type.name, word, tp);
-  tp.prev = None::val;
   attributes(type.name, word, tp);
 }
 
@@ -82,11 +170,9 @@ Attribute &OffsetWordGen::load(const Type &type, std::istream &in) {
 }
 
 void OffsetWordGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) {
-  TagPair _tp(None::val, tp.curr);
   const Raw *word = _get_raw(sent.words, i);
 
   attributes(type.name, *word, tp);
-  attributes(type.name, *word, _tp);
 }
 
 void OffsetWordGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i) {
@@ -109,11 +195,9 @@ Attribute &OffsetPosGen::load(const Type &type, std::istream &in) {
 }
 
 void OffsetPosGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) {
-  TagPair _tp(None::val, tp.curr);
   const Raw *raw = _get_raw(sent.pos, i);
 
   attributes(type.name, *raw, tp);
-  attributes(type.name, *raw, _tp);
 }
 
 void OffsetPosGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i) {
@@ -156,18 +240,14 @@ Attribute &BigramWordGen::load(const Type &type, std::istream &in) {
 }
 
 void BigramWordGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) {
-  TagPair _tp(None::val, tp.curr);
   Raw raw;
-
   _get_raw(sent.words, raw, i);
 
   attributes(type.name, raw, tp);
-  attributes(type.name, raw, _tp);
 }
 
 void BigramWordGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i) {
   Raw raw;
-
   _get_raw(sent.words, raw, i);
 
   attributes(type.name, raw, c);
@@ -202,18 +282,14 @@ Attribute &BigramPosGen::load(const Type &type, std::istream &in) {
 }
 
 void BigramPosGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) {
-  TagPair _tp(None::val, tp.curr);
   Raw raw;
-
   _get_raw(sent.pos, raw, i);
 
   attributes(type.name, raw, tp);
-  attributes(type.name, raw, _tp);
 }
 
 void BigramPosGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i) {
   Raw raw;
-
   _get_raw(sent.pos, raw, i);
 
   attributes(type.name, raw, c);

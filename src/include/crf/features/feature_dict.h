@@ -9,6 +9,23 @@ namespace NLP {
         virtual Attribute &load(const Type &type, std::istream &in) = 0;
     };
 
+    class AffixDict : public FeatureDict {
+      public:
+        AffixDict(const size_t nbuckets=HT::SMALL, const size_t pool_size=HT::MEDIUM);
+        AffixDict(const AffixDict &other);
+        virtual ~AffixDict(void);
+
+        virtual Attribute &load(const Type &type, std::istream &in);
+        Attribute get(const Type &type, const Raw &raw);
+        Attribute &insert(const Type &type, const Raw &raw);
+
+        void print_stats(std::ostream &out);
+
+      private:
+        class Impl;
+        Impl *_impl;
+    };
+
     class WordDict : public FeatureDict {
       public:
         WordDict(const Lexicon lexicon, const size_t nbuckets=HT::MEDIUM,

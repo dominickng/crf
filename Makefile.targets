@@ -9,7 +9,8 @@ CRF_OBJECTS = src/lib/word.o src/lib/lexicon.o src/lib/tagset.o src/lib/crf/tagg
 
 FEATURE_OBJECTS = src/lib/crf/features/attributes.o src/lib/crf/features/registry.o \
 		  src/lib/crf/features/feature_gen.o src/lib/crf/features/feature_word.o \
-		  src/lib/crf/features/types.o src/lib/crf/features/feature_bigram.o
+		  src/lib/crf/features/types.o src/lib/crf/features/feature_bigram.o \
+		  src/lib/crf/features/feature_affix.o
 
 REQUIRED_OBJECTS = $(IO_OBJECTS) $(CRF_OBJECTS) $(FEATURE_OBJECTS)
 

@@ -57,11 +57,9 @@ namespace NLP {
         }
 
         Attribute find(const char *type, const Word &value) {
-          for (WordEntry *l = this; l != NULL; l = l->next) {
-            if(l->equal(type, value)) {
+          for (WordEntry *l = this; l != NULL; l = l->next)
+            if (l->equal(type, value))
               return l->attrib;
-            }
-          }
           return NONE;
         }
 

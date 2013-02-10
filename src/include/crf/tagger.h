@@ -92,6 +92,7 @@ namespace NLP {
 
         WordDict w_dict;
         BiWordDict ww_dict;
+        AffixDict a_dict;
 
         const std::string preface;
         double inv_sigma_sq;
@@ -103,7 +104,7 @@ namespace NLP {
             model("info", "Tagger model info file", cfg.model), registry(),
             lexicon(cfg.lexicon()), tags(cfg.tags()),
             attributes(), instances(), weights(), attribs2weights(),
-            w_dict(lexicon), ww_dict(lexicon), preface(preface),
+            w_dict(lexicon), ww_dict(lexicon), a_dict(), preface(preface),
             inv_sigma_sq(), log_z(0.0), ntags() { }
 
         virtual ~Impl(void) { /* nothing */ }

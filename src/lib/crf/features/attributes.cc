@@ -195,7 +195,15 @@ namespace NLP {
         using ImplBase::insert;
         using ImplBase::find;
 
-        void add(const char *type, const std::string &str, TagPair &tp) {
+        void add(const char *type, const std::string &str, TagPair tp, const bool add_state_feature=true) {
+          _add(type, str, tp);
+          if (add_state_feature) {
+            tp.prev = None::val;
+            _add(type, str, tp);
+          }
+        }
+
+        void _add(const char *type, const std::string &str, TagPair &tp) {
           size_t bucket = AttribEntry::hash(type, str).value() % _nbuckets;
           AttribEntry *entry = _buckets[bucket]->find(type, str);
           if (entry)
@@ -395,7 +403,7 @@ namespace NLP {
     void Attributes::save_features(std::ostream &out, const std::string &preface) { _impl->save_features(out, preface); }
     void Attributes::save_weights(std::ostream &out, const std::string &preface) { _impl->save_weights(out, preface); }
 
-    void Attributes::operator()(const char *type, const std::string &str, TagPair &tp) { _impl->add(type, str, tp); }
+    void Attributes::operator()(const char *type, const std::string &str, TagPair &tp, const bool add_state_feature) { _impl->add(type, str, tp, add_state_feature); }
     void Attributes::operator()(const char *type, const std::string &str, uint64_t &id) { _impl->find(type, str, id); }
     void Attributes::operator()(const char *type, const std::string &str, Context &c) { _impl->find(type, str, c); }
 

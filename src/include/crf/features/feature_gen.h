@@ -37,7 +37,32 @@ namespace NLP {
         virtual void operator()(const Type &type, Sentence &sent, PDFs &dist, int i);
 
         WordDict &dict;
+    };
 
+    class PrefixGen : public FeatureGen {
+      public:
+        PrefixGen(AffixDict &dict);
+        virtual ~PrefixGen(void) { }
+
+        virtual Attribute &load(const Type &type, std::istream &in);
+        virtual void operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i);
+        virtual void operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i);
+        virtual void operator()(const Type &type, Sentence &sent, PDFs &dist, int i);
+
+        AffixDict &dict;
+    };
+
+    class SuffixGen : public FeatureGen {
+      public:
+        SuffixGen(AffixDict &dict);
+        virtual ~SuffixGen(void) { }
+
+        virtual Attribute &load(const Type &type, std::istream &in);
+        virtual void operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i);
+        virtual void operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i);
+        virtual void operator()(const Type &type, Sentence &sent, PDFs &dist, int i);
+
+        AffixDict &dict;
     };
 
     class PosGen : public FeatureGen {
