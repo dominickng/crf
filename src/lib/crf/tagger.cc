@@ -398,10 +398,10 @@ void Tagger::Impl::reg(void) {
   registry.reg(Types::prefix, types.use_prefix, new PrefixGen(a_dict));
   registry.reg(Types::suffix, types.use_suffix, new SuffixGen(a_dict));
 
-  registry.reg(Types::ppw_pw, types.use_word_bigrams, new BigramWordGen(ww_dict, -2));
-  registry.reg(Types::pw_w, types.use_word_bigrams, new BigramWordGen(ww_dict, -1));
-  registry.reg(Types::w_nw, types.use_word_bigrams, new BigramWordGen(ww_dict, 0));
-  registry.reg(Types::nw_nnw, types.use_word_bigrams, new BigramWordGen(ww_dict, 1));
+  //registry.reg(Types::ppw_pw, types.use_word_bigrams, new BigramWordGen(ww_dict, -2));
+  //registry.reg(Types::pw_w, types.use_word_bigrams, new BigramWordGen(ww_dict, -1));
+  //registry.reg(Types::w_nw, types.use_word_bigrams, new BigramWordGen(ww_dict, 0));
+  //registry.reg(Types::nw_nnw, types.use_word_bigrams, new BigramWordGen(ww_dict, 1));
 }
 
 Tagger::Tagger(Tagger::Config &cfg, const std::string &preface, Impl *impl)
