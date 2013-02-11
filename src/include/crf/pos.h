@@ -10,7 +10,7 @@ namespace NLP {
           public:
             Config(const std::string &name="pos",
                 const std::string &desc="pos CRF tagger config")
-              : Tagger::Config(name, desc) { }
+              : Tagger::Config(name, desc, 1.414, 200) { }
         };
 
         POS(POS::Config &cfg, Types &types, const std::string &preface);

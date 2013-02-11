@@ -16,7 +16,7 @@ namespace NLP {
             config::Op<uint64_t> niterations;
             config::Op<uint64_t> rare_cutoff;
 
-            Config(const std::string &name, const std::string &desc)
+            Config(const std::string &name, const std::string &desc, double sigma, uint64_t niterations)
               : config::OpGroup(name, desc),
             model(*this, "model", "location to save the model"),
             lexicon(*this, "lexicon", "location to save the lexicon file", "//lexicon", &model),
@@ -24,8 +24,8 @@ namespace NLP {
             attributes(*this, "attributes", "location to save the attributes file", "//attributes", &model),
             features(*this, "features", "location to save the features file", "//features", &model),
             weights(*this, "weights", "location to save the weights file", "//weights", &model),
-            sigma(*this, "sigma", "sigma value for regularization", 0.707, true),
-            niterations(*this, "niterations", "number of training iterations", 500, false),
+            sigma(*this, "sigma", "sigma value for regularization", sigma, true),
+            niterations(*this, "niterations", "number of training iterations", niterations, false),
             rare_cutoff(*this, "rare_cutoff", "cutoff to apply rare word features", 5, false)
           { }
 
