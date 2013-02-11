@@ -96,10 +96,10 @@ class NER::Impl : public Tagger::Impl {
       registry.reg(Types::np, types.use_next_pos, new OffsetPosGen(n_p_dict, 1));
       registry.reg(Types::nnp, types.use_next_pos, new OffsetPosGen(nn_p_dict, 2));
 
-      registry.reg(Types::ppp_pp, types.use_pos_bigrams, new BigramPosGen(ppp_pp_p_dict, -2));
-      registry.reg(Types::pp_p, types.use_pos_bigrams, new BigramPosGen(pp_p_p_dict, -1));
-      registry.reg(Types::p_np, types.use_pos_bigrams, new BigramPosGen(p_np_p_dict, 0));
-      registry.reg(Types::np_nnp, types.use_pos_bigrams, new BigramPosGen(np_nnp_p_dict, 1));
+      //registry.reg(Types::ppp_pp, types.use_pos_bigrams, new BigramPosGen(ppp_pp_p_dict, -2));
+      //registry.reg(Types::pp_p, types.use_pos_bigrams, new BigramPosGen(pp_p_p_dict, -1));
+      //registry.reg(Types::p_np, types.use_pos_bigrams, new BigramPosGen(p_np_p_dict, 0));
+      //registry.reg(Types::np_nnp, types.use_pos_bigrams, new BigramPosGen(np_nnp_p_dict, 1));
     }
 
     virtual void load(void) {
