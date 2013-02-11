@@ -109,6 +109,13 @@ namespace NLP {
           raws.push_back(str(*i));
       }
 
+      uint64_t freq(const std::string &str) const {
+        Entry *e = find(str.c_str());
+        if (e)
+          return e->value;
+        return 0;
+      }
+
       size_t size(void) const { return Base::_size; }
   };
 
@@ -152,6 +159,8 @@ namespace NLP {
 
   const char *Lexicon::str(const Word &word) const { return _impl->str(word); }
   void Lexicon::str(const Words &words, Raws &raws) const { _impl->str(words, raws); }
+
+  uint64_t Lexicon::freq(const std::string &raw) const { return _impl->freq(raw); }
 
   void Lexicon::sort_by_freq(void) { _impl->sort_by_rev_value(); }
 

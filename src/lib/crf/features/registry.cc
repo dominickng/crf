@@ -17,8 +17,8 @@ namespace NLP {
 
     class RegEntry {
       private:
-        RegEntry(const Type &type, FeatureGen *gen, RegEntry *next) :
-          type(type), gen(gen), next(next) { }
+        RegEntry(const Type &type, FeatureGen *gen, const bool rare, RegEntry *next) :
+          type(type), gen(gen), rare(rare), next(next) { }
 
         void *operator new(size_t size, Util::Pool *pool) {
           return pool->alloc(size);
@@ -29,6 +29,7 @@ namespace NLP {
       public:
         const Type &type;
         FeatureGen *gen;
+        const bool rare;
         RegEntry *next;
 
         ~RegEntry(void) {
@@ -49,8 +50,8 @@ namespace NLP {
         }
 
         static RegEntry *create(Util::Pool *pool, const Type &type,
-            FeatureGen *gen, RegEntry *next) {
-          RegEntry *entry = new (pool) RegEntry(type, gen, next);
+            FeatureGen *gen, const bool rare, RegEntry *next) {
+          RegEntry *entry = new (pool) RegEntry(type, gen, rare, next);
           return entry;
         }
 
@@ -78,21 +79,24 @@ namespace NLP {
 
     class Registry::Impl : public ImplBase, public Util::Shared {
       private:
+        const uint64_t rare_cutoff;
         typedef std::vector<Entry *> Entries;
         Entries _actives;
       public:
-        Impl(const size_t nbuckets, const size_t pool_size)
-          : ImplBase(nbuckets, pool_size), Shared(), _actives() { }
+        Impl(const uint64_t rare_cutoff,
+            const size_t nbuckets, const size_t pool_size)
+          : ImplBase(nbuckets, pool_size), Shared(), rare_cutoff(rare_cutoff),
+            _actives() { }
 
         virtual ~Impl(void) {
           for (Entries::iterator j = _actives.begin(); j != _actives.end(); ++j)
             (*j)->~RegEntry();
         }
 
-        void reg(const Type &type, config::Op<bool> &op, FeatureGen *gen) {
+        void reg(const Type &type, config::Op<bool> &op, FeatureGen *gen, const bool rare) {
           if (op()) {
             size_t bucket = RegEntry::hash(type.name).value() % _nbuckets;
-            RegEntry *entry = RegEntry::create(ImplBase::_pool, type, gen, _buckets[bucket]);
+            RegEntry *entry = RegEntry::create(ImplBase::_pool, type, gen, rare, _buckets[bucket]);
             _actives.push_back(entry);
             _buckets[bucket] = entry;
             ++_size;
@@ -116,18 +120,20 @@ namespace NLP {
           }
         }
 
-        void generate(Attributes &attributes, TagSet tags, Sentence &sent, Raws &rawtags, Contexts &contexts, const bool extract) {
+        void generate(Attributes &attributes, Lexicon lexicon, TagSet tags, Sentence &sent, Raws &rawtags, Contexts &contexts, const bool extract) {
           for (size_t i = 0; i < sent.size(); ++i) {
             for (Entries::iterator j = _actives.begin(); j != _actives.end(); ++j) {
               RegEntry *e = *j;
-              TagPair tp;
-              get_tagpair(tags, rawtags, tp, i);
-              if (extract)
-                (*e->gen)(e->type, attributes, sent, tp, i);
-              else {
-                contexts[i].klasses = tp;
-                contexts[i].index = i;
-                (*e->gen)(e->type, attributes, sent, contexts[i], i);
+              if (!(e->rare) || lexicon.freq(sent.words[i]) > rare_cutoff) {
+                TagPair tp;
+                get_tagpair(tags, rawtags, tp, i);
+                if (extract)
+                  (*e->gen)(e->type, attributes, sent, tp, i);
+                else {
+                  contexts[i].klasses = tp;
+                  contexts[i].index = i;
+                  (*e->gen)(e->type, attributes, sent, contexts[i], i);
+                }
               }
             }
           }
@@ -141,8 +147,8 @@ namespace NLP {
         }
     };
 
-    Registry::Registry(const size_t nbuckets, const size_t pool_size) :
-        _impl(new Impl(nbuckets, pool_size)) { }
+    Registry::Registry(const uint64_t rare_cutoff, const size_t nbuckets, const size_t pool_size) :
+        _impl(new Impl(rare_cutoff, nbuckets, pool_size)) { }
 
     Registry::Registry(const Registry &other) :
         _impl(share(other._impl)) { }
@@ -151,8 +157,8 @@ namespace NLP {
       release(_impl);
     }
 
-    void Registry::reg(const Type &type, config::Op<bool> &op, FeatureGen *gen) {
-      _impl->reg(type, op, gen);
+    void Registry::reg(const Type &type, config::Op<bool> &op, FeatureGen *gen, const bool rare) {
+      _impl->reg(type, op, gen, rare);
     }
 
     Attribute &Registry::load(const std::string &type, std::istream &in) {
@@ -160,8 +166,8 @@ namespace NLP {
       return entry->gen->load(entry->type, in);
     }
 
-    void Registry::generate(Attributes &attributes, TagSet tags, Sentence &sent, Raws &rawtags, Contexts &contexts, const bool extract) {
-      _impl->generate(attributes, tags, sent, rawtags, contexts, extract);
+    void Registry::generate(Attributes &attributes, Lexicon lexicon, TagSet tags, Sentence &sent, Raws &rawtags, Contexts &contexts, const bool extract) {
+      _impl->generate(attributes, lexicon, tags, sent, rawtags, contexts, extract);
     }
 
     void Registry::add_features(Sentence &sent, PDFs &dist, int i) {

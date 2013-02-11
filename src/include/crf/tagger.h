@@ -14,6 +14,8 @@ namespace NLP {
             config::OpPath weights;
             config::Op<double> sigma;
             config::Op<uint64_t> niterations;
+            config::Op<uint64_t> rare_cutoff;
+
             Config(const std::string &name, const std::string &desc)
               : config::OpGroup(name, desc),
             model(*this, "model", "location to save the model"),
@@ -23,7 +25,8 @@ namespace NLP {
             features(*this, "features", "location to save the features file", "//features", &model),
             weights(*this, "weights", "location to save the weights file", "//weights", &model),
             sigma(*this, "sigma", "sigma value for regularization", 0.707, true),
-            niterations(*this, "niterations", "number of training iterations", 1, false)
+            niterations(*this, "niterations", "number of training iterations", 500, false),
+            rare_cutoff(*this, "rare_cutoff", "cutoff to apply rare word features", 5, false)
           { }
 
             virtual ~Config(void) { /* nothing */ }
@@ -101,7 +104,8 @@ namespace NLP {
 
         Impl(Config &cfg, Types &types, const std::string &preface)
           : Util::Shared(), cfg(cfg), types(types),
-            model("info", "Tagger model info file", cfg.model), registry(),
+            model("info", "Tagger model info file", cfg.model),
+            registry(cfg.rare_cutoff()),
             lexicon(cfg.lexicon()), tags(cfg.tags()),
             attributes(), instances(), weights(), attribs2weights(),
             w_dict(lexicon), ww_dict(lexicon), a_dict(), preface(preface),

@@ -36,6 +36,8 @@ namespace NLP {
       const Word operator[](const char *raw) const { return canonize(raw); }
       const char *operator[](const Word &word) const { return str(word); }
 
+      uint64_t freq(const std::string &str) const;
+
       void sort_by_freq(void);
 
       size_t size(void) const;
