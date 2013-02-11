@@ -98,6 +98,7 @@ void Tagger::Impl::train(Reader &reader) {
   for(size_t i = 0; i < n; ++i)
     x[i] = 1.0;
   lbfgs_parameter_init(&param);
+  param.max_iterations = cfg.niterations();
   //param.linesearch = LBFGS_LINESEARCH_BACKTRACKING;
   //param.delta = 1e-8;
   //param.past = 2;
