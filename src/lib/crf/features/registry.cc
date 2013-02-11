@@ -124,7 +124,7 @@ namespace NLP {
           for (size_t i = 0; i < sent.size(); ++i) {
             for (Entries::iterator j = _actives.begin(); j != _actives.end(); ++j) {
               RegEntry *e = *j;
-              if (!(e->rare) || lexicon.freq(sent.words[i]) > rare_cutoff) {
+              if (!(e->rare) || lexicon.freq(sent.words[i]) < rare_cutoff) {
                 TagPair tp;
                 get_tagpair(tags, rawtags, tp, i);
                 if (extract)
