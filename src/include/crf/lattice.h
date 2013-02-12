@@ -41,16 +41,17 @@ namespace NLP {
             }
           }
           else {
-            size_t size = nodes.size() - 1;
+            size_t size = nodes.size();
             const Node *new_max = NULL;
             for (size_t curr = 2; curr < nklasses; ++curr) {
               double best_score = -std::numeric_limits<double>::max();
               Node *best_prev = NULL;
               for (size_t prev = 2; prev < nklasses; ++prev) {
-                double score = dist[prev][curr] + nodes[size - prev + 2]->score;
+                size_t prev_index = size - (nklasses - prev);
+                double score = dist[prev][curr] + nodes[prev_index]->score;
                 if (score > best_score) {
                   best_score = score;
-                  best_prev = nodes[size - prev + 2];
+                  best_prev = nodes[prev_index];
                 }
               }
               Node *n = new (pool) Node(best_prev, curr, best_score);
