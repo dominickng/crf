@@ -360,6 +360,10 @@ void Tagger::Impl::extract(Reader &reader, Instances &instances) {
   reader.reset();
   std::cerr << "beginning pass 3" << std::endl;
   _pass3(reader, instances);
+
+  attributes.apply_cutoff(Types::w, cfg.cutoff_words(), cfg.cutoff_default());
+  if (cfg.cutoff_attribs() > 1)
+    attributes.apply_attrib_cutoff(cfg.cutoff_attribs());
 }
 
 void Tagger::Impl::finite_differences(Instances &instances, PDFs &alphas, PDFs &betas, PSIs &psis, PDF &scale, lbfgsfloatval_t *g, bool overwrite) {

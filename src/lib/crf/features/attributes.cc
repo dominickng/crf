@@ -4,6 +4,8 @@
 #include "base.h"
 #include "hashtable.h"
 #include "lbfgs.h"
+#include "config.h"
+#include "crf/features/types.h"
 #include "crf/features/feature.h"
 #include "crf/features/context.h"
 #include "crf/features/attributes.h"
@@ -76,7 +78,7 @@ namespace NLP {
 
         AttribEntry *find(const char *type, const std::string &str) {
           for (AttribEntry *l = this; l != NULL; l = l->next)
-            if (l->equal(type, str))
+            if (l->equal(type, str) && l->value > 0)
               return l;
           return NULL;
         }
@@ -94,12 +96,23 @@ namespace NLP {
           for (AttribEntry *l = this; l != NULL; l = l->next) {
             if (l->equal(type, str) && l->value > 0) {
               for (Features::iterator i = l->features.begin(); i != l->features.end(); ++i)
-                if (i->klasses == c.klasses || (i->klasses.prev == None::val && i->klasses.curr == c.klasses.curr))
+                if (i->freq > 0 && (i->klasses == c.klasses || (i->klasses.prev == None::val && i->klasses.curr == c.klasses.curr)))
                   c.features.push_back(&(*i));
               return true;
             }
           }
           return false;
+        }
+
+        void cutoff(const uint64_t freq) {
+          for (AttribEntry *l = this; l != NULL; l = l->next) {
+            for (Features::iterator i = l->features.begin(); i != l->features.end(); ++i) {
+              if (i->freq < freq) {
+                value -= i->freq;
+                i->freq = 0;
+              }
+            }
+          }
         }
 
         void save_attribute(std::ostream &out) const {
@@ -268,19 +281,22 @@ namespace NLP {
           sort_by_rev_value();
           out << preface << '\n';
           for (Entries::const_iterator i = _entries.begin(); i != _entries.end(); ++i)
-            (*i)->save_attribute(out);
+            if ((*i)->value)
+              (*i)->save_attribute(out);
         }
 
         void save_features(std::ostream &out, const std::string &preface) {
           out << preface << '\n';
           for (Entries::const_iterator i = _entries.begin(); i != _entries.end(); ++i)
-            (*i)->save_features(out);
+            if ((*i)->value)
+              (*i)->save_features(out);
         }
 
         void save_weights(std::ostream &out, const std::string &preface) {
           out << preface << '\n';
           for (Entries::const_iterator i = _entries.begin(); i != _entries.end(); ++i)
-            (*i)->save_weights(out);
+            if ((*i)->value)
+              (*i)->save_weights(out);
         }
 
         uint64_t nfeatures(void) const {
@@ -288,6 +304,31 @@ namespace NLP {
           for (Entries::const_iterator i = _entries.begin(); i != _entries.end(); ++i)
             n += (*i)->nfeatures();
           return n;
+        }
+
+        void apply_attrib_cutoff(const uint64_t freq) {
+          for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
+            if ((*i)->value < freq)
+              (*i)->value = 0;
+        }
+
+        void apply_cutoff(const uint64_t freq) {
+          for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
+            (*i)->cutoff(freq);
+        }
+
+        void apply_cutoff(const char *type, const uint64_t freq) {
+          for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
+            if ((*i)->type == type)
+              (*i)->cutoff(freq);
+        }
+
+        void apply_cutoff(const char *type, const uint64_t freq, const uint64_t def) {
+          for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
+            if ((*i)->type == type)
+              (*i)->cutoff(freq);
+            else
+              (*i)->cutoff(def);
         }
 
         void reset_estimations(void) {
@@ -411,6 +452,11 @@ namespace NLP {
     void Attributes::reset_estimations(void) { _impl->reset_estimations(); }
 
     uint64_t Attributes::nfeatures(void) const { return _impl->nfeatures(); }
+
+    void Attributes::apply_attrib_cutoff(const uint64_t freq) { _impl->apply_attrib_cutoff(freq); }
+    void Attributes::apply_cutoff(const uint64_t freq) { _impl->apply_cutoff(freq); }
+    void Attributes::apply_cutoff(const Type &type, const uint64_t freq) { _impl->apply_cutoff(type.name, freq); }
+    void Attributes::apply_cutoff(const Type &type, const uint64_t freq, const uint64_t def) { _impl->apply_cutoff(type.name, freq, def); }
 
     double Attributes::sum_lambda_sq(void) { return _impl->sum_lambda_sq(); }
     void Attributes::copy_lambdas(const lbfgsfloatval_t *x) { _impl->copy_lambdas(x);; }

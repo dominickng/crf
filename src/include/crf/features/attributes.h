@@ -35,6 +35,11 @@ namespace NLP {
 
         uint64_t nfeatures(void) const;
 
+        void apply_attrib_cutoff(const uint64_t freq);
+        void apply_cutoff(const uint64_t freq);
+        void apply_cutoff(const Type &type, const uint64_t freq);
+        void apply_cutoff(const Type &type, const uint64_t freq, const uint64_t def);
+
         double sum_lambda_sq(void);
         void copy_lambdas(const lbfgsfloatval_t *x);
         void copy_gradients(lbfgsfloatval_t *x, double inv_sigma_sq);

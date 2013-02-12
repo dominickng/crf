@@ -14,6 +14,10 @@ namespace NLP {
             config::OpPath weights;
             config::Op<double> sigma;
             config::Op<uint64_t> niterations;
+
+            config::Op<uint64_t> cutoff_default;
+            config::Op<uint64_t> cutoff_words;
+            config::Op<uint64_t> cutoff_attribs;
             config::Op<uint64_t> rare_cutoff;
 
             Config(const std::string &name, const std::string &desc, double sigma, uint64_t niterations)
@@ -25,8 +29,11 @@ namespace NLP {
             features(*this, "features", "location to save the features file", "//features", &model),
             weights(*this, "weights", "location to save the weights file", "//weights", &model),
             sigma(*this, "sigma", "sigma value for regularization", sigma, true),
-            niterations(*this, "niterations", "number of training iterations", niterations, false),
-            rare_cutoff(*this, "rare_cutoff", "cutoff to apply rare word features", 5, false)
+            niterations(*this, "niterations", "number of training iterations", niterations, true),
+            cutoff_default(*this, "cutoff_default", "minimum frequency cutoff for features", 1, true),
+            cutoff_words(*this, "cutoff_words", "minimum frequency cutoff for word features", 1, true),
+            cutoff_attribs(*this, "cutoff_attribs", "minimum frequency cutoff for attributes", 1, true),
+            rare_cutoff(*this, "rare_cutoff", "cutoff to apply rare word features", 5, true)
           { }
 
             virtual ~Config(void) { /* nothing */ }
