@@ -26,6 +26,18 @@ namespace NLP {
       sum += vec[i];
     return sum;
   }
+
+  void vector_print(PDF &vec, const size_t size) {
+    for (size_t i = 0; i < size; ++i)
+      printf("%f ", vec[i]);
+    printf("\n");
+  }
+
+  void vector_print(const double *vec, const size_t size) {
+    for (size_t i = 0; i < size; ++i)
+      printf("%f ", vec[i]);
+    printf("\n");
+  }
 }
 
 #endif

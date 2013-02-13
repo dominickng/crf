@@ -7,5 +7,7 @@ namespace NLP {
   void vector_scale(PDF &vec, const double scale, const size_t size);
   double vector_sum_log(PDF &vec, const size_t size);
   double vector_sum(PDF &vec, const size_t size);
+  void vector_print(PDF &vec, const size_t size);
+  void vector_print(const double *vec, const size_t size);
 
 }
