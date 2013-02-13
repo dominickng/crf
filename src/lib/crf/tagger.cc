@@ -139,15 +139,14 @@ double Tagger::Impl::log_likelihood(void) {
 
 void Tagger::Impl::compute_psis(Contexts &contexts, PSIs &psis) {
   //TODO profiling shows that this is the bottleneck in training
+  //(60% of training time!)
   for (size_t i = 0; i < contexts.size(); ++i) {
     Context &c = contexts[i];
     for (FeaturePtrs::iterator j = c.features.begin(); j != c.features.end(); ++j) {
-      //std::cout << "adding " << (*j)->klasses.prev << " " << (*j)->klasses.curr << " " << (*j)->lambda << " at " << i << std::endl;
+      psis[i][(*j)->klasses.prev][(*j)->klasses.curr] += (*j)->lambda;
       if ((*j)->klasses.prev == None::val)
-        for (Tag prev = 0; prev < ntags; ++prev)
+        for (Tag prev = 1; prev < ntags; ++prev)
           psis[i][prev][(*j)->klasses.curr] += (*j)->lambda;
-      else
-        psis[i][(*j)->klasses.prev][(*j)->klasses.curr] += (*j)->lambda;
     }
 
     for (Tag prev = 0; prev < ntags; ++prev)
