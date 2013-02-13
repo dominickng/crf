@@ -42,7 +42,7 @@ class Chunk::Impl : public Tagger::Impl {
         registry.add_features(lexicon, sent, state.dist, i);
         state.lattice.viterbi(tags, state.dist);
       }
-      state.lattice.print(std::cout, tags, sent.size());
+      //state.lattice.print(std::cout, tags, sent.size());
       state.lattice.best(tags, sent.chunks, sent.size());
     }
 
