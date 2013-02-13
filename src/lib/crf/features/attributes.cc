@@ -96,8 +96,7 @@ namespace NLP {
           for (AttribEntry *l = this; l != NULL; l = l->next) {
             if (l->equal(type, str) && l->value > 0) {
               for (Features::iterator i = l->features.begin(); i != l->features.end(); ++i)
-                if (i->freq > 0 && (i->klasses == c.klasses || (i->klasses.prev == None::val && i->klasses.curr == c.klasses.curr)))
-                  c.features.push_back(&(*i));
+                c.features.push_back(&(*i));
               return true;
             }
           }
@@ -208,8 +207,9 @@ namespace NLP {
         using ImplBase::insert;
         using ImplBase::find;
 
-        void add(const char *type, const std::string &str, TagPair tp, const bool add_state_feature=true) {
-          _add(type, str, tp);
+        void add(const char *type, const std::string &str, TagPair tp, const bool add_state_feature=true, const bool add_trans_feature=true) {
+          if (add_trans_feature)
+            _add(type, str, tp);
           if (add_state_feature) {
             tp.prev = None::val;
             _add(type, str, tp);
@@ -444,7 +444,7 @@ namespace NLP {
     void Attributes::save_features(std::ostream &out, const std::string &preface) { _impl->save_features(out, preface); }
     void Attributes::save_weights(std::ostream &out, const std::string &preface) { _impl->save_weights(out, preface); }
 
-    void Attributes::operator()(const char *type, const std::string &str, TagPair &tp, const bool add_state_feature) { _impl->add(type, str, tp, add_state_feature); }
+    void Attributes::operator()(const char *type, const std::string &str, TagPair &tp, const bool add_state_feature, const bool add_trans_feature) { _impl->add(type, str, tp, add_state_feature, add_trans_feature); }
     void Attributes::operator()(const char *type, const std::string &str, uint64_t &id) { _impl->find(type, str, id); }
     void Attributes::operator()(const char *type, const std::string &str, Context &c) { _impl->find(type, str, c); }
 

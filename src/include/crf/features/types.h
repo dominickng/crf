@@ -86,6 +86,9 @@ namespace NLP {
           const static Type ps_s_ns;
           const static Type s_ns_nns;
 
+          //transition
+          const static Type trans;
+
           config::Op<bool> use_words;
           config::Op<bool> use_prev_words;
           config::Op<bool> use_next_words;
@@ -122,6 +125,8 @@ namespace NLP {
           config::Op<bool> use_prev_shape;
           config::Op<bool> use_next_shape;
           config::Op<bool> use_shape_bigram;
+
+          config::Op<bool> use_trans;
 
           Types(void);
           ~Types(void) { }

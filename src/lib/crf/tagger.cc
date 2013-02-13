@@ -95,13 +95,24 @@ void Tagger::Impl::train(Reader &reader) {
   lbfgsfloatval_t *x = lbfgs_malloc(n);
   lbfgs_parameter_t param;
 
-  for(size_t i = 0; i < n; ++i)
-    x[i] = 1.0;
+  for (size_t i = 0; i < n; ++i)
+    x[i] = 0.0;
   lbfgs_parameter_init(&param);
   param.max_iterations = cfg.niterations();
   //param.linesearch = LBFGS_LINESEARCH_BACKTRACKING;
-  //param.delta = 1e-8;
-  //param.past = 2;
+  param.linesearch = LBFGS_LINESEARCH_MORETHUENTE;
+  param.epsilon = 1e-5;
+  param.delta = 1e-5;
+  param.past = 10;
+
+  for (size_t i = 0; i < model.max_size(); ++i) {
+    alphas.push_back(PDF(ntags, 0.0));
+    betas.push_back(PDF(ntags, 0.0));
+    scale.push_back(1.0);
+    psis.push_back(PDFs(0));
+    for (size_t j = 0; j < ntags; ++j)
+      psis[i].push_back(PDF(ntags, 0.0));
+  }
 
   int ret = lbfgs(n, x, NULL, evaluate, progress, (void *)this, &param);
 
@@ -118,7 +129,8 @@ double Tagger::Impl::log_likelihood(void) {
   for (Instances::iterator i = instances.begin(); i != instances.end(); ++i) {
     for (Contexts::iterator j = i->begin(); j != i->end(); ++j) {
       for (FeaturePtrs::iterator k = j->features.begin(); k != j->features.end(); ++k)
-        llhood += (*k)->lambda;
+        if ((*k)->klasses == j->klasses || ((*k)->klasses.prev == None::val && (*k)->klasses.curr == j->klasses.curr))
+          llhood += (*k)->lambda;
     }
   }
   //std::cout << llhood << ' ' << log_z << ' ' << (attributes.sum_lambda_sq() * inv_sigma_sq * 0.5) << std::endl;
@@ -127,11 +139,19 @@ double Tagger::Impl::log_likelihood(void) {
 
 void Tagger::Impl::compute_psis(Contexts &contexts, PSIs &psis) {
   for (size_t i = 0; i < contexts.size(); ++i) {
-    double sum = 0.0;
     Context &c = contexts[i];
-    for (FeaturePtrs::iterator j = c.features.begin(); j != c.features.end(); ++j)
-      sum += (*j)->lambda;
-    psis[i][c.klasses.prev][c.klasses.curr] = exp(sum);
+    for (FeaturePtrs::iterator j = c.features.begin(); j != c.features.end(); ++j) {
+      //std::cout << "adding " << (*j)->klasses.prev << " " << (*j)->klasses.curr << " " << (*j)->lambda << " at " << i << std::endl;
+      if ((*j)->klasses.prev == None::val)
+        for (Tag prev = 0; prev < ntags; ++prev)
+          psis[i][prev][(*j)->klasses.curr] += (*j)->lambda;
+      else
+        psis[i][(*j)->klasses.prev][(*j)->klasses.curr] += (*j)->lambda;
+    }
+
+    for (Tag prev = 0; prev < ntags; ++prev)
+      for (Tag curr = 0; curr < ntags; ++curr)
+        psis[i][prev][curr] = exp(psis[i][prev][curr]);
   }
 }
 
@@ -186,7 +206,9 @@ void Tagger::Impl::forward(Contexts &contexts, PDFs &alphas, PSIs &psis, PDF &sc
     sum = 1.0;
   scale[0] = 1.0 / sum;
   vector_scale(alphas[0], scale[0], ntags);
+  //vector_print(alphas[0], ntags);
   //std::cout << "sum: " << sum << std::endl;
+  //std::cout << "scale: " << scale[0] << std::endl;
 
   for (size_t i = 1; i < contexts.size(); ++i) {
     sum = 0.0;
@@ -202,6 +224,8 @@ void Tagger::Impl::forward(Contexts &contexts, PDFs &alphas, PSIs &psis, PDF &sc
       sum = 1.0;
     scale[i] = 1.0 / sum;
     //std::cout << "sum: " << sum << std::endl;
+    //std::cout << "scale: " << scale[i] << std::endl;
+    //vector_print(alphas[i], ntags);
     vector_scale(alphas[i], scale[i], ntags);
   }
   log_z += -vector_sum_log(scale, contexts.size());
@@ -266,9 +290,16 @@ int Tagger::Impl::progress(void *instance, const lbfgsfloatval_t *x,
     const lbfgsfloatval_t *g, const lbfgsfloatval_t fx,
     const lbfgsfloatval_t xnorm, const lbfgsfloatval_t gnorm,
     const lbfgsfloatval_t step, int n, int k, int ls) {
-  std::cerr << "Iteration " << k << std::endl;
-  std::cerr << "  fx = " << fx;
-  std::cerr << "  xnorm = " << xnorm << " gnorm = " << gnorm << " step = " << step << std::endl;
+
+  uint64_t nactives = 0;
+  for (size_t i = 0; i < n; ++i)
+    if (x[i] != 0.0)
+      ++nactives;
+
+  std::cout << "Iteration " << k << '\n' << "  fx = " << fx;
+  std::cout << "  xnorm = " << xnorm << " gnorm = " << gnorm;
+  std::cout << " step = " << step << " trials: " << ls;
+  std::cout << " nactives = " << nactives << " (of " << n << ")" << std::endl;
   return 0;
 }
 
@@ -279,7 +310,7 @@ void Tagger::Impl::reset(PDFs &alphas, PDFs &betas, PSIs &psis, PDF &scale, cons
     std::fill(alphas[i].begin(), alphas[i].end(), 0.0);
     std::fill(betas[i].begin(), betas[i].end(), 0.0);
     for (size_t j = 0; j < psis[i].size(); ++j)
-      std::fill(psis[i][j].begin(), psis[i][j].end(), 1.0);
+      std::fill(psis[i][j].begin(), psis[i][j].end(), 0.0);
   }
 }
 
@@ -287,26 +318,12 @@ lbfgsfloatval_t Tagger::Impl::_evaluate(const lbfgsfloatval_t *x,
     lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step) {
   attributes.copy_lambdas(x);
   attributes.reset_estimations();
+  //vector_print(x, n);
 
   log_z = 0.0;
-  PDFs alphas;
-  PDFs betas;
-  PSIs psis;
-  PDF scale;
-
-  for (size_t i = 0; i < model.max_size(); ++i) {
-    alphas.push_back(PDF(ntags, 0.0));
-    betas.push_back(PDF(ntags, 0.0));
-    scale.push_back(1.0);
-    psis.push_back(PDFs(0));
-    for (size_t j = 0; j < ntags; ++j)
-      psis[i].push_back(PDF(ntags, 1.0));
-  }
-
   for (Instances::iterator i = instances.begin(); i != instances.end(); ++i) {
     Contexts &contexts = *i;
     reset(alphas, betas, psis, scale, i->size());
-
     compute_psis(contexts, psis);
 
     //print_psis(contexts, psis);
@@ -323,16 +340,24 @@ lbfgsfloatval_t Tagger::Impl::_evaluate(const lbfgsfloatval_t *x,
     //print_fwd_bwd(contexts, betas, scale);
 
     for (size_t j = 0; j < i->size(); ++j) {
-      TagPair &klasses = contexts[j].klasses;
       for (FeaturePtrs::iterator k = contexts[j].features.begin(); k != contexts[j].features.end(); ++k) {
-        double alpha = (j > 0) ? alphas[j-1][klasses.prev] : 1.0;
-        double beta = betas[j][klasses.curr];
-        (*k)->est += alpha * psis[j][klasses.prev][klasses.curr] * beta;
+        TagPair &klasses = (*k)->klasses;
+        if (klasses.prev == None::val) { //state feature
+          double alpha = alphas[j][klasses.curr];
+          double beta = betas[j][klasses.curr];
+          (*k)->est += alpha * beta * (1.0 / scale[j]);
+        }
+        else {
+          //trans feature
+          //FIXME TODO WARNING for some reason, trans features that look
+          //further than 1 word back don't work
+          double alpha = (j > 0) ? alphas[j-1][klasses.prev] : 1.0;
+          double beta = betas[j][klasses.curr];
+          (*k)->est += alpha * psis[j][klasses.prev][klasses.curr] * beta;
+        }
 
         //std::cout << j << ' ' << tags.str(klasses.prev) << ' ' << tags.str(klasses.curr) << ' ' << alpha << ' ' << beta << ' ' << psis[j][klasses.prev][klasses.curr] << std::endl;
-        //assert(!std::isnan(est));
       }
-      //std::cout << std::endl;
     }
   }
   //attributes.prep_finite_differences();
@@ -342,7 +367,6 @@ lbfgsfloatval_t Tagger::Impl::_evaluate(const lbfgsfloatval_t *x,
   //attributes.print(inv_sigma_sq);
 
   lbfgsfloatval_t llhood = log_likelihood();
-  std::cout << "llhood: " << llhood << std::endl;
   return llhood;
 }
 
@@ -352,13 +376,13 @@ lbfgsfloatval_t Tagger::Impl::evaluate(void *_instance, const lbfgsfloatval_t *x
 }
 
 void Tagger::Impl::extract(Reader &reader, Instances &instances) {
-  std::cerr << "beginning pass 1" << std::endl;
+  std::cout << "beginning pass 1" << std::endl;
   _pass1(reader);
   reader.reset();
-  std::cerr << "beginning pass 2" << std::endl;
+  std::cout << "beginning pass 2" << std::endl;
   _pass2(reader);
   reader.reset();
-  std::cerr << "beginning pass 3" << std::endl;
+  std::cout << "beginning pass 3" << std::endl;
   _pass3(reader, instances);
 
   attributes.apply_cutoff(Types::w, cfg.cutoff_words(), cfg.cutoff_default());
@@ -384,7 +408,7 @@ void Tagger::Impl::finite_differences(Instances &instances, PDFs &alphas, PDFs &
 
     double plus_llhood = log_likelihood();
     double val = (plus_llhood - llhood) / EPSILON;
-    if(overwrite)
+    if (overwrite)
       g[index++] = val;
     else
       attributes.print_current_gradient(val, inv_sigma_sq);
@@ -394,19 +418,21 @@ void Tagger::Impl::finite_differences(Instances &instances, PDFs &alphas, PDFs &
 }
 
 void Tagger::Impl::reg(void) {
-  registry.reg(Types::w, types.use_words, new WordGen(w_dict));
-  registry.reg(Types::pw, types.use_prev_words, new OffsetWordGen(w_dict, -1));
-  registry.reg(Types::ppw, types.use_prev_words, new OffsetWordGen(w_dict, -2));
-  registry.reg(Types::nw, types.use_next_words, new OffsetWordGen(w_dict, 1));
-  registry.reg(Types::nnw, types.use_next_words, new OffsetWordGen(w_dict, 2));
+  registry.reg(Types::w, types.use_words, new WordGen(w_dict, true, false));
+  registry.reg(Types::pw, types.use_prev_words, new OffsetWordGen(w_dict, -1, true, false));
+  registry.reg(Types::ppw, types.use_prev_words, new OffsetWordGen(w_dict, -3, true, false));
+  registry.reg(Types::nw, types.use_next_words, new OffsetWordGen(w_dict, 1, true, false));
+  registry.reg(Types::nnw, types.use_next_words, new OffsetWordGen(w_dict, 2, true, false));
 
-  registry.reg(Types::prefix, types.use_prefix, new PrefixGen(a_dict), true);
-  registry.reg(Types::suffix, types.use_suffix, new SuffixGen(a_dict), true);
+  //registry.reg(Types::prefix, types.use_prefix, new PrefixGen(a_dict, true, false), true);
+  //registry.reg(Types::suffix, types.use_suffix, new SuffixGen(a_dict, true, false), true);
 
-  //registry.reg(Types::ppw_pw, types.use_word_bigrams, new BigramWordGen(ww_dict, -2));
-  //registry.reg(Types::pw_w, types.use_word_bigrams, new BigramWordGen(ww_dict, -1));
-  //registry.reg(Types::w_nw, types.use_word_bigrams, new BigramWordGen(ww_dict, 0));
-  //registry.reg(Types::nw_nnw, types.use_word_bigrams, new BigramWordGen(ww_dict, 1));
+  //registry.reg(Types::ppw_pw, types.use_word_bigrams, new BigramWordGen(ww_dict, -2, true, true));
+  registry.reg(Types::pw_w, types.use_word_bigrams, new BigramWordGen(ww_dict, -1, true, false));
+  registry.reg(Types::w_nw, types.use_word_bigrams, new BigramWordGen(ww_dict, 0, true, false));
+  //registry.reg(Types::nw_nnw, types.use_word_bigrams, new BigramWordGen(ww_dict, 1, true, true));
+
+  registry.reg(Types::trans, types.use_trans, new TransGen(t_dict, false, true));
 }
 
 Tagger::Tagger(Tagger::Config &cfg, const std::string &preface, Impl *impl)

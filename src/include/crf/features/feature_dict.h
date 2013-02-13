@@ -87,17 +87,41 @@ namespace NLP {
         std::vector<Attribute> attributes;
     };
 
+    class TransDict : public FeatureDict {
+      public:
+        TransDict(const TagSet tags) : _tags(tags), _attrib() { }
+        virtual ~TransDict(void) { }
+
+        virtual Attribute &load(const Type &type, std::istream &in) {
+          Raw val;
+          in >> val;
+          return _attrib;
+        }
+
+        Attribute get(const Type &type) {
+          return _attrib;
+        }
+
+        Attribute &insert(const std::string &type) {
+          return _attrib;
+        }
+
+        const TagSet tags(void) { return _tags; }
+
+      private:
+        const TagSet _tags;
+        Attribute _attrib;
+    };
+
     class BiTagDict : public FeatureDict {
       public:
         BiTagDict(const TagSet tags)
-          : tags(tags), nklasses2(0), attributes() { }
+          : tags(tags), attributes() { }
         virtual ~BiTagDict(void) { };
 
         virtual Attribute &load(const Type &type, std::istream &in) {
-          if (!attributes.size()) {
-            nklasses2 = tags.size() * tags.size();
-            attributes.resize(nklasses2);
-          }
+          if (!attributes.size())
+            attributes.resize(tags.size() * tags.size());
           Raw val1, val2;
           in >> val1 >> val2;
           return insert(type.name, val1, val2);
@@ -113,7 +137,6 @@ namespace NLP {
 
       private:
         const TagSet tags;
-        uint64_t nklasses2;
         std::vector<Attribute> attributes;
     };
   }

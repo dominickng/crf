@@ -103,11 +103,17 @@ namespace NLP {
         WordDict w_dict;
         BiWordDict ww_dict;
         AffixDict a_dict;
+        TransDict t_dict;
 
         const std::string preface;
         double inv_sigma_sq;
         double log_z;
         uint64_t ntags;
+
+        PDFs alphas;
+        PDFs betas;
+        PSIs psis;
+        PDF scale;
 
         Impl(Config &cfg, Types &types, const std::string &preface)
           : Util::Shared(), cfg(cfg), types(types),
@@ -115,8 +121,9 @@ namespace NLP {
             registry(cfg.rare_cutoff()),
             lexicon(cfg.lexicon()), tags(cfg.tags()),
             attributes(), instances(), weights(), attribs2weights(),
-            w_dict(lexicon), ww_dict(lexicon), a_dict(), preface(preface),
-            inv_sigma_sq(), log_z(0.0), ntags() { }
+            w_dict(lexicon), ww_dict(lexicon), a_dict(), t_dict(tags),
+            preface(preface), inv_sigma_sq(), log_z(0.0), ntags(),
+            alphas(), betas(), psis(), scale() { }
 
         virtual ~Impl(void) { /* nothing */ }
 

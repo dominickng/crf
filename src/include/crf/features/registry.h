@@ -11,7 +11,7 @@ namespace NLP {
 
         void generate(Attributes &attributes, Lexicon lexicon, TagSet tags, Sentence &sent, Raws &rawtags, Contexts &contexts, const bool extract);
 
-        void add_features(Sentence &sent, PDFs &dist, int i);
+        void add_features(Lexicon lexicon, Sentence &sent, PDFs &dist, int i);
 
       private:
         class Impl;

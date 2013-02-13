@@ -27,7 +27,7 @@ namespace NLP {
         void save_weights(const std::string &filename, const std::string &preface);
         void save_weights(std::ostream &out, const std::string &preface);
 
-        void operator()(const char *type, const std::string &str, TagPair &tp, const bool add_state_feature=true);
+        void operator()(const char *type, const std::string &str, TagPair &tp, const bool add_state_feature=true, const bool add_trans_feature=true);
         void operator()(const char *type, const std::string &str, uint64_t &id);
         void operator()(const char *type, const std::string &str, Context &c);
         void sort_by_freq(void);

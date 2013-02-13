@@ -65,6 +65,8 @@ const Type Types::ps_s = {"prev shape + curr shape", "ps_s", 1};
 const Type Types::s_ns = {"shape + next shape", "s_ns", 2};
 const Type Types::ns_nns = {"next 2 shapes", "ns_nns", 3};
 
+const Type Types::trans = {"transition feature", "trans", 0};
+
 Types::Types(void) :
   config::OpGroup("types", "Tagger feature types"),
   use_words(*this, "use_words", "use words features", true, true),
@@ -101,7 +103,8 @@ Types::Types(void) :
   use_shape(*this, "use_shape", "use shape features", true, true),
   use_prev_shape(*this, "use_prev_shape", "use prev shape features", true, true),
   use_next_shape(*this, "use_next_shape", "use next shape features", true, true),
-  use_shape_bigram(*this, "use_shape_bigram", "use shape bigram features", true, true)
+  use_shape_bigram(*this, "use_shape_bigram", "use shape bigram features", true, true),
+  use_trans(*this, "use_trans", "use transition features", true, true)
   { }
 
 } }

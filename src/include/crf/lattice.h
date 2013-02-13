@@ -34,6 +34,7 @@ namespace NLP {
         void viterbi(TagSet &tags, PDFs &dist) {
           if (nodes.size() == 0) {
             for (size_t curr = 2; curr < nklasses; ++curr) {
+              //std::cout << "score " << dist[Sentinel::val][curr] << " for " << curr << std::endl;
               Node *n = new (pool) Node(NULL, curr, dist[Sentinel::val][curr]);
               nodes.push_back(n);
               if (!max || max->score < n->score)
@@ -49,9 +50,11 @@ namespace NLP {
               for (size_t prev = 2; prev < nklasses; ++prev) {
                 size_t prev_index = size - (nklasses - prev);
                 double score = dist[prev][curr] + nodes[prev_index]->score;
+                //std::cout << "considering score of " << score << " = " << dist[prev][curr] << " + " << nodes[prev_index]->score << " for " << prev << " -> " << curr << std::endl;
                 if (score > best_score) {
                   best_score = score;
                   best_prev = nodes[prev_index];
+                  //std::cout << "updating best_prev to " << best_prev->tag << std::endl;
                 }
               }
               Node *n = new (pool) Node(best_prev, curr, best_score);

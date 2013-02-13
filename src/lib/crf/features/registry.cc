@@ -139,10 +139,12 @@ namespace NLP {
           }
         }
 
-        void add_features(Sentence &sent, PDFs &dist, int i) {
+        void add_features(Lexicon lexicon, Sentence &sent, PDFs &dist, int i) {
           for (Entries::iterator j = _actives.begin(); j != _actives.end(); ++j) {
             RegEntry *e = *j;
-            (*e->gen)(e->type, sent, dist, i);
+            //std::cout << "Adding " << e->type.name << " features for position " << i << std::endl;
+            if (!(e->rare) || lexicon.freq(sent.words[i]) < rare_cutoff)
+              (*e->gen)(e->type, sent, dist, i);
           }
         }
     };
@@ -170,8 +172,8 @@ namespace NLP {
       _impl->generate(attributes, lexicon, tags, sent, rawtags, contexts, extract);
     }
 
-    void Registry::add_features(Sentence &sent, PDFs &dist, int i) {
-      _impl->add_features(sent, dist, i);
+    void Registry::add_features(Lexicon lexicon, Sentence &sent, PDFs &dist, int i) {
+      _impl->add_features(lexicon, sent, dist, i);
     }
 
   }
