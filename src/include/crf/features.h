@@ -1,3 +1,4 @@
+#include "shape.h"
 #include "crf/features/weight.h"
 #include "crf/features/types.h"
 #include "crf/features/feature.h"
