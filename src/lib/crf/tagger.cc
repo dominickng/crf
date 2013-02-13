@@ -296,10 +296,10 @@ int Tagger::Impl::progress(void *instance, const lbfgsfloatval_t *x,
     if (x[i] != 0.0)
       ++nactives;
 
-  std::cout << "Iteration " << k << '\n' << "  fx = " << fx;
-  std::cout << "  xnorm = " << xnorm << " gnorm = " << gnorm;
-  std::cout << " step = " << step << " trials: " << ls;
-  std::cout << " nactives = " << nactives << " (of " << n << ")" << std::endl;
+  std::cout << "Iteration " << k << '\n' << "  llhood = " << fx;
+  std::cout << ", xnorm = " << xnorm << ", gnorm = " << gnorm;
+  std::cout << ", step = " << step << ", trials = " << ls;
+  std::cout << ", nactives = " << nactives << '/' << n << std::endl;
   return 0;
 }
 
