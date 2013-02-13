@@ -16,6 +16,10 @@ namespace NLP {
 
         void reset(void) {
           lattice.reset();
+          next_word();
+        }
+
+        void next_word(void) {
           for (size_t i = 0; i < dist.size(); ++i)
             std::fill(dist[i].begin(), dist[i].end(), 0.0);
         }

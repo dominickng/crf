@@ -11,11 +11,7 @@ namespace NLP { namespace CRF {
 void FeatureGen::_add_features(Attribute attrib, PDFs &dist) {
   for (Weight *w = attrib.begin; w != attrib.end; ++w) {
     //std::cout << "adding weight " << w->lambda << " for " << w->prev << " -> " << w->curr << std::endl;
-    if (w->prev == None::val)
-      for (Tag t = 0; t < dist.size(); ++t)
-        dist[t][w->curr] += w->lambda;
-    else
-      dist[w->prev][w->curr] += w->lambda;
+    dist[w->prev][w->curr] += w->lambda;
   }
 }
 

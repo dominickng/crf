@@ -68,13 +68,7 @@ namespace NLP {
       }
 
       const Word canonize(const std::string &raw) const {
-        if (raw[0] == '_' && raw[1] == '_') {
-          if (raw == None::str)
-            return NONE;
-          else if (raw == Sentinel::str)
-            return SENTINEL;
-        }
-        return Word(reinterpret_cast<uint64_t>(find(raw.c_str())));
+        return canonize(raw.c_str());
       }
 
       const Word canonize(const char *raw) const {
@@ -153,7 +147,7 @@ namespace NLP {
   }
   void Lexicon::save(std::ostream &out, const std::string &preface) { _impl->save(out, preface); }
 
-  const Word Lexicon::canonize(const std::string &raw) const { return _impl->canonize(raw); }
+  const Word Lexicon::canonize(const std::string &raw) const { return _impl->canonize(raw.c_str()); }
   const Word Lexicon::canonize(const char *raw) const { return _impl->canonize(raw); }
   void Lexicon::canonize(const Raws &raws, Words &words) const { _impl->canonize(raws, words); }
 

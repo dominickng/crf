@@ -65,13 +65,17 @@ namespace NLP {
       }
 
       const Tag canonize(const std::string &raw) const {
-        Entry *e = find(raw.c_str());
-        if (!e)
-          return SENTINEL;
-        return Tag(e->index);
+        return canonize(raw.c_str());
       }
 
       const Tag canonize(const char *raw) const {
+        if (raw[0] == '_' && raw[1] == '_') {
+          if (raw == None::str)
+            return None::val;
+          else if (raw == Sentinel::str)
+            return Sentinel::val;
+        }
+
         Entry *e = find(raw);
         if (!e)
           return SENTINEL;
@@ -141,7 +145,7 @@ namespace NLP {
   }
   void TagSet::save(std::ostream &out, const std::string &preface) { _impl->save(out, preface); }
 
-  const Tag TagSet::canonize(const std::string &raw) const { return _impl->canonize(raw); }
+  const Tag TagSet::canonize(const std::string &raw) const { return _impl->canonize(raw.c_str()); }
   const Tag TagSet::canonize(const char *raw) const { return _impl->canonize(raw); }
   void TagSet::canonize(const Raws &raws, Tags &tags) const { _impl->canonize(raws, tags); }
 

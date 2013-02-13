@@ -35,7 +35,8 @@ namespace NLP {
           if (nodes.size() == 0) {
             for (size_t curr = 2; curr < nklasses; ++curr) {
               //std::cout << "score " << dist[Sentinel::val][curr] << " for " << curr << std::endl;
-              Node *n = new (pool) Node(NULL, curr, dist[Sentinel::val][curr]);
+              double score = dist[None::val][curr] + dist[Sentinel::val][curr];
+              Node *n = new (pool) Node(NULL, curr, score);
               nodes.push_back(n);
               if (!max || max->score < n->score)
                 max = n;
@@ -57,8 +58,9 @@ namespace NLP {
                   //std::cout << "updating best_prev to " << best_prev->tag << std::endl;
                 }
               }
-              Node *n = new (pool) Node(best_prev, curr, best_score);
+              Node *n = new (pool) Node(best_prev, curr, best_score + dist[None::val][curr]);
               nodes.push_back(n);
+              //std::cout << "creating node from " << best_prev->tag << " to " << curr << " with score " << best_score << " + " << dist[None::val][curr] << " = " << n->score << std::endl;
               if (!new_max || new_max->score < n->score)
                 new_max = n;
             }

@@ -41,6 +41,7 @@ class NER::Impl : public Tagger::Impl {
       for (size_t i = 0; i < sent.size(); ++i) {
         registry.add_features(lexicon, sent, state.dist, i);
         state.lattice.viterbi(tags, state.dist);
+        state.next_word();
       }
       //state.lattice.print(std::cout, tags, sent.size());
       state.lattice.best(tags, sent.entities, sent.size());
