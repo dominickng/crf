@@ -385,7 +385,7 @@ namespace NLP {
 
         void print_current_gradient(double val, double inv_sigma_sq) {
           double gradient = f->gradient(inv_sigma_sq);
-          if (abs(gradient - val) >= 1.0e-2) {
+          if (fabs(gradient - val) >= 1.0e-3) {
             std::cout << "freq: " << f->freq << " est: " << f->est;
             std::cout << " lambda: " << prev_lambda << " gradient: " << f->gradient(inv_sigma_sq);
             std::cout << " estimated gradient: " << val << " <" << f->klasses.prev << ' ' << f->klasses.curr << "> " << (*e)->str <<  std::endl;
