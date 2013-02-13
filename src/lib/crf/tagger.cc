@@ -138,6 +138,7 @@ double Tagger::Impl::log_likelihood(void) {
 }
 
 void Tagger::Impl::compute_psis(Contexts &contexts, PSIs &psis) {
+  //TODO profiling shows that this is the bottleneck in training
   for (size_t i = 0; i < contexts.size(); ++i) {
     Context &c = contexts[i];
     for (FeaturePtrs::iterator j = c.features.begin(); j != c.features.end(); ++j) {
@@ -292,7 +293,7 @@ int Tagger::Impl::progress(void *instance, const lbfgsfloatval_t *x,
     const lbfgsfloatval_t step, int n, int k, int ls) {
 
   uint64_t nactives = 0;
-  for (size_t i = 0; i < n; ++i)
+  for (int i = 0; i < n; ++i)
     if (x[i] != 0.0)
       ++nactives;
 
