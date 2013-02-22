@@ -157,9 +157,11 @@ namespace Util {
               else
                 throw ConfigException("Invalid default value", Op<T>::_name, _options_string);
             }
+            ss.clear();
             ss.str(buffer);
             ss >> option;
             _options.push_back(option);
+            buffer.clear();
           }
         }
 

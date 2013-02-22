@@ -50,7 +50,9 @@ class POS::Impl : public Tagger::Impl {
     virtual void _pass1(Reader &reader) {
       Sentence sent;
       uint64_t max_size = 0;
+      uint64_t nsents = 0;
       while (reader.next(sent)) {
+        ++nsents;
         for (size_t i = 0; i < sent.size(); ++i) {
           lexicon.add(sent.words[i]);
           tags.add(sent.pos[i]);
@@ -60,6 +62,7 @@ class POS::Impl : public Tagger::Impl {
         sent.reset();
       }
 
+      instances.reserve(nsents);
       lexicon.save(preface);
       tags.save(preface);
       model.max_size(max_size);
