@@ -95,6 +95,7 @@ namespace NLP {
         bool find(const char *type, const std::string &str, Context &c) {
           for (AttribEntry *l = this; l != NULL; l = l->next) {
             if (l->equal(type, str) && l->value > 0) {
+              c.features.reserve(c.features.size() + l->features.size());
               for (Features::iterator i = l->features.begin(); i != l->features.end(); ++i)
                 c.features.push_back(&(*i));
               return true;
