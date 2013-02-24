@@ -7,12 +7,11 @@ namespace NLP {
       public:
         FeaturePtrs features;
         TagPair klasses;
-        uint64_t freq;
         size_t index;
 
-        Context(void) : features(), klasses(), freq(0), index(0) { }
-        Context(TagPair klasses, const size_t index=0) : features(), klasses(klasses), freq(0), index(index) { }
-        Context(Tag prev, Tag curr, const size_t index=0) : features(), klasses(prev, curr), freq(0), index(index) { }
+        Context(void) : features(), klasses(), index(0) { }
+        Context(TagPair klasses, const size_t index=0) : features(), klasses(klasses), index(index) { }
+        Context(Tag prev, Tag curr, const size_t index=0) : features(), klasses(prev, curr), index(index) { }
     };
 
     class Contexts {
