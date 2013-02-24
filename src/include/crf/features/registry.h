@@ -6,7 +6,7 @@ namespace NLP {
         Registry(const Registry &other);
        ~Registry(void);
 
-        void reg(const Type &type, config::Op<bool> &op, FeatureGen *gen, const bool rare=false);
+        void reg(const Type &type, FeatureGen *gen, const bool active, const bool rare=false);
         Attribute &load(const std::string &type, std::istream &in);
 
         void generate(Attributes &attributes, Lexicon lexicon, TagSet tags, Sentence &sent, Raws &rawtags, Contexts &contexts, const bool extract);

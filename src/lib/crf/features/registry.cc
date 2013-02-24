@@ -93,8 +93,8 @@ namespace NLP {
             (*j)->~RegEntry();
         }
 
-        void reg(const Type &type, config::Op<bool> &op, FeatureGen *gen, const bool rare) {
-          if (op()) {
+        void reg(const Type &type, FeatureGen *gen, const bool active, const bool rare) {
+          if (active) {
             size_t bucket = RegEntry::hash(type.name).value() % _nbuckets;
             RegEntry *entry = RegEntry::create(ImplBase::_pool, type, gen, rare, _buckets[bucket]);
             _actives.push_back(entry);
@@ -159,8 +159,8 @@ namespace NLP {
       release(_impl);
     }
 
-    void Registry::reg(const Type &type, config::Op<bool> &op, FeatureGen *gen, const bool rare) {
-      _impl->reg(type, op, gen, rare);
+    void Registry::reg(const Type &type, FeatureGen *gen, const bool active, const bool rare) {
+      _impl->reg(type, gen, active, rare);
     }
 
     Attribute &Registry::load(const std::string &type, std::istream &in) {

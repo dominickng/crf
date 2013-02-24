@@ -94,22 +94,22 @@ class NER::Impl : public Tagger::Impl {
     virtual void reg(void) {
       Tagger::Impl::reg();
 
-      registry.reg(Types::p, types.use_pos, new PosGen(p_dict, true, false));
-      registry.reg(Types::pp, types.use_prev_pos, new OffsetPosGen(p_p_dict, -1, true, false));
-      registry.reg(Types::ppp, types.use_prev_pos, new OffsetPosGen(pp_p_dict, -2, true, false));
-      registry.reg(Types::np, types.use_next_pos, new OffsetPosGen(n_p_dict, 1, true, false));
-      registry.reg(Types::nnp, types.use_next_pos, new OffsetPosGen(nn_p_dict, 2, true, false));
+      registry.reg(Types::p, new PosGen(p_dict, true, false), types.use_pos());
+      registry.reg(Types::pp, new OffsetPosGen(p_p_dict, -1, true, false), types.use_prev_pos());
+      registry.reg(Types::ppp, new OffsetPosGen(pp_p_dict, -2, true, false), types.use_prev_pos());
+      registry.reg(Types::np, new OffsetPosGen(n_p_dict, 1, true, false), types.use_next_pos());
+      registry.reg(Types::nnp, new OffsetPosGen(nn_p_dict, 2, true, false), types.use_next_pos());
 
-      registry.reg(Types::ppp_pp, types.use_pos_bigrams, new BigramPosGen(ppp_pp_p_dict, -2, true, false));
-      registry.reg(Types::pp_p, types.use_pos_bigrams, new BigramPosGen(pp_p_p_dict, -1, true, false));
-      registry.reg(Types::p_np, types.use_pos_bigrams, new BigramPosGen(p_np_p_dict, 0, true, false));
-      registry.reg(Types::np_nnp, types.use_pos_bigrams, new BigramPosGen(np_nnp_p_dict, 1, true, false));
+      registry.reg(Types::ppp_pp, new BigramPosGen(ppp_pp_p_dict, -2, true, false), types.use_pos_bigrams());
+      registry.reg(Types::pp_p, new BigramPosGen(pp_p_p_dict, -1, true, false), types.use_pos_bigrams());
+      registry.reg(Types::p_np, new BigramPosGen(p_np_p_dict, 0, true, false), types.use_pos_bigrams());
+      registry.reg(Types::np_nnp, new BigramPosGen(np_nnp_p_dict, 1, true, false), types.use_pos_bigrams());
 
-      //registry.reg(Types::pps, types.use_prev_shape, new OffsetShapeGen(a_dict, -2, true, true));
-      registry.reg(Types::ps, types.use_prev_shape, new OffsetShapeGen(a_dict, -1, true, false));
-      registry.reg(Types::s, types.use_shape, new ShapeGen(a_dict, true, false));
-      registry.reg(Types::ns, types.use_next_shape, new OffsetShapeGen(a_dict, 1, true, false));
-      //registry.reg(Types::nns, types.use_next_shape, new OffsetShapeGen(a_dict, 2, true, true));
+      //registry.reg(Types::pps, new OffsetShapeGen(a_dict, -2, true, true), types.use_prev_shape());
+      registry.reg(Types::ps, new OffsetShapeGen(a_dict, -1, true, false), types.use_prev_shape());
+      registry.reg(Types::s, new ShapeGen(a_dict, true, false), types.use_shape());
+      registry.reg(Types::ns, new OffsetShapeGen(a_dict, 1, true, false), types.use_next_shape());
+      //registry.reg(Types::nns, new OffsetShapeGen(a_dict, 2, true, true), types.use_next_shape());
     }
 
     virtual void load(void) {
