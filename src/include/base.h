@@ -30,6 +30,7 @@ namespace NLP {
 #include "port.h"
 #include "exception.h"
 #include "version.h"
+#include "vector.h"
 #include "offset_vector.h"
 #include "word.h"
 #include "tag.h"
