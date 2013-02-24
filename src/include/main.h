@@ -12,7 +12,7 @@ int main(int argc, char *argv[]) {
   catch (config::ConfigException &e) {
     std::cerr << port::RED << e.msg << ": " << e.name;
     if (e.value.size())
-      std::cerr << ", " << e.value;
+      std::cerr << " (value supplied was " << e.value << ')';
     std::cerr << port::OFF << std::endl;
     exit(1);
   }
