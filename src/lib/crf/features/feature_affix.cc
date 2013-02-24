@@ -14,6 +14,17 @@ namespace NLP {
     namespace Hash = Util::Hasher;
     namespace HT = Util::hashtable;
 
+    /**
+     * AffixEntry.
+     * Entry object for the AffixDict hashtable. Each entry stores a type
+     * pointer (allowing one AffixDict to be used for multiple feature types),
+     * an Attribute object, the matching feature value, and a pointer to the
+     * next chained AffixEntry.
+     *
+     * The feature value is stored in the str member. To save memory, this
+     * is dynamically allocated in the provided memory pool at the time of
+     * object creation.
+     */
     class AffixEntry {
       private:
         AffixEntry(const char *type, AffixEntry *next) :
@@ -73,6 +84,10 @@ namespace NLP {
 
     typedef HT::BaseHashTable<AffixEntry, std::string> ImplBase;
 
+    /**
+     * AffixDict::Impl.
+     * Private implementation of the AffixDict as a hashtable.
+     */
     class AffixDict::Impl : public ImplBase, public Util::Shared {
       public:
         Impl(const size_t nbuckets, const size_t pool_size)

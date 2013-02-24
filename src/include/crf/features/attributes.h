@@ -1,3 +1,7 @@
+/**
+ * attributes.h.
+ * Defines the attributes object, which is used in training.
+ */
 namespace NLP {
   namespace CRF {
     namespace HT = Util::hashtable;

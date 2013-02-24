@@ -8,6 +8,13 @@
 
 namespace NLP { namespace CRF {
 
+/**
+ * _add_features.
+ *
+ * Utility method to add all lambdas associated with an attribute to a
+ * probability distribution, indexed by the previous and current tags for each
+ * lambda.
+ */
 void FeatureGen::_add_features(Attribute attrib, PDFs &dist) {
   for (Weight *w = attrib.begin; w != attrib.end; ++w) {
     //std::cout << "adding weight " << w->lambda << " for " << w->prev << " -> " << w->curr << std::endl;
@@ -39,6 +46,12 @@ void TransGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int i) {
     _add_features(dict.get(type), dist);
 }
 
+/**
+ * _get_raw.
+ * Utility function to get the appropriate offset value for subclasses of
+ * OffsetGen. If the requested offset is out of range, Sentinel::str is
+ * returned.
+ */
 const Raw *OffsetGen::_get_raw(Raws &raws, int i) {
   const Raw *raw = 0;
   i += offset;
@@ -262,6 +275,14 @@ void OffsetPosGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int 
   _add_features(dict.get(type, *_get_raw(sent.pos, i)), dist);
 }
 
+/**
+ * _get_raw.
+ * Utility function to generate the feature value for a bigram feature, and
+ * store it in the reference raw string.
+ *
+ * Bigram feature values are the two elements of the bigram conjoined with a
+ * space. Sentinel::str is used when the offset is out of range.
+ */
 void BigramGen::_get_raw(Raws &raws, Raw &raw, int i) {
   i += offset;
   if (i >= 0 && i < raws.size()) {

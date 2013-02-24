@@ -1,3 +1,10 @@
+/**
+ * lexicon.h
+ * Defines the lexicon dictionary, which maps the raw words that occur in
+ * input text to a canonical representation in order to save memory. Instead
+ * of having to store multiple copies of each string, one copy is stored in
+ * the lexicon and canonical pointers to that copy are created for use.
+ */
 namespace NLP {
   namespace HT = Util::hashtable;
 

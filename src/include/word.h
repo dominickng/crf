@@ -1,3 +1,13 @@
+/**
+ * word.h
+ * Implementation of Word objects, which are a thin wrapper
+ * around a pointer into the lexicon dictionary. Words are
+ * canonical objects; words that are equal to one another
+ * will have identical Word object representations
+ *
+ * id values of 0 and 1 are reserved for None::str and Sentinel::str
+ * respectively.
+ */
 namespace NLP {
   class Word {
     private:

@@ -11,8 +11,34 @@ namespace NLP {
   namespace CRF {
     namespace Hash = Util::Hasher;
 
+    /**
+     * AttribEntry. This object is an entry in the Attributes hash table.
+     *
+     * Each AttribEntry has a unique index (used for sorting), a frequency,
+     * a feature type, a pointer to the next AttribEntry in the chain, text
+     * value, and a vector of Feature objects that have been observed
+     * with this attribute in the training data.
+     *
+     * The feature type is stored as a const char * pointer to the canonical
+     * string representation of the name of the feature type (in the Types
+     * object)
+     *
+     * The text value of each AttribEntry is generally the unique
+     * representation of a feature (e.g. a word, pos tag, underscore-joined
+     * conjunction of words, etc.). This is generated from the observed data at
+     * training and test time. The value is stored in the str member. When
+     * an AttribEntry is allocated, extra memory is allocated to fit the
+     * text value exactly, including the terminating null character. The
+     * str member is a 1-element char array since some compilers complain
+     * about a zero element array.
+     */
     class AttribEntry {
       private:
+        /**
+         * Private constructor so that AttribEntry objects cannot be created
+         * directly; they must be created via the static create function so
+         * that memory can be appropriately allocated.
+         */
         AttribEntry(const char *type, AttribEntry *next) :
           index(0), value(0), next(next), type(type), features() { }
 
@@ -32,6 +58,10 @@ namespace NLP {
 
         ~AttribEntry(void) { }
 
+        /**
+         * Static hash function. The hash is computed from the conjoined
+         * type string and text value
+         */
         static Hash::Hash hash(const char *type, const std::string &str) {
           std::string s = str + ' ' + type;
           Hash::Hash hash(s);
@@ -43,6 +73,11 @@ namespace NLP {
           return NULL;
         }
 
+        /**
+         * create.
+         * Static function to create AttribEntry objects. Allocates the
+         * AttribEntry and copies the text value into the str member.
+         */
         static AttribEntry *create(Util::Pool *pool, const char *type,
             const std::string &str, AttribEntry *next) {
           AttribEntry *entry = new (pool, str.size()) AttribEntry(type, next);
@@ -50,10 +85,20 @@ namespace NLP {
           return entry;
         }
 
+        /**
+         * insert.
+         * Adds a new feature with the tagpair it has been observed with to
+         * this attribute.
+         */
         void insert(TagPair &tp) {
           features.push_back(Feature(tp, 1, strcmp(type, "trans") == 0)); //hackety hack
         }
 
+        /**
+         * increment.
+         * If a feature has previously been seen with the given tagpair,
+         * increment its frequency. Otherwise, add the feature.
+         */
         void increment(TagPair &tp) {
           ++value;
           for (Features::iterator i = features.begin(); i != features.end(); ++i) {
@@ -80,6 +125,12 @@ namespace NLP {
           return NULL;
         }
 
+        /**
+         * find.
+         * Given a context, a feature type, and the text value extracted by
+         * the feature generator for that feature type, add all features on
+         * attributes which match the text value to the context
+         */
         bool find(const char *type, const std::string &str, Context &c) {
           for (AttribEntry *l = this; l != NULL; l = l->next) {
             if (l->equal(type, str) && l->value > 0) {
@@ -92,6 +143,10 @@ namespace NLP {
           return false;
         }
 
+        /**
+         * cutoff.
+         * Eliminates features with a frequency less than cutoff.
+         */
         void cutoff(const uint64_t freq) {
           for (AttribEntry *l = this; l != NULL; l = l->next) {
             for (Features::iterator i = l->features.begin(); i != l->features.end(); ++i) {
@@ -103,11 +158,30 @@ namespace NLP {
           }
         }
 
+        /**
+         * save_attribute.
+         * Dump the current attribute to the ostream. The output format is:
+         * type_string text_value freq
+         *
+         * This does not need to iterate through the chain of AttribEntry
+         * objects as it is called via the sorted list of all AttribEntry
+         * objects in the hash table
+         */
         void save_attribute(std::ostream &out) const {
           assert(index != 0);
           out << type << ' ' << str << ' ' << value << '\n';
         }
 
+        /**
+         * save_features.
+         * Dump the features associated with this attribute to the ostream. The
+         * output format is:
+         * attr_index prev_klass curr_klass freq lambda
+         *
+         * where attr index is the index of this attribute. This index value
+         * is set when the attributes hash table is sorted by decreasing
+         * frequency.
+         */
         void save_features(std::ostream &out) const {
           assert(index != 0);
           for (Features::const_iterator i = features.begin(); i != features.end(); ++i)
@@ -115,6 +189,10 @@ namespace NLP {
               out << index << ' ' << i->klasses.prev_id() << ' ' << i->klasses.curr_id() << ' ' << i->freq << ' ' << *(i->lambda) << '\n';
         }
 
+        /**
+         * nfeatures.
+         * Calculates the number of features on this attribute
+         */
         uint64_t nfeatures(void) const {
           assert(index != 0);
           uint64_t total = 0;
@@ -128,11 +206,20 @@ namespace NLP {
           return next ? next->nchained() + 1 : 1;
         }
 
+        /**
+         * reset_expectations.
+         * Resets model expected feature counts to 0 for each L-BFGS iteration
+         */
         void reset_expectations(void) {
           for (Features::iterator i = features.begin(); i != features.end(); ++i)
             i->exp = 0.0;
         }
 
+        /**
+         * sum_lambda_sq.
+         * Returns the sum of the squared lambda values of each feature
+         * attached to this attribute
+         */
         double sum_lambda_sq(void) {
           double lambda_sq = 0.0;
           for (Features::iterator i = features.begin(); i != features.end(); ++i)
@@ -140,16 +227,35 @@ namespace NLP {
           return lambda_sq;
         }
 
+        /**
+         * assign_lambdas.
+         * Given an array of doubles and a reference to a starting array index,
+         * assigns the lambda pointer for each feature attached to this
+         * attribute to the indexth position of the array. Increments index
+         * for each feature. It is assumed that the array and index are
+         * correctly sized as this function is called for each attribute and
+         * does not do any bounds checking.
+         */
         void assign_lambdas(lbfgsfloatval_t *x, size_t &index) {
           for (Features::iterator i = features.begin(); i != features.end(); ++i)
             i->lambda = &x[index++];
         }
 
+        /**
+         * copy_gradients.
+         * Computes the gradient of each feature attached to this attribute,
+         * and copies that gradient to the supplied array of doubles.
+         */
         void copy_gradients(lbfgsfloatval_t *x, double inv_sigma_sq, size_t &index) {
           for (Features::iterator i = features.begin(); i != features.end(); ++i)
             x[index++] = i->gradient(inv_sigma_sq);
         }
 
+        /**
+         * print.
+         * Prints the features attached to this attribute to stdout along with
+         * their gradient and lambda values.
+         */
         void print(double inv_sigma_sq) {
           for (Features::iterator i = features.begin(); i != features.end(); ++i)
             std::cout << "gradient: " << i->gradient(inv_sigma_sq) << " lambda: " << *(i->lambda) << std::endl;
@@ -158,12 +264,16 @@ namespace NLP {
 
     typedef HT::OrderedHashTable<AttribEntry, std::string> ImplBase;
 
+    /**
+     * Attributes::Impl.
+     * Private hashtable implementation of the attributes object.
+     */
     class Attributes::Impl : public ImplBase, public Util::Shared {
       private:
         std::string preface;
-        Entries::iterator e;
-        Features::iterator f;
-        double prev_lambda;
+        Entries::iterator e; //used for finite differences gradient checking
+        Features::iterator f; //used for finite differences gradient checking
+        double prev_lambda; //used for finite differences gradient checking
 
       public:
         Impl(const size_t nbuckets, const size_t pool_size)
@@ -191,6 +301,13 @@ namespace NLP {
         using ImplBase::insert;
         using ImplBase::find;
 
+        /**
+         * add.
+         * Adds a feature with a given value, type, an observed tagpair to
+         * the hash table. Allow both state and transition features to be added
+         *
+         * Most of the real work is done in the _add function
+         */
         void add(const char *type, const std::string &str, TagPair tp, const bool add_state_feature=true, const bool add_trans_feature=true) {
           if (add_trans_feature)
             _add(type, str, tp);
@@ -200,6 +317,17 @@ namespace NLP {
           }
         }
 
+        /**
+         * _add.
+         * Adds a feature to the attributes hash table.
+         *
+         * First, do a lookup to see if an existing AttribEntry matches the
+         * given type and text value. If so, then increment the feature
+         * matching the observed tagpair on that entry. Otherwise, create a
+         * new AttribEntry and add it to the chain at the appropriate
+         * location in the hash table (this chain may be NULL if nothing else
+         * that collides with the computed hash value has been added yet)
+         */
         void _add(const char *type, const std::string &str, TagPair &tp) {
           size_t bucket = AttribEntry::hash(type, str).value() % _nbuckets;
           AttribEntry *entry = _buckets[bucket]->find(type, str);
@@ -215,10 +343,21 @@ namespace NLP {
           entry->increment(tp);
         }
 
+        /**
+         * add.
+         * Adds an observation of a tagpair to the features on the attribute
+         * at a specified index of the sorted entries
+         */
         void add(uint64_t index, TagPair &tp) {
           _entries[index]->increment(tp);
         }
 
+        /**
+         * insert.
+         * Similar to the add function, but does not perform an initial lookup
+         * and always creates a new AttribEntry. Used for loading the
+         * full attributes hashtable from disk.
+         */
         void insert(const char *type, const std::string &str, uint64_t freq) {
           size_t bucket = AttribEntry::hash(type, str).value() % Base::_nbuckets;
           AttribEntry *entry = AttribEntry::create(Base::_pool, type, str, Base::_buckets[bucket]);
@@ -228,6 +367,11 @@ namespace NLP {
           _entries.push_back(entry);
         }
 
+        /**
+         * find.
+         * Given a context, feature type, and feature value, add all features
+         * that match the feature type and feature value to the context
+         */
         bool find(const char *type, const std::string &str, Context &c) {
           return Base::_buckets[AttribEntry::hash(type, str).value() % Base::_nbuckets]->find(type, str, c);
         }
@@ -258,6 +402,10 @@ namespace NLP {
             throw IOException("could not parse word or frequency information for attributes", filename, nlines);
         }
 
+        /**
+         * save_attributes.
+         * Dumps the attributes file to disk, sorted by decreasing frequency
+         */
         void save_attributes(std::ostream &out, const std::string &preface) {
           compact();
           sort_by_rev_value();
@@ -267,6 +415,11 @@ namespace NLP {
               (*i)->save_attribute(out);
         }
 
+        /**
+         * save_features.
+         * Dumps the features to disk, sorted by attributes in decreasing
+         * frequency
+         */
         void save_features(std::ostream &out, const std::string &preface) {
           out << preface << '\n';
           for (Entries::const_iterator i = _entries.begin(); i != _entries.end(); ++i)
@@ -274,6 +427,10 @@ namespace NLP {
               (*i)->save_features(out);
         }
 
+        /**
+         * nfeatures.
+         * Returns the total number of features observed in the training data
+         */
         uint64_t nfeatures(void) const {
           uint64_t n = 0;
           for (Entries::const_iterator i = _entries.begin(); i != _entries.end(); ++i)
@@ -281,23 +438,42 @@ namespace NLP {
           return n;
         }
 
+        /**
+         * apply_attrib_cutoff.
+         * Removes all attributes with frequency less than a cutoff value
+         */
         void apply_attrib_cutoff(const uint64_t freq) {
           for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
             if ((*i)->value < freq)
               (*i)->value = 0;
         }
 
+        /**
+         * apply_cutoff.
+         * Removes all features with frequency less than a cutoff value
+         */
         void apply_cutoff(const uint64_t freq) {
           for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
             (*i)->cutoff(freq);
         }
 
+        /**
+         * apply_cutoff.
+         * Removes all features with a specific type that have a frequency
+         * less than a cutoff value
+         */
         void apply_cutoff(const char *type, const uint64_t freq) {
           for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
             if ((*i)->type == type)
               (*i)->cutoff(freq);
         }
 
+        /**
+         * apply_cutoff.
+         * Removes all features with a specific type that have a frequency
+         * less than a cutoff value, and all other features with frequency
+         * less than a default value
+         */
         void apply_cutoff(const char *type, const uint64_t freq, const uint64_t def) {
           for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
             if ((*i)->type == type)
@@ -330,6 +506,12 @@ namespace NLP {
             (*i)->copy_gradients(x, inv_sigma_sq, index);
         }
 
+        /**
+         * inc_next_gradient.
+         * Increments the next feature lambda by val. Restores the previously
+         * incremented lambda to its former value. Used for finite
+         * difference empirical gradient check.
+         */
         bool inc_next_lambda(double val) {
           if (e == _entries.end() && (f+1) == (*e)->features.end()) {
             *(f->lambda) = prev_lambda;
@@ -348,11 +530,21 @@ namespace NLP {
           return true;
         }
 
+        /**
+         * prep_finite_differences.
+         * Sets the entries and feature iterators to the appropriate values
+         * before beginning the finite differences empirical gradient check
+         */
         void prep_finite_differences(void) {
           e = _entries.begin();
           f = (*e)->features.begin() - 1;
         }
 
+        /**
+         * print_current_gradient.
+         * Prints the feature that is currently having its empirical gradient
+         * checked.
+         */
         void print_current_gradient(double val, double inv_sigma_sq) {
           double gradient = f->gradient(inv_sigma_sq);
           if (fabs(gradient - val) >= 1.0e-2) {

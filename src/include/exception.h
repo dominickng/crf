@@ -1,4 +1,13 @@
-// general errors with an error message
+/**
+ * exception.h.
+ * Defines broad exception classes used in the CRF
+ */
+
+
+/**
+ * Exception.
+ * general errors with a message
+ */
 class Exception : public std::exception {
   public:
     const std::string msg;
@@ -11,9 +20,12 @@ class Exception : public std::exception {
 };
 
 
-// I/O errors with an error message, filename, and line number
-// normally these occur when files are missing or file reading
-// when the text does not match the expected input format
+/**
+ * IOException.
+ * I/O errors with an error message, filename, and line number
+ * normally these occur when files are missing or file reading
+ * when the text does not match the expected input format
+ */
 class IOException : public Exception {
   public:
     const std::string uri;
@@ -25,7 +37,10 @@ class IOException : public Exception {
     virtual ~IOException(void) throw() { }
 };
 
-// general errors with an error message
+/**
+ * FormatException.
+ * an exception used in the IO format system
+ */
 class FormatException : public Exception {
   public:
     const char c;
@@ -34,7 +49,10 @@ class FormatException : public Exception {
     virtual ~FormatException(void) throw() { }
 };
 
-// general errors with an error message
+/**
+ * ValueException.
+ * a general exception indicating some sort of malformed value
+ */
 class ValueException : public Exception {
   public:
     ValueException(const std::string &msg) : Exception(msg) { }

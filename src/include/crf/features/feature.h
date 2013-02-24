@@ -1,5 +1,16 @@
 namespace NLP {
   namespace CRF {
+    /**
+     * Feature object.
+     * This represents some feature on an attribute associated with a pair
+     * of tags. Each feature has an empirical frequency (calculated by summing
+     * the occurences of the feature in the training data), a pointer to a
+     * lambda that exists in a vector used in optimization, and an expected
+     * frequency calculated during L-BFGS optimization.
+     *
+     * klasses.prev is set to None::val if the feature is a state feature; i.e.
+     * it doesn't care about the previous tag.
+     */
     class Feature {
       public:
         TagPair klasses;

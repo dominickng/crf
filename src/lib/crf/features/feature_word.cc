@@ -14,6 +14,18 @@ namespace NLP {
     namespace Hash = Util::Hasher;
     namespace HT = Util::hashtable;
 
+    /**
+     * WordEntry.
+     * Entry object for the WordDict hashtable. Each entry stores a type
+     * pointer (allowing one WordDict to be used for multiple feature types),
+     * an Attribute object, a Word representing the matching feature value, and
+     * a pointer to the next chained WordEntry.
+     *
+     * All feature values stored in this entry are assumed to have been
+     * canonized into a Word object, which is a thin wrapper around a pointer
+     * into the lexicon dictionary. Hence, no dynamically sized feature value
+     * strings are required.
+     */
     class WordEntry {
       private:
         WordEntry(const char *type, const Word value, WordEntry *next) :
@@ -70,6 +82,10 @@ namespace NLP {
 
     typedef HT::BaseHashTable<WordEntry, Word> ImplBase;
 
+    /**
+     * WordDict::Impl.
+     * Private implementation of the WordDict as a hashtable.
+     */
     class WordDict::Impl : public ImplBase, public Util::Shared {
       public:
         const Lexicon lexicon;

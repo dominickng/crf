@@ -14,6 +14,19 @@ namespace NLP {
     namespace Hash = Util::Hasher;
     namespace HT = Util::hashtable;
 
+    /**
+     * BigramEntry.
+     * Entry object for the BiWordDict hashtable. Each entry stores a type
+     * pointer (allowing one BiWordDict to be used for multiple feature types),
+     * an Attribute object, two Word objects representing the matching feature
+     * values of each part of the bigram, and a pointer to the next chained
+     * WordEntry.
+     *
+     * All feature values stored in this entry are assumed to have been
+     * canonized into Word objects, which are thin wrappers around pointers
+     * into the lexicon dictionary. Hence, no dynamically sized feature value
+     * strings are required.
+     */
     class BigramEntry {
       private:
         BigramEntry(const char *type, const Word val1, const Word val2, BigramEntry *next) :
@@ -73,6 +86,10 @@ namespace NLP {
 
     typedef HT::BaseHashTable<BigramEntry, Word> ImplBase;
 
+    /**
+     * BiWordDict::Impl.
+     * Private implementation of the BiWordDict as a hashtable.
+     */
     class BiWordDict::Impl : public ImplBase, public Util::Shared {
       public:
         const Lexicon lexicon;

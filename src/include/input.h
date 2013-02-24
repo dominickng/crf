@@ -1,3 +1,9 @@
+/**
+ * input.h
+ * Defines methods related to reading and creating useful
+ * prefaces for input and output files. These prefaces store the
+ * program invocation used to generate the provided file.
+ */
 namespace NLP {
   extern const std::string PREFACE_HEADER;
 

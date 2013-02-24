@@ -41,6 +41,16 @@ void Tagger::Impl::reset(const size_t size) {
   }
 }
 
+/**
+ * compute_psis.
+ * Iterate through the features attached to a context, and add the lambdas
+ * for each feature to a probability distribution. Exponentiate the final
+ * summed distributions, scaling by a decay factor for SGD. The distribution is
+ * indexed by a tuple of (previous_tag, current_tag)
+ *
+ * State features (previous_Tag = None::val) are uniformly added to every
+ * (x, current_tag) for each tag x
+ */
 void Tagger::Impl::compute_psis(Context &context, PDFs &dist, double decay) {
   //TODO profiling shows that this is the bottleneck in training
   //(50% of training time!)
@@ -57,11 +67,28 @@ void Tagger::Impl::compute_psis(Context &context, PDFs &dist, double decay) {
       dist[prev][curr] = exp(dist[prev][curr] * decay);
 }
 
+/**
+ * compute_psis.
+ * Iterate through contexts, computing the activation values for each one.
+ */
 void Tagger::Impl::compute_psis(Contexts &contexts, PSIs &psis, double decay) {
   for (size_t i = 0; i < contexts.size(); ++i)
     compute_psis(contexts[i], psis[i], decay);
 }
 
+/**
+ * compute_expectations.
+ * Iterate through contexts, computing the expected values of each feature
+ *
+ * The expected value of a state feature is the sum over each occurence of the
+ * feature of alpha[i][tag] * beta[i][tag] * (1.0 / scale[i]), where i is the
+ * current position and tag is the current gold tag
+ *
+ * The expected value of a transition feature is the sum over each occurence of
+ * the feature of alpha[i-1][prev] * activation[i][prev][curr] * beta[i][curr],
+ * where i is the current position, prev is the previous gold tag, and curr
+ * is the current gold tag
+ */
 void Tagger::Impl::compute_expectations(Contexts &c) {
   for (size_t i = 0; i < c.size(); ++i) {
     double inv_scale = (1.0 / scale[i]);
@@ -87,6 +114,31 @@ void Tagger::Impl::compute_expectations(Contexts &c) {
   }
 }
 
+/**
+ * forward.
+ * The forward pass of the forward-backward algorithm. This pass calculates the
+ * alpha scores, using scaling to avoid numerical overflow from exponentiation
+ *
+ * The scaling factor scale[i] at each position i is the inverse sum of each
+ * alpha[i]. It can be shown from the recurrence relations for alpha, alpha',
+ * beta, beta', and the definition of the scale factor that the log partition
+ * function (aka the log of the normalizing constant Z) can be calculated as
+ * the negative sum of the log of each scale value.
+ *
+ * At position 0, alpha[0][tag] is calculated for each tag. Then scale[0]
+ * is calculated, and alpha'[0][tag] is calculated by multiplying each
+ * alpha[0][tag] by scale[0]. Then the alpha[i-1] are used to calculate each
+ * alpha[i] and scale[i] in turn.
+ *
+ * alpha[0][tag] = state_activation(tag)
+ * scale[0] = 1.0 / (sum (over tags t) [alpha[0][t]])
+ * alpha'[0][tag] alpha[0][tag] * scale[0]
+ *
+ * alpha[i][tag] = sum (over prev tags p) [alpha'[i-1][p] * activation[i][tag]]
+ * scale[i] = 1.0 / (sum (over tags t) [alpha[i][t]])
+ * alpha'[i][tag] = alpha[i][tag] * scale[i]
+ *
+ */
 void Tagger::Impl::forward(Contexts &contexts, PDFs &alphas, PSIs &psis, PDF &scale) {
   double sum = 0.0;
 
@@ -126,6 +178,13 @@ void Tagger::Impl::forward(Contexts &contexts, PDFs &alphas, PSIs &psis, PDF &sc
   //std::cout << "scale Z: " << -vector_sum_log(scale, contexts.size()) << std::endl;
 }
 
+/**
+ * forward_noscale.
+ * A version of the forward pass that does not perform scaling. In this case,
+ * the log partition function is calculated by taking the log of the sum of
+ * the alpha values in the final column (i.e. at position N, where N is the
+ * number of words in the sentence)
+ */
 void Tagger::Impl::forward_noscale(Contexts &contexts, PDFs &alphas, PSIs &psis) {
   for (Tag curr(2); curr < ntags; ++curr) {
     double val = psis[0][Sentinel::val][curr];
@@ -144,7 +203,29 @@ void Tagger::Impl::forward_noscale(Contexts &contexts, PDFs &alphas, PSIs &psis)
   std::cout << "noscale Z: " << log(vector_sum(alphas[contexts.size() - 1], ntags)) << std::endl;
 }
 
-
+/**
+ * backward.
+ * The backward pass of the forward-backward algorithm. This pass calculates
+ * the beta scores, using scaling to avoid numerical overflow from
+ * exponentiation
+ *
+ * The scale values calculated during the forward pass are reused for scaling
+ * the beta values. This is necessary for the correct calculation of the
+ * log partition function, and will scale the beta values to reasonable
+ * ranges.
+ *
+ * At position N, beta[N][tag] is initialised to 1.0 for each tag, and
+ * beta'[N][tag] is calculated by multiplying each beta[N][tag] by scale[N]
+ * (previously computed). Then each beta[i][tag] is calculated from
+ * beta[i+1] and scale[i] in turn.
+ *
+ * beta[N][tag] = 1.0
+ * beta'[N][tag] = beta[N][tag] * scale[N]
+ *
+ * beta[i][tag] = sum (over next tags t) [beta'[i+1][t] * activation[i+1][t]]
+ * beta'[i][tag] = beta[i][tag] * scale[i]
+ *
+ */
 void Tagger::Impl::backward(Contexts &contexts, PDFs &betas, PSIs &psis, PDF &scale) {
   //std::cout << "backward" << std::endl;
   for (Tag curr(2); curr < ntags; ++curr)
@@ -163,6 +244,10 @@ void Tagger::Impl::backward(Contexts &contexts, PDFs &betas, PSIs &psis, PDF &sc
   }
 }
 
+/**
+ * backward_noscale.
+ * A version of the backward pass that does not perform scaling.
+ */
 void Tagger::Impl::backward_noscale(Contexts &contexts, PDFs &betas, PSIs &psis) {
   for (Tag curr(2); curr < ntags; ++curr)
     betas[contexts.size() - 1][curr] = 1.0;
@@ -180,6 +265,11 @@ void Tagger::Impl::backward_noscale(Contexts &contexts, PDFs &betas, PSIs &psis)
   std::cout << "noscale Z: " << log(z) << std::endl;
 }
 
+/**
+ * sum_llhood.
+ * Iterates through a given vector of contexts and computes the sum of all
+ * active features on each context. Returns the sum.
+ */
 double Tagger::Impl::sum_llhood(Contexts &contexts, double decay) {
   double score = 0.0;
   for (Contexts::iterator i = contexts.begin(); i != contexts.end(); ++i) {
@@ -190,6 +280,19 @@ double Tagger::Impl::sum_llhood(Contexts &contexts, double decay) {
   return score;
 }
 
+/**
+ * regularised_llhood.
+ * Computes the regularised log likelihood, i.e. the objective function for
+ * L-BFGS optimization.
+ *
+ * The three components of the regularised log likelihood are:
+ *  1. the summed log likelihood over each training instance
+ *  2. the summed log partition function over each training instance
+ *  3. the sum of squared lambdas over all features divided by (2 * sigma^2)
+ *
+ * libLBFGS minimizes a given function, thus this returns the negative
+ * regularised log likelihood.
+ */
 double Tagger::Impl::regularised_llhood(void) {
   double llhood = 0.0;
   for (Instances::iterator i = instances.begin(); i != instances.end(); ++i)
@@ -198,6 +301,23 @@ double Tagger::Impl::regularised_llhood(void) {
   return -(llhood - log_z - (attributes.sum_lambda_sq() * inv_sigma_sq * 0.5));
 }
 
+/**
+ * _lbfgs_evaluate.
+ * Gradient and objective evaluation function for libLBFGS optimization.
+ * Updates the gradient for each feature lambda, and computes the new value
+ * of the objective function (regularised_llhood)
+ *
+ * The update process is:
+ *  1. reset previously computed feature expectations and log_z to 0
+ *  2. for each training instance:
+ *        a. reset the working vectors (alphas, betas, etc.)
+ *        b. compute the activation scores (psis) for each position in the
+ *           instance
+ *        c. perform the forward-backward algorithm to compute marginals
+ *        d. increment the feature expectations based on the instance
+ *  3. calculate the gradient of each feature, and copy to the grad vector
+ *  4. calculate the regularised log likelihood and return it
+ */
 lbfgsfloatval_t Tagger::Impl::_lbfgs_evaluate(const lbfgsfloatval_t *x,
     lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step) {
   attributes.reset_expectations();
@@ -233,6 +353,11 @@ lbfgsfloatval_t Tagger::Impl::_lbfgs_evaluate(const lbfgsfloatval_t *x,
   return regularised_llhood();
 }
 
+/**
+ * print_psis.
+ * Debugging function to print out the matrix of activation values (psis)
+ * for a given instance.
+ */
 void Tagger::Impl::print_psis(Contexts &contexts, PSIs &psis) {
   for (size_t i = 0; i < contexts.size(); ++i) {
     std::cout << "Position " << i << std::endl;
@@ -253,6 +378,11 @@ void Tagger::Impl::print_psis(Contexts &contexts, PSIs &psis) {
   }
 }
 
+/**
+ * print_fwd_bwd.
+ * Debugging function to print out the matrix of alpha values or matrix of
+ * beta values as well as the accompanying scale factors.
+ */
 void Tagger::Impl::print_fwd_bwd(Contexts &contexts, PDFs &pdfs, PDF &scale) {
   std::cout << std::setw(16) << ' ';
   for (size_t i = 0; i < contexts.size(); ++i)
@@ -271,6 +401,32 @@ void Tagger::Impl::print_fwd_bwd(Contexts &contexts, PDFs &pdfs, PDF &scale) {
   std::cout << '\n' << std::endl;
 }
 
+/**
+ * finite_differences.
+ * Debugging function to empirically check the gradient of each feature.
+ * Optionally uses the empirically calculated gradient in the L-BFGS update
+ * if the overwrite parameter is true (default=false).
+ *
+ * Uses a first order finite difference approximation, i.e. the derivative of
+ * a function is approximately equal to the difference between the function
+ * value at (x+h) and at (x), divided by h. h is a small constant (here 1e-4):
+ *
+ * f'(x) ~= (f(x+h) - f(x)) / h
+ *
+ * In this instance, the function is the regularised log likelihood. The
+ * empirical value of the gradient should be almost identical to the
+ * correct value, i.e. on the order of 1% or less difference between the two.
+ *
+ * This function iterates through each feature lambda. For each one, it
+ * increments the lambda value by h, and then recomputes the activation values
+ * and log partition function given the increment, which requires a full pass
+ * through all the training instances. Then the regularised
+ * log likelihood is recomputed and the finite differences check performed.
+ *
+ * IT IS EXTREMELY IMPORTANT THAT THE LOG PARTITION FUNCTION AND ACTIVATION
+ * VALUES ARE RECOMPUTED FOR EACH FEATURE. OTHERWISE, THE EMPIRICAL GRADIENT
+ * CALCULATED WILL BE INCORRECT
+ */
 void Tagger::Impl::finite_differences(lbfgsfloatval_t *g, bool overwrite) {
   double old_log_z = log_z; //store to restore later
   double EPSILON = 1.0e-4;
@@ -298,6 +454,10 @@ void Tagger::Impl::finite_differences(lbfgsfloatval_t *g, bool overwrite) {
   log_z = old_log_z;
 }
 
+/**
+ * calibrate.
+ * Calibrates the learning rate for stochastic gradient descent optimization.
+ */
 double Tagger::Impl::calibrate(InstancePtrs &instance_ptrs, double *weights, double lambda, double initial_eta, const size_t n) {
   size_t max_samples = fmin(1000, instances.size());
   size_t nsamples = max_samples;
@@ -360,6 +520,17 @@ double Tagger::Impl::calibrate(InstancePtrs &instance_ptrs, double *weights, dou
   return 1.0 / (lambda * eta);
 }
 
+/**
+ * sgd_iterate.
+ * Performs up to nepochs iterations of stochastic gradient descent.
+ *
+ * Each epoch randomly shuffles the training data, and then iterates through
+ * each training instance, performing the SGD update.
+ *
+ * The optimization terminates after nepochs, or if the percentage
+ * improvement in the * summed loss over all the training instance falls
+ * below cfg.delta()
+ */
 double Tagger::Impl::sgd_iterate(InstancePtrs &instance_ptrs, double *weights,
     const int n, const int nsamples, const double t0, const double lambda,
     const int nepochs, const int period, bool calibration) {
@@ -445,6 +616,27 @@ double Tagger::Impl::sgd_iterate(InstancePtrs &instance_ptrs, double *weights,
   return loss;
 }
 
+/**
+ * compute_marginals.
+ * Computes the marginal probabilities based on the model expectations for
+ * each tag at each position i in the given contexts.
+ *
+ * The model expectation of a state having tag t at position i is given by:
+ *   p(t, i) = alpha[i][t] * beta[i][t] / Z
+ *           = alpha'[i][t] * beta'[i][t] * (1.0 / scale[i])
+ *
+ * The model expectation of a transition from tag t to tag u at position
+ * (i, i+1) is given by:
+ *   p(t, u, i, i+1) = alpha[i-1][t] * psis[i][t][u] * beta[i][u] / Z
+ *                   = alpha'[i-1][t] * psis[i][t][u] * beta'[i][u]
+ *
+ * The model expecation of a transition from tag t to tag u is the sum of
+ * p(t, u, i, i+1) over each position i in a sentence.
+ *
+ * Fortuitously, the design of the scaling factor allows the Z term to cancel
+ * out of the transition expectations.
+ *
+ */
 void Tagger::Impl::compute_marginals(Contexts &c, double decay) {
   for (size_t i = 0; i < c.size(); ++i) {
     double inv_scale = (1.0 / scale[i]);
@@ -466,6 +658,11 @@ void Tagger::Impl::compute_marginals(Contexts &c, double decay) {
   }
 }
 
+/**
+ * compute_weights.
+ * Updates the feature lambdas for features active on a training instance.
+ * Used for stochastic gradient descent optimization.
+ */
 void Tagger::Impl::compute_weights(Contexts &c, double gain) {
   for (size_t i = 0; i < c.size(); ++i) {
     for (size_t j = 0; j < c[i].features.size(); ++j) {
@@ -497,6 +694,12 @@ void Tagger::Impl::compute_weights(Contexts &c, double gain) {
   }
 }
 
+/**
+ * score.
+ * Computes the unregularised log likelihood of a given training instance.
+ * Used to compute the initial loss in the calibration process for stochastic
+ * gradient descent optimization.
+ */
 double Tagger::Impl::score(Contexts &contexts, double decay) {
   double score = 0.0;
   log_z = 0.0;
@@ -508,6 +711,12 @@ double Tagger::Impl::score(Contexts &contexts, double decay) {
   return score;
 }
 
+/**
+ * score_instance.
+ * Updates the weights for features active on a particular training instance,
+ * and computes the unregularized loss for that instance. Used in stochastic
+ * gradient descent optimization.
+ */
 double Tagger::Impl::score_instance(Contexts &contexts, double decay, double gain) {
   double score;
   log_z = 0.0;
@@ -522,6 +731,13 @@ double Tagger::Impl::score_instance(Contexts &contexts, double decay, double gai
   return -score + log_z;
 }
 
+/**
+ * train_lbfgs.
+ * Perform L-BFGS optimization given a labelled training dataset. Uses the
+ * libLBFGS library for the optimization, which requires the calculation of
+ * the function objective value (negative regularised log likelihood) and
+ * the gradient of each feature lambda at each iteration.
+ */
 void Tagger::Impl::train_lbfgs(Reader &reader, double *weights) {
   const size_t n = attributes.nfeatures();
   lbfgs_parameter_t param;
@@ -543,6 +759,11 @@ void Tagger::Impl::train_lbfgs(Reader &reader, double *weights) {
   std::cerr << "L-BFGS optimization terminated with status code " << ret << std::endl;
 }
 
+/**
+ * train_sgd.
+ * Perform stochastic gradient descent optimization given a labelled training
+ * dataset.
+ */
 void Tagger::Impl::train_sgd(Reader &reader, double *weights) {
   const size_t n = attributes.nfeatures();
   double lambda = 1.0 / (instances.size() * cfg.sigma() * cfg.sigma());
@@ -560,6 +781,22 @@ void Tagger::Impl::train_sgd(Reader &reader, double *weights) {
   sgd_iterate(instance_ptrs, weights, n, instance_ptrs.size(), t0, lambda, cfg.niterations(), cfg.period(), false);
 }
 
+/**
+ * reg.
+ * Registers active feature generating functions with their associated
+ * feature type constants and feature dictionaries in the registry.
+ *
+ * The registry object is responsible for mapping feature type constants to
+ * the appropriate feature generator and feature dictionary.
+ *
+ * Feature generators are responsible for generating feature values given a
+ * sentence and a position. This is done in multiple passes: an initial pass
+ * that extracts all active features, and a second pass which builds the
+ * instances vector used in training.
+ *
+ * Feature dictionaries load the weights associated with each feature for use
+ * in tagging. Each dictionary is a member of the Tagger (sub)class
+ */
 void Tagger::Impl::reg(void) {
   registry.reg(Types::w, new WordGen(w_dict, true, false), types.use_words());
   registry.reg(Types::pw, new OffsetWordGen(w_dict, -1, true, false), types.use_prev_words());
@@ -578,6 +815,12 @@ void Tagger::Impl::reg(void) {
   registry.reg(Types::trans, new TransGen(t_dict, false, true), types.use_trans());
 }
 
+/**
+ * load.
+ * Loads the lexicon and tag hash tables, registers the active features, and
+ * loads the trained model. This function must be called before tagging
+ * sentences.
+ */
 void Tagger::Impl::load(void) {
   lexicon.load();
   tags.load();
@@ -585,12 +828,35 @@ void Tagger::Impl::load(void) {
   _load_model(model);
 }
 
+/**
+ * _load_model.
+ * Reads the model statistics, and loads the feature lambdas and attributes.
+ */
 void Tagger::Impl::_load_model(Model &model) {
   model.read_config();
   _read_weights(model);
   _read_attributes(model);
 }
 
+/**
+ * _read_weights.
+ * Loads the attribute-sorted feature lambdas into a reference vector of
+ * weights.
+ *
+ * An attribute is some string generated from the input sequence (e.g. the
+ * current word, the previous word, etc.) and a feature type.
+ * A feature is a lambda value associated with a pair of tags and an
+ * attribute.
+ *
+ * As each lambda is loaded, the attribute that it is associated with is
+ * checked. The weights file is guaranteed to be sorted by attribute values,
+ * so each time the attribute value changes, the next lambda corresponds to
+ * the next attribute.
+ *
+ * At test time, each attribute is simply represented as a pair of pointers to
+ * Weight objects in their reference vector; one to the start, and one to
+ * one past the end.
+ */
 void Tagger::Impl::_read_weights(Model &model) {
   uint64_t prev_klass, curr_klass, freq, attrib = 0, nlines = 0;
   uint64_t previous = static_cast<uint64_t>(-1);
@@ -623,6 +889,13 @@ void Tagger::Impl::_read_weights(Model &model) {
     throw IOException("number of attributes read is not equal to configuration value", cfg.features(), nlines);
 }
 
+/**
+ * _read_attributes.
+ * Loads the attributes extracted during training into the feature
+ * dictionaries. This process maps an attribute to all the feature lambdas
+ * associated with it in the feature dictionary for the appropriate feature
+ * type.
+ */
 void Tagger::Impl::_read_attributes(Model &model) {
   uint64_t freq = 0, nlines = 0, id = 0;
   std::string preface, type;
@@ -656,6 +929,32 @@ void Tagger::Impl::_read_attributes(Model &model) {
     throw IOException("number of attributes read is not equal to configuration value", cfg.attributes(), nlines);
 }
 
+/**
+ * extract.
+ * Runs the feature extraction process by calling the pure virtual functions
+ * _pass1, _pass2, and _pass3. These methods are to be implemented by the
+ * Tagger::Impl subclasses.
+ *
+ * In general:
+ *
+ *  _pass1: extracts the word lexicon, the tags present in the
+ *          training corpus, and any other provided data (e.g. POS tags).
+ *          These will be saved to disk.
+ *
+ *  _pass2: extracts and counts all occurences of active features, and stores
+ *          them in the attributes dictionary. The attributes dictionary maps
+ *          features to the attributes that they occur with. The attributes
+ *          are sorted by frequency and saved to disk.
+ *
+ *    any relevant cutoffs for eliminating rare attributes and features is
+ *    applied
+ *
+ *  _pass3: constructs the instances vector used in training. For each
+ *          training instance, build a vector of contexts, one for each word
+ *          in the sentence. For each context, compute a feature vector that
+ *          consists of pointers to the appropriate feature object in the
+ *          attributes dictionary
+ */
 void Tagger::Impl::extract(Reader &reader, Instances &instances) {
   std::cout << "beginning pass 1" << std::endl;
   _pass1(reader);
@@ -673,6 +972,11 @@ void Tagger::Impl::extract(Reader &reader, Instances &instances) {
 
 }
 
+/**
+ * train.
+ * Given a labelled training dataset and a training algorithm, train a model
+ * for CRF tagging.
+ */
 void Tagger::Impl::train(Reader &reader, const std::string &trainer) {
   reg();
   inv_sigma_sq = 1.0 / (cfg.sigma() * cfg.sigma());
@@ -707,11 +1011,20 @@ void Tagger::Impl::train(Reader &reader, const std::string &trainer) {
   delete [] weights;
 }
 
+/**
+ * lbfgs_evaluate.
+ * Static function required for libLBFGS.
+ */
 lbfgsfloatval_t Tagger::Impl::lbfgs_evaluate(void *_instance, const lbfgsfloatval_t *x,
     lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step) {
   return reinterpret_cast<Tagger::Impl *>(_instance)->_lbfgs_evaluate(x, g, n, step);
 }
 
+/**
+ * lbfgs_progress.
+ * Static function required for libLBFGS. Prints out the progress of training
+ * at each iteration
+ */
 int Tagger::Impl::lbfgs_progress(void *instance, const lbfgsfloatval_t *x,
     const lbfgsfloatval_t *g, const lbfgsfloatval_t fx,
     const lbfgsfloatval_t xnorm, const lbfgsfloatval_t gnorm,

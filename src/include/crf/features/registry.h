@@ -1,3 +1,11 @@
+/**
+ * registry.h The registry object.
+ * The registry is responsible for mapping feature type constants to
+ * the appropriate feature generator and feature dictionary.
+ *
+ * It is implemented using the private implementation trick as a hashtable
+ *
+ */
 namespace NLP {
   namespace CRF {
     class Registry {

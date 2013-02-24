@@ -3,6 +3,13 @@ namespace NLP {
     class Feature;
 
     typedef std::vector<Feature *> FeaturePtrs;
+
+    /**
+     * Context object.
+     * Stores the observed tagpair at position index in a sentence, along with
+     * a vector of pointers to features active at that position given the
+     * observations (e.g. words).
+     */
     class Context {
       public:
         FeaturePtrs features;
@@ -14,6 +21,13 @@ namespace NLP {
         Context(Tag prev, Tag curr, const size_t index=0) : features(), klasses(prev, curr), index(index) { }
     };
 
+    /**
+     * Contexts object.
+     *
+     * Thin wrapper around a vector of Context objects. Represents a training
+     * instance, where the i'th word in a sentence corresponds to the i'th
+     * item in the contexts vector.
+     */
     class Contexts {
       private:
         std::vector<Context> contexts;

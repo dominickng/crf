@@ -1,3 +1,11 @@
+/**
+ * hash.h
+ * Provides function objects that implement various popular
+ * hash algorithms for integers and strings.
+ *
+ * Descriptions of the hash algorithms implemented here can be found at
+ * http://eternallyconfuzzled.com/tuts/algorithms/jsw_tut_hashing.aspx
+ */
 namespace Util {
   namespace Hasher {
 

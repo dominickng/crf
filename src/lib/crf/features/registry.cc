@@ -15,6 +15,14 @@ namespace NLP {
     namespace HT = Util::hashtable;
     namespace config = Util::config;
 
+    /**
+     * RegEntry class. This class is an entry in the registry hashtable.
+     *
+     * Each entry contains a reference to a feature type constant, a pointer
+     * to a feature generator object for the feature type, a flag indicating
+     * whether the feature is active only for rare words, and a pointer
+     * to the next RegEntry (for the chaining in the hash table)
+     */
     class RegEntry {
       private:
         RegEntry(const Type &type, FeatureGen *gen, const bool rare, RegEntry *next) :
@@ -77,6 +85,9 @@ namespace NLP {
 
     typedef HT::BaseHashTable<RegEntry, const char *>ImplBase;
 
+    /**
+     * Registry::Impl. The private registry hashtable implementation.
+     */
     class Registry::Impl : public ImplBase, public Util::Shared {
       private:
         const uint64_t rare_cutoff;
@@ -93,6 +104,13 @@ namespace NLP {
             (*j)->~RegEntry();
         }
 
+        /**
+         * reg.
+         * Registers a feature type with its generating object.
+         *
+         * Each feature type is mapped to a RegEntry containing the
+         * pointer to the feature generator
+         */
         void reg(const Type &type, FeatureGen *gen, const bool active, const bool rare) {
           if (active) {
             size_t bucket = RegEntry::hash(type.name).value() % _nbuckets;
@@ -109,6 +127,14 @@ namespace NLP {
           return _buckets[RegEntry::hash(type).value() % _nbuckets]->find(type);
         }
 
+        /**
+         * get_tagpair.
+         *
+         * Utility function to canonize tags in a string format to their
+         * internal representation.
+         *
+         * Uses the Sentinel tag for words at the start or end of the sentence.
+         */
         void get_tagpair(TagSet tags, Raws &raws, TagPair &tp, int i) {
           if (i == 0) {
             tp.prev = Tag(Sentinel::val);
@@ -120,6 +146,29 @@ namespace NLP {
           }
         }
 
+        /**
+         * generate.
+         *
+         * Given a reference to the attributes dictionary, the lexicon, and
+         * tagset, extracts or generates features for the given sentence and
+         * tags.
+         *
+         * Only features that are active for the given context (e.g. if the
+         * word falls under the rare word cutoff and the feature is active for
+         * rare words only) are extracted.
+         *
+         * If extract is true, this function calls each active feature
+         * generator in turn to extract features from each sentence and map
+         * them to the gold tags sequence. This creates attributes and the
+         * feature objects associated with those attributes in the attributes
+         * dictionary.
+         *
+         * If extract is false, this function calls each active feature
+         * generator in turn and constructs the contexts object used for
+         * training. Each context contains a list of pointers to
+         * feature objects in the attributes dictionary that are active for
+         * that context.
+         */
         void generate(Attributes &attributes, Lexicon lexicon, TagSet tags, Sentence &sent, Raws &rawtags, Contexts &contexts, const bool extract) {
           for (size_t i = 0; i < sent.size(); ++i) {
             for (Entries::iterator j = _actives.begin(); j != _actives.end(); ++j) {
@@ -140,6 +189,11 @@ namespace NLP {
           }
         }
 
+        /**
+         * add_features.
+         * Adds the weights of active features for a sentence to a probability
+         * distribution. Used in tagging.
+         */
         void add_features(Lexicon lexicon, Sentence &sent, PDFs &dist, int i) {
           for (Entries::iterator j = _actives.begin(); j != _actives.end(); ++j) {
             RegEntry *e = *j;

@@ -1,9 +1,22 @@
+/**
+ * feature_gen.h.
+ *
+ * Defines the feature generators used in the CRF. Feature generators are
+ * responsible for extracting features from each position in a sentence,
+ * accumulating pointers to the feature objects active at each context object,
+ * and computing the probability distribution of features at tagging time.
+ *
+ */
 namespace NLP {
   namespace CRF {
+    /**
+     * FeatureGen. Abstract base class for feature generators.
+     */
     class FeatureGen {
       protected:
         void _add_features(Attribute attrib, PDFs &dist);
 
+        // whether to add state and trans versions of features features
         const bool _add_state;
         const bool _add_trans;
 
@@ -12,10 +25,39 @@ namespace NLP {
           : _add_state(add_state), _add_trans(add_trans) { }
         virtual ~FeatureGen(void) { }
 
+        /**
+         * load.
+         * Given an input stream, loads a feature of a given type and its
+         * lambda value. Used to load the feature dictionaries prior to tagging
+         */
         virtual Attribute &load(const Type &type, std::istream &in) = 0;
 
+        /**
+         * operator().
+         * This version extracts the attribute value from the sentence at
+         * position i, and inserts it into the attributes dictionary with
+         * a feature for the observed tagpair. Called in the second pass
+         * of feature extraction.
+         */
         virtual void operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) = 0;
+
+        /**
+         * operator().
+         * This version looks up the extracted attribute value in the populated
+         * attributes dictionary, adding all matching features to the context
+         * object that represents all active features at position i. This
+         * prepares the data structures used for optimization. Called in
+         * the third pass of feature extraction.
+         */
         virtual void operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i) = 0;
+
+        /**
+         * operator().
+         * This version looks up all features matching the extracted attribute
+         * value for the sentence at position i, and adds the lambdas of those
+         * features to the probability distribution. The distribution is indexed
+         * by prev_klass, curr_klass.
+         */
         virtual void operator()(const Type &type, Sentence &sent, PDFs &dist, int i) = 0;
     };
 

@@ -1,9 +1,26 @@
+/**
+ * tagger.h: common functionality for CRF training and tagging
+ *
+ */
+
 namespace config = Util::config;
 
 namespace NLP {
   namespace CRF {
+    /**
+     * Tagger class. Base class for conditional random field taggers.
+     * Implements the basic training routines, including L-BFGS and
+     * SGD optimization, for CRFs. All of the functionality is contained in
+     * the private Tagger::Impl class
+     *
+     */
     class Tagger {
       public:
+        /**
+         * Tagger config class. Base class for commmon parameters to be read
+         * from the command line when instantiating a Tagger object
+         *
+         */
         class Config : public config::OpGroup {
           public:
             config::OpPath model;
@@ -48,6 +65,10 @@ namespace NLP {
             virtual ~Config(void) { /* nothing */ }
         };
 
+        /**
+         * Model config class. Stores information about a trained CRF model
+         *
+         */
         class Model : public config::Info {
           public:
             config::Op<uint64_t> nattributes;
@@ -72,6 +93,9 @@ namespace NLP {
         virtual ~Tagger(void) { release(_impl); }
     };
 
+    /**
+     * Private implementation for the Tagger class.
+     */
     class Tagger::Impl : public Util::Shared {
       protected:
         typedef std::vector<Contexts *> InstancePtrs; //for SGD
@@ -138,6 +162,27 @@ namespace NLP {
         double log_z;
         uint64_t ntags;
 
+        /**
+         * working vectors for training
+         * alphas: an (nwords * ntags) matrix that stores the forward scores for
+         *         one pass of the forward-backward algorithm
+         * betas: an (nwords * ntags) matrix that stores the backward scores for
+         *        one pass of the forward-backward algorithm
+         *
+         * state_marginals: an (nwords * ntags) matrix that stores the model
+         *                  expectation of a tag t at position i
+         *
+         * trans_marginals: an (ntags * ntags) matrix that stores the model
+         *                  expectation of a transition between tag t and tag u
+         *
+         * psis: an (nwords * ntags * ntags) matrix that stores the activation
+         *       score (psi) for a transition from tag t to tag u at position i.
+         *       State activations for features that do not rely on the
+         *       previous tag are stored with a previous tag of None
+         *
+         * scale: an (nwords) vector that stores the scale factor for each
+         *        position i.
+         */
         PDFs alphas;
         PDFs betas;
         PDFs state_marginals;
