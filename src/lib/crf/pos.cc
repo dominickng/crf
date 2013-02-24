@@ -98,7 +98,7 @@ class POS::Impl : public Tagger::Impl {
 POS::POS(POS::Config &cfg, Types &types, const std::string &preface)
   : Tagger(cfg, preface, new Impl(cfg, types, preface)) { }
 
-void POS::train(Reader &reader) { _impl->train(reader); }
+void POS::train(Reader &reader, const std::string &trainer) { _impl->train(reader, trainer); }
 
 void POS::run_tag(Reader &reader, Writer &writer) { _impl->run_tag(reader, writer); }
 

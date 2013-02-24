@@ -15,7 +15,7 @@ namespace NLP {
 
         POS(POS::Config &cfg, Types &types, const std::string &preface);
 
-        void train(Reader &reader);
+        void train(Reader &reader, const std::string &trainer);
         void run_tag(Reader &reader, Writer &writer);
         void tag(State &state, Sentence &sent);
         void extract(Reader &reader, Instances &instances);

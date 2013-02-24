@@ -13,6 +13,11 @@ namespace NLP {
             config::OpPath features;
             config::OpPath weights;
             config::Op<double> sigma;
+            config::Op<double> eta;
+            config::Op<double> delta;
+
+            config::Op<uint64_t> batch;
+            config::Op<uint64_t> period;
             config::Op<uint64_t> niterations;
 
             config::Op<uint64_t> cutoff_default;
@@ -28,7 +33,11 @@ namespace NLP {
             attributes(*this, "attributes", "location to save the attributes file", "//attributes", &model),
             features(*this, "features", "location to save the features file", "//features", &model),
             weights(*this, "weights", "location to save the weights file", "//weights", &model),
-            sigma(*this, "sigma", "sigma value for regularization", sigma, true),
+            sigma(*this, "sigma", "sigma value for L2 regularization", sigma, true),
+            eta(*this, "eta", "eta calibration value for SGD (ignored for L-BFGS)", 0.1, true),
+            delta(*this, "delta", "SGD optimization converges when log-likelihood improvement over the last (period) iterations is no larger than this value (ignored for L-BFGS)", 1e-6, true),
+            batch(*this, "batch", "batch size for SGD optimization (ignored for L-BFGS)", 1, true),
+            period(*this, "period", "period size for checking SGD convergence (ignored for L-BFGS)", 10, true),
             niterations(*this, "niterations", "number of training iterations", niterations, true),
             cutoff_default(*this, "cutoff_default", "minimum frequency cutoff for features", 1, true),
             cutoff_words(*this, "cutoff_words", "minimum frequency cutoff for word features", 1, true),
@@ -56,10 +65,7 @@ namespace NLP {
 
       protected:
         class Impl;
-
         Impl *_impl;
-        Config &cfg;
-        Types &types;
 
         Tagger(Tagger::Config &cfg, const std::string &preface, Impl *impl);
         Tagger(const Tagger &other);
@@ -68,25 +74,47 @@ namespace NLP {
 
     class Tagger::Impl : public Util::Shared {
       protected:
-        virtual lbfgsfloatval_t log_likelihood(void);
+        typedef std::vector<Contexts *> InstancePtrs; //for SGD
 
-        lbfgsfloatval_t _evaluate(const lbfgsfloatval_t *x,
-            lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step);
+        virtual void reset(const size_t size);
 
-        virtual void reg(void);
-
-        virtual void compute_psis(Contexts &contexts, PSIs &psis);
-        virtual void print_psis(Contexts &contexts, PSIs &psis);
+        virtual void compute_psis(Context &context, PDFs &dist, double decay=1.0);
+        virtual void compute_psis(Contexts &contexts, PSIs &psis, double decay=1.0);
+        void compute_expectations(Contexts &c);
         virtual void forward(Contexts &contexts, PDFs &alphas, PSIs &psis, PDF &scale);
         virtual void forward_noscale(Contexts &contexts, PDFs &alphas, PSIs &psis);
         virtual void backward(Contexts &contexts, PDFs &betas, PSIs &psis, PDF &scale);
         virtual void backward_noscale(Contexts &contexts, PDFs &betas, PSIs &psis);
+        virtual double sum_llhood(Contexts &contexts, double decay=1.0);
+        virtual lbfgsfloatval_t regularised_llhood(void);
+        lbfgsfloatval_t _lbfgs_evaluate(const lbfgsfloatval_t *x,
+            lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step);
+
+        virtual void print_psis(Contexts &contexts, PSIs &psis);
         virtual void print_fwd_bwd(Contexts &contexts, PDFs &pdfs, PDF &scale);
-        virtual void reset(PDFs &alphas, PDFs &betas, PSIs &psis, PDF &scale, const size_t size);
+
+        virtual void finite_differences(lbfgsfloatval_t *g, bool overwrite=false);
+
+        virtual double calibrate(InstancePtrs &instance_ptrs, double *weights, double lambda, double initial_eta, const size_t n);
+        virtual double sgd_iterate(InstancePtrs &instance_ptrs, double *weights, const int n, const int nsamples, const double t0, const double lambda, const int nepochs, const int period, bool calibration);
+        void compute_marginals(Contexts &c, double decay=1.0);
+        void compute_weights(Contexts &c, double gain);
+        virtual double score(Contexts &contexts, double decay=1.0);
+        virtual double score_instance(Contexts &contexts, double decay=1.0, double gain=1.0);
 
         virtual void _pass1(Reader &reader) = 0;
         virtual void _pass2(Reader &reader) = 0;
         virtual void _pass3(Reader &reader, Instances &instances) = 0;
+
+        virtual void train_lbfgs(Reader &reader, double *weights);
+        virtual void train_sgd(Reader &reader, double *weights);
+
+        virtual void reg(void);
+        virtual void load(void);
+        virtual void _load_model(Model &model);
+        virtual void _read_weights(Model &model);
+        virtual void _read_attributes(Model &model);
+
       public:
         Config &cfg;
         Types &types;
@@ -112,6 +140,8 @@ namespace NLP {
 
         PDFs alphas;
         PDFs betas;
+        PDFs state_marginals;
+        PDFs trans_marginals;
         PSIs psis;
         PDF scale;
 
@@ -121,43 +151,28 @@ namespace NLP {
             registry(cfg.rare_cutoff()),
             lexicon(cfg.lexicon()), tags(cfg.tags()),
             attributes(), instances(), weights(), attribs2weights(),
-            w_dict(lexicon), ww_dict(lexicon), a_dict(), t_dict(tags),
-            preface(preface), inv_sigma_sq(), log_z(0.0), ntags(),
-            alphas(), betas(), psis(), scale() { }
+            w_dict(lexicon), ww_dict(lexicon), a_dict(), t_dict(),
+            preface(preface), inv_sigma_sq(), log_z(0.0),
+            ntags(), alphas(), betas(), state_marginals(), trans_marginals(),
+            psis(), scale() { }
 
         virtual ~Impl(void) { /* nothing */ }
 
-        virtual void _read_weights(Model &model);
-        virtual void _read_attributes(Model &model);
-        virtual void _load_model(Model &model) {
-          model.read_config();
-          _read_weights(model);
-          _read_attributes(model);
-        }
+        virtual void extract(Reader &reader, Instances &instances);
+        virtual void train(Reader &reader, const std::string &trainer);
 
-        virtual void load(void) {
-          lexicon.load();
-          tags.load();
-          reg();
-          _load_model(model);
-        }
+        static lbfgsfloatval_t lbfgs_evaluate(void *instance,
+            const lbfgsfloatval_t *x, lbfgsfloatval_t *g, const int n,
+            const lbfgsfloatval_t step);
+
+        static int lbfgs_progress(void *instance, const lbfgsfloatval_t *x,
+            const lbfgsfloatval_t *g, const lbfgsfloatval_t fx,
+            const lbfgsfloatval_t xnorm, const lbfgsfloatval_t gnorm,
+            const lbfgsfloatval_t step, int n, int k, int ls);
 
         virtual void run_tag(Reader &reader, Writer &writer) = 0;
         virtual void tag(State &state, Sentence &sent) = 0;
 
-        virtual void train(Reader &reader);
-        virtual void extract(Reader &reader, Instances &instances);
-
-        virtual void finite_differences(Instances &instances, PDFs &alphas, PDFs &betas, PSIs &psis, PDF &scale, lbfgsfloatval_t *g, bool overwrite=false);
-
-        static lbfgsfloatval_t evaluate(void *instance,
-            const lbfgsfloatval_t *x, lbfgsfloatval_t *g, const int n,
-            const lbfgsfloatval_t step);
-
-        static int progress(void *instance, const lbfgsfloatval_t *x,
-            const lbfgsfloatval_t *g, const lbfgsfloatval_t fx,
-            const lbfgsfloatval_t xnorm, const lbfgsfloatval_t gnorm,
-            const lbfgsfloatval_t step, int n, int k, int ls);
     };
 
   }

@@ -22,7 +22,7 @@ namespace NLP {
         ~AffixEntry(void) { }
 
         void *operator new(size_t size, Util::Pool *pool, size_t len) {
-          return pool->alloc(size + len - 1);
+          return pool->alloc(size + len);
         }
 
         void operator delete(void *, Util::Pool, size_t) { }

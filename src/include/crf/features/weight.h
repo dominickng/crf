@@ -5,7 +5,8 @@ namespace NLP {
       Tag curr;
       double lambda;
 
-      Weight(Tag prev, Tag curr, double lambda) : prev(prev), curr(curr), lambda(lambda) { }
+      Weight(Tag prev, Tag curr, double lambda) :
+        prev(prev), curr(curr), lambda(lambda) { }
     };
 
     typedef std::vector<Weight> Weights;

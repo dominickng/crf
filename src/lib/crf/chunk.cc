@@ -146,7 +146,7 @@ class Chunk::Impl : public Tagger::Impl {
 Chunk::Chunk(Chunk::Config &cfg, Types &types, const std::string &preface)
   : Tagger(cfg, preface, new Impl(cfg, types, preface)) { }
 
-void Chunk::train(Reader &reader) { _impl->train(reader); }
+void Chunk::train(Reader &reader, const std::string &trainer) { _impl->train(reader, trainer); }
 
 void Chunk::run_tag(Reader &reader, Writer &writer) { _impl->run_tag(reader, writer); }
 

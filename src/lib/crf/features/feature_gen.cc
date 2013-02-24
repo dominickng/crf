@@ -15,17 +15,6 @@ void FeatureGen::_add_features(Attribute attrib, PDFs &dist) {
   }
 }
 
-const Raw *OffsetGen::_get_raw(Raws &raws, int i) {
-  const Raw *raw = 0;
-  i += offset;
-
-  if (i >= 0 && i < raws.size())
-    raw = &raws[i];
-  else
-    raw = &Sentinel::str;
-  return raw;
-}
-
 const std::string TransGen::name = "trans";
 
 TransGen::TransGen(TransDict &dict, const bool add_state, const bool add_trans)
@@ -50,6 +39,17 @@ void TransGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int i) {
     _add_features(dict.get(type), dist);
 }
 
+const Raw *OffsetGen::_get_raw(Raws &raws, int i) {
+  const Raw *raw = 0;
+  i += offset;
+
+  if (i >= 0 && i < raws.size())
+    raw = &raws[i];
+  else
+    raw = &Sentinel::str;
+  return raw;
+}
+
 WordGen::WordGen(WordDict &dict, const bool add_state, const bool add_trans)
   : FeatureGen(add_state, add_trans), dict(dict) { }
 
@@ -58,13 +58,11 @@ Attribute &WordGen::load(const Type &type, std::istream &in) {
 }
 
 void WordGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) {
-  Raw word = sent.words[i];
-  attributes(type.name, word, tp, _add_state, _add_trans);
+  attributes(type.name, sent.words[i], tp, _add_state, _add_trans);
 }
 
 void WordGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i) {
-  Raw word = sent.words[i];
-  attributes(type.name, word, c);
+  attributes(type.name, sent.words[i], c);
 }
 
 void WordGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int i) {
@@ -215,13 +213,11 @@ Attribute &PosGen::load(const Type &type, std::istream &in) {
 }
 
 void PosGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) {
-  Raw word = sent.pos[i];
-  attributes(type.name, word, tp, _add_state, _add_trans);
+  attributes(type.name, sent.pos[i], tp, _add_state, _add_trans);
 }
 
 void PosGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i) {
-  Raw word = sent.pos[i];
-  attributes(type.name, word, c);
+  attributes(type.name, sent.pos[i], c);
 }
 
 void PosGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int i) {
@@ -236,21 +232,15 @@ Attribute &OffsetWordGen::load(const Type &type, std::istream &in) {
 }
 
 void OffsetWordGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) {
-  const Raw *word = _get_raw(sent.words, i);
-
-  attributes(type.name, *word, tp, _add_state, _add_trans);
+  attributes(type.name, *_get_raw(sent.words, i), tp, _add_state, _add_trans);
 }
 
 void OffsetWordGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i) {
-  const Raw *word = _get_raw(sent.words, i);
-
-  attributes(type.name, *word, c);
+  attributes(type.name, *_get_raw(sent.words, i), c);
 }
 
 void OffsetWordGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int i) {
-  const Raw *word = _get_raw(sent.words, i);
-
-  _add_features(dict.get(type, *word), dist);
+  _add_features(dict.get(type, *_get_raw(sent.words, i)), dist);
 }
 
 OffsetPosGen::OffsetPosGen(TagDict &dict, const int offset, const bool add_state, const bool add_trans)
@@ -261,21 +251,15 @@ Attribute &OffsetPosGen::load(const Type &type, std::istream &in) {
 }
 
 void OffsetPosGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) {
-  const Raw *raw = _get_raw(sent.pos, i);
-
-  attributes(type.name, *raw, tp, _add_state, _add_trans);
+  attributes(type.name, *_get_raw(sent.pos, i), tp, _add_state, _add_trans);
 }
 
 void OffsetPosGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i) {
-  const Raw *raw = _get_raw(sent.pos, i);
-
-  attributes(type.name, *raw, c);
+  attributes(type.name, *_get_raw(sent.pos, i), c);
 }
 
 void OffsetPosGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int i) {
-  const Raw *raw = _get_raw(sent.pos, i);
-
-  _add_features(dict.get(type, *raw), dist);
+  _add_features(dict.get(type, *_get_raw(sent.pos, i)), dist);
 }
 
 void BigramGen::_get_raw(Raws &raws, Raw &raw, int i) {

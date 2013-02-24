@@ -11,5 +11,5 @@
 #include "main.h"
 
 int run(int argc, char *argv[]) {
-  return NLP::CRF::run_train<NLP::CRF::Chunk>(argc, argv, "");
+  return NLP::CRF::run_train<NLP::CRF::Chunk>(argc, argv, "", "lbfgs");
 }

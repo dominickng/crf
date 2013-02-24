@@ -1,6 +1,3 @@
-#ifndef _LEXICON_H
-#define _LEXICON_H
-
 #include "base.h"
 #include "hashtable.h"
 #include "lbfgs.h"
@@ -20,7 +17,7 @@ namespace NLP {
           index(0), value(0), next(next), type(type), features() { }
 
         void *operator new(size_t size, Util::Pool *pool, size_t len) {
-          return pool->alloc(size + len - 1);
+          return pool->alloc(size + len);
         }
 
         void operator delete(void *, Util::Pool *, size_t) { /* nothing */}
@@ -54,7 +51,7 @@ namespace NLP {
         }
 
         void insert(TagPair &tp) {
-          features.push_back(Feature(tp, 1));
+          features.push_back(Feature(tp, 1, strcmp(type, "trans") == 0)); //hackety hack
         }
 
         void increment(TagPair &tp) {
@@ -81,15 +78,6 @@ namespace NLP {
             if (l->equal(type, str) && l->value > 0)
               return l;
           return NULL;
-        }
-
-        bool find(const char *type, const std::string &str, uint64_t &id) const {
-          for (const AttribEntry *l = this; l != NULL; l = l->next)
-            if (l->equal(type, str) && l->value > 0) {
-              id = l->index;
-              return l->index != 0;
-            }
-          return false;
         }
 
         bool find(const char *type, const std::string &str, Context &c) {
@@ -124,14 +112,7 @@ namespace NLP {
           assert(index != 0);
           for (Features::const_iterator i = features.begin(); i != features.end(); ++i)
             if (i->freq)
-              out << index << ' ' << i->klasses.prev_id() << ' ' << i->klasses.curr_id() << ' ' << i->freq << ' ' << i->lambda << '\n';
-        }
-
-        void save_weights(std::ostream &out) const {
-          assert(index != 0);
-          for (Features::const_iterator i = features.begin(); i != features.end(); ++i)
-            if (i->freq)
-              out << i->lambda << '\n';
+              out << index << ' ' << i->klasses.prev_id() << ' ' << i->klasses.curr_id() << ' ' << i->freq << ' ' << *(i->lambda) << '\n';
         }
 
         uint64_t nfeatures(void) const {
@@ -147,21 +128,21 @@ namespace NLP {
           return next ? next->nchained() + 1 : 1;
         }
 
-        void reset_estimations(void) {
+        void reset_expectations(void) {
           for (Features::iterator i = features.begin(); i != features.end(); ++i)
-            i->est = 0.0;
+            i->exp = 0.0;
         }
 
         double sum_lambda_sq(void) {
           double lambda_sq = 0.0;
           for (Features::iterator i = features.begin(); i != features.end(); ++i)
-            lambda_sq += (i->lambda * i->lambda);
+            lambda_sq += (*(i->lambda) * *(i->lambda));
           return lambda_sq;
         }
 
-        void copy_lambdas(const lbfgsfloatval_t *x, size_t &index) {
+        void assign_lambdas(lbfgsfloatval_t *x, size_t &index) {
           for (Features::iterator i = features.begin(); i != features.end(); ++i)
-            i->lambda = x[index++];
+            i->lambda = &x[index++];
         }
 
         void copy_gradients(lbfgsfloatval_t *x, double inv_sigma_sq, size_t &index) {
@@ -171,7 +152,7 @@ namespace NLP {
 
         void print(double inv_sigma_sq) {
           for (Features::iterator i = features.begin(); i != features.end(); ++i)
-            std::cout << "gradient: " << i->gradient(inv_sigma_sq) << " lambda: " << i->lambda << std::endl;
+            std::cout << "gradient: " << i->gradient(inv_sigma_sq) << " lambda: " << *(i->lambda) << std::endl;
         }
     };
 
@@ -186,16 +167,16 @@ namespace NLP {
 
       public:
         Impl(const size_t nbuckets, const size_t pool_size)
-          : ImplBase(nbuckets, pool_size), Shared(), preface() { }
+          : ImplBase(nbuckets, pool_size), Shared(), preface(), trans_features(0) { }
         Impl(const std::string &filename, const size_t nbuckets,
             const size_t pool_size)
-          : ImplBase(nbuckets, pool_size), Shared(), preface() {
+          : ImplBase(nbuckets, pool_size), Shared(), preface(), trans_features(0) {
           load(filename);
         }
 
         Impl(const std::string &filename, std::istream &input,
             const size_t nbuckets, const size_t pool_size) :
-          ImplBase(nbuckets, pool_size), Shared(), preface() {
+          ImplBase(nbuckets, pool_size), Shared(), preface(), trans_features(0) {
             load(filename, input);
         }
 
@@ -203,6 +184,8 @@ namespace NLP {
           for (Entries::const_iterator i = _entries.begin(); i != _entries.end(); ++i)
             (*i)->~AttribEntry();
         }
+
+        AttribEntry *trans_features; //hack for SGD optimization
 
         using ImplBase::add;
         using ImplBase::insert;
@@ -220,6 +203,8 @@ namespace NLP {
         void _add(const char *type, const std::string &str, TagPair &tp) {
           size_t bucket = AttribEntry::hash(type, str).value() % _nbuckets;
           AttribEntry *entry = _buckets[bucket]->find(type, str);
+          if (strcmp(type, "trans") == 0) //hackety hack
+            trans_features = entry;
           if (entry)
             return entry->increment(tp);
 
@@ -241,10 +226,6 @@ namespace NLP {
           ++_size;
           _buckets[bucket] = entry;
           _entries.push_back(entry);
-        }
-
-        bool find(const char *type, const std::string &str, uint64_t &id) {
-          return Base::_buckets[AttribEntry::hash(type, str).value() % Base::_nbuckets]->find(type, str, id);
         }
 
         bool find(const char *type, const std::string &str, Context &c) {
@@ -293,13 +274,6 @@ namespace NLP {
               (*i)->save_features(out);
         }
 
-        void save_weights(std::ostream &out, const std::string &preface) {
-          out << preface << '\n';
-          for (Entries::const_iterator i = _entries.begin(); i != _entries.end(); ++i)
-            if ((*i)->value)
-              (*i)->save_weights(out);
-        }
-
         uint64_t nfeatures(void) const {
           uint64_t n = 0;
           for (Entries::const_iterator i = _entries.begin(); i != _entries.end(); ++i)
@@ -332,9 +306,9 @@ namespace NLP {
               (*i)->cutoff(def);
         }
 
-        void reset_estimations(void) {
+        void reset_expectations(void) {
           for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
-            (*i)->reset_estimations();
+            (*i)->reset_expectations();
         }
 
         double sum_lambda_sq(void) {
@@ -344,10 +318,10 @@ namespace NLP {
           return lambda_sq;
         }
 
-        void copy_lambdas(const lbfgsfloatval_t *x) {
+        void assign_lambdas(lbfgsfloatval_t *x) {
           size_t index = 0;
           for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
-            (*i)->copy_lambdas(x, index);
+            (*i)->assign_lambdas(x, index);
         }
 
         void copy_gradients(lbfgsfloatval_t *x, double inv_sigma_sq) {
@@ -356,26 +330,21 @@ namespace NLP {
             (*i)->copy_gradients(x, inv_sigma_sq, index);
         }
 
-        bool inc_next_gradient(double val) {
+        bool inc_next_lambda(double val) {
           if (e == _entries.end() && (f+1) == (*e)->features.end()) {
-            f->lambda = prev_lambda;
+            *(f->lambda) = prev_lambda;
             return false;
           }
           else if (++f != (*e)->features.begin()) {
-            (f-1)->lambda = prev_lambda;
+            *((f-1)->lambda) = prev_lambda;
             if (f == (*e)->features.end()) {
               if (++e == _entries.end())
                 return false;
               f = (*e)->features.begin();
             }
           }
-          prev_lambda = f->lambda;
-          f->lambda += val;
-          return true;
-        }
-
-        bool dec_gradient(double val) {
-          f->lambda = prev_lambda - val;
+          prev_lambda = *(f->lambda);
+          *(f->lambda) += val;
           return true;
         }
 
@@ -387,7 +356,7 @@ namespace NLP {
         void print_current_gradient(double val, double inv_sigma_sq) {
           double gradient = f->gradient(inv_sigma_sq);
           if (fabs(gradient - val) >= 1.0e-2) {
-            std::cout << "freq: " << f->freq << " est: " << f->est;
+            std::cout << "freq: " << f->freq << " exp: " << f->exp;
             std::cout << " lambda: " << prev_lambda << " gradient: " << f->gradient(inv_sigma_sq);
             std::cout << " estimated gradient: " << val << " <" << f->klasses.prev << ' ' << f->klasses.curr << "> " << (*e)->str <<  std::endl;
           }
@@ -434,23 +403,14 @@ namespace NLP {
       _impl->save_features(out, preface);
     }
 
-    void Attributes::save_weights(const std::string &filename, const std::string &preface) {
-      std::ofstream out(filename.c_str());
-      if (!out)
-        throw IOException("unable to open file for writing", filename);
-      _impl->save_weights(out, preface);
-    }
-
     void Attributes::save_attributes(std::ostream &out, const std::string &preface) { _impl->save_attributes(out, preface); }
     void Attributes::save_features(std::ostream &out, const std::string &preface) { _impl->save_features(out, preface); }
-    void Attributes::save_weights(std::ostream &out, const std::string &preface) { _impl->save_weights(out, preface); }
 
     void Attributes::operator()(const char *type, const std::string &str, TagPair &tp, const bool add_state_feature, const bool add_trans_feature) { _impl->add(type, str, tp, add_state_feature, add_trans_feature); }
-    void Attributes::operator()(const char *type, const std::string &str, uint64_t &id) { _impl->find(type, str, id); }
     void Attributes::operator()(const char *type, const std::string &str, Context &c) { _impl->find(type, str, c); }
 
     void Attributes::sort_by_freq(void) { _impl->sort_by_rev_value(); }
-    void Attributes::reset_estimations(void) { _impl->reset_estimations(); }
+    void Attributes::reset_expectations(void) { _impl->reset_expectations(); }
 
     uint64_t Attributes::nfeatures(void) const { return _impl->nfeatures(); }
 
@@ -460,17 +420,15 @@ namespace NLP {
     void Attributes::apply_cutoff(const Type &type, const uint64_t freq, const uint64_t def) { _impl->apply_cutoff(type.name, freq, def); }
 
     double Attributes::sum_lambda_sq(void) { return _impl->sum_lambda_sq(); }
-    void Attributes::copy_lambdas(const lbfgsfloatval_t *x) { _impl->copy_lambdas(x);; }
+    void Attributes::assign_lambdas(lbfgsfloatval_t *x) { _impl->assign_lambdas(x);; }
     void Attributes::copy_gradients(lbfgsfloatval_t *x, double inv_sigma_sq) { _impl->copy_gradients(x, inv_sigma_sq);; }
 
-    bool Attributes::inc_next_gradient(double val) { return _impl->inc_next_gradient(val); }
-    bool Attributes::dec_gradient(double val) { return _impl->dec_gradient(val); }
+    bool Attributes::inc_next_lambda(double val) { return _impl->inc_next_lambda(val); }
     void Attributes::print_current_gradient(double val, double inv_sigma_sq) { _impl->print_current_gradient(val, inv_sigma_sq); }
     void Attributes::print(double inv_sigma_sq) { _impl->print(inv_sigma_sq); }
     void Attributes::prep_finite_differences(void) { _impl->prep_finite_differences(); }
 
     size_t Attributes::size(void) const { return _impl->size(); }
+    Features &Attributes::trans_features(void) { return _impl->trans_features->features; }
   }
 }
-
-#endif

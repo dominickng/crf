@@ -4,7 +4,7 @@ namespace NLP {
   namespace CRF {
 
     template <typename TAGGER>
-    int run_train(int argc, char **argv, const char *IFMT) {
+    int run_train(int argc, char **argv, const char *IFMT, const char *TRAINER) {
       std::string preface;
       create_preface(argc, argv, preface);
 
@@ -15,14 +15,15 @@ namespace NLP {
       config::OpAlias model(cfg, "model", "location to store the model", tagger_cfg.model);
       config::OpAlias sigma(cfg, "sigma", "sigma value for regularization", tagger_cfg.sigma);
       config::Op<std::string> ifmt(cfg, "ifmt", "input file format", IFMT, true);
+      config::OpRestricted<std::string> trainer(cfg, "trainer", "training algorithm to use", TRAINER, "lbfgs|sgd");
 
       tagger_cfg.add(&types);
       cfg.add(&tagger_cfg);
-      if(cfg.process(argc, argv)) {
+      if (cfg.process(argc, argv)) {
         Util::port::make_directory(tagger_cfg.model());
         TAGGER tagger(tagger_cfg, types, preface);
         ReaderFactory reader(TAGGER::reader, cfg.input(), cfg.input.file(), ifmt());
-        tagger.train(reader);
+        tagger.train(reader, trainer());
       }
 
       return 0;

@@ -146,7 +146,7 @@ class NER::Impl : public Tagger::Impl {
 NER::NER(NER::Config &cfg, Types &types, const std::string &preface)
   : Tagger(cfg, preface, new Impl(cfg, types, preface)) { }
 
-void NER::train(Reader &reader) { _impl->train(reader); }
+void NER::train(Reader &reader, const std::string &trainer) { _impl->train(reader, trainer); }
 
 void NER::run_tag(Reader &reader, Writer &writer) { _impl->run_tag(reader, writer); }
 

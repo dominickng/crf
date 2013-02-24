@@ -133,6 +133,7 @@ namespace NLP {
                   contexts[i].klasses = tp;
                   contexts[i].index = i;
                   (*e->gen)(e->type, attributes, sent, contexts[i], i);
+                  //std::cout << "added " << e->type.name << " at position " << i << ' ' << " for tag " << tp.curr << " nfeatures = " << contexts[i].features.size() << std::endl;
                 }
               }
             }
