@@ -418,21 +418,21 @@ void Tagger::Impl::finite_differences(Instances &instances, PDFs &alphas, PDFs &
 }
 
 void Tagger::Impl::reg(void) {
-  registry.reg(Types::w, types.use_words, new WordGen(w_dict, true, false));
-  registry.reg(Types::pw, types.use_prev_words, new OffsetWordGen(w_dict, -1, true, false));
-  registry.reg(Types::ppw, types.use_prev_words, new OffsetWordGen(w_dict, -3, true, false));
-  registry.reg(Types::nw, types.use_next_words, new OffsetWordGen(w_dict, 1, true, false));
-  registry.reg(Types::nnw, types.use_next_words, new OffsetWordGen(w_dict, 2, true, false));
+  registry.reg(Types::w, new WordGen(w_dict, true, false), types.use_words());
+  registry.reg(Types::pw, new OffsetWordGen(w_dict, -1, true, false), types.use_prev_words());
+  registry.reg(Types::ppw, new OffsetWordGen(w_dict, -2, true, false), types.use_prev_words());
+  registry.reg(Types::nw, new OffsetWordGen(w_dict, 1, true, false), types.use_next_words());
+  registry.reg(Types::nnw, new OffsetWordGen(w_dict, 2, true, false), types.use_next_words());
 
-  //registry.reg(Types::prefix, types.use_prefix, new PrefixGen(a_dict, true, false), true);
-  //registry.reg(Types::suffix, types.use_suffix, new SuffixGen(a_dict, true, false), true);
+  //registry.reg(Types::prefix, new PrefixGen(a_dict, true, false), true, types.use_prefix());
+  //registry.reg(Types::suffix, new SuffixGen(a_dict, true, false), true, types.use_suffix());
 
-  //registry.reg(Types::ppw_pw, types.use_word_bigrams, new BigramWordGen(ww_dict, -2, true, true));
-  registry.reg(Types::pw_w, types.use_word_bigrams, new BigramWordGen(ww_dict, -1, true, false));
-  registry.reg(Types::w_nw, types.use_word_bigrams, new BigramWordGen(ww_dict, 0, true, false));
-  //registry.reg(Types::nw_nnw, types.use_word_bigrams, new BigramWordGen(ww_dict, 1, true, true));
+  //registry.reg(Types::ppw_pw, new BigramWordGen(ww_dict, -2, true, true), types.use_word_bigrams());
+  registry.reg(Types::pw_w, new BigramWordGen(ww_dict, -1, true, false), types.use_word_bigrams());
+  registry.reg(Types::w_nw, new BigramWordGen(ww_dict, 0, true, false), types.use_word_bigrams());
+  //registry.reg(Types::nw_nnw, new BigramWordGen(ww_dict, 1, true, true), types.use_word_bigrams());
 
-  registry.reg(Types::trans, types.use_trans, new TransGen(t_dict, false, true));
+  registry.reg(Types::trans, new TransGen(t_dict, false, true), types.use_trans());
 }
 
 Tagger::Tagger(Tagger::Config &cfg, const std::string &preface, Impl *impl)
