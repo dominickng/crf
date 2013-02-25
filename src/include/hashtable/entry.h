@@ -53,7 +53,7 @@ namespace Util {
           return NULL;
         }
 
-        size_t size(void){ return next ? next->size() + 1 : 1; }
+        size_t nchained(void){ return next ? next->nchained() + 1 : 1; }
 
         std::ostream &save(std::ostream &out) const {
           return out << str << ' ' << value << '\n';
@@ -108,7 +108,7 @@ namespace Util {
           return hash == hash && key == key;
         }
 
-        size_t size(void) { return next ? next->size() + 1 : 1; }
+        size_t nchained(void) { return next ? next->nchained() + 1 : 1; }
       };
   }
 }
