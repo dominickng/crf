@@ -39,7 +39,7 @@ namespace NLP {
           }
         }
       public:
-        Shape(void) : _buffer() { _buffer.reserve(1024); }
+        Shape(void) : _buffer(1024, '\0') { }
 
         const std::string &operator()(const char *word) {
           _buffer.clear();
