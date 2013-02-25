@@ -1,6 +1,8 @@
 #ifndef _IO_H
 #define _IO_H
 
+#include "io/log.h"
+
 #include "io/format.h"
 #include "io/reader.h"
 #include "io/reader_factory.h"

@@ -200,7 +200,7 @@ void Tagger::Impl::forward_noscale(Contexts &contexts, PDFs &alphas, PSIs &psis)
       }
     }
   }
-  std::cout << "noscale Z: " << log(vector_sum(alphas[contexts.size() - 1], ntags)) << std::endl;
+  //std::cout << "noscale Z: " << log(vector_sum(alphas[contexts.size() - 1], ntags)) << std::endl;
 }
 
 /**
@@ -262,7 +262,7 @@ void Tagger::Impl::backward_noscale(Contexts &contexts, PDFs &betas, PSIs &psis)
   double z = 0.0;
   for (Tag next(2); next < ntags; ++next)
     z += betas[0][next] * psis[0][Sentinel::val][next];
-  std::cout << "noscale Z: " << log(z) << std::endl;
+  //std::cout << "noscale Z: " << log(z) << std::endl;
 }
 
 /**
@@ -494,19 +494,19 @@ double Tagger::Impl::calibrate(InstancePtrs &instance_ptrs, double *weights,
     initial_loss += score(*(instance_ptrs[i]));
 
   initial_loss += (attributes.sum_lambda_sq() * inv_sigma_sq * 0.5);
-  std::cout << "Initial loss: " << initial_loss << std::endl;
+  logger << "Initial loss: " << initial_loss << std::endl;
 
   while (ncandidates > 0 || !dec) {
-    std::cout << "Trial " << ntrials << ", eta = " << eta << std::endl;
+    logger << "Trial " << ntrials << ", eta = " << eta << std::endl;
     loss = sgd_iterate_calibrate(instance_ptrs, weights, nfeatures, max_samples, 1.0 / (lambda * eta), lambda);
 
     bool check = !isinf(loss) && loss < initial_loss;
     if (check) {
       --ncandidates;
-      std::cout << "Loss: " << loss << std::endl;
+      logger << "Loss: " << loss << std::endl;
     }
     else
-      std::cout << "Loss: " << loss << " (worse)" << std::endl;
+      logger << "Loss: " << loss << " (worse)" << std::endl;
 
     if (!isinf(loss) && loss < best_loss) {
       best_loss = loss;
@@ -530,7 +530,7 @@ double Tagger::Impl::calibrate(InstancePtrs &instance_ptrs, double *weights,
   }
 
   eta = best_eta;
-  std::cout << "Best learning rate: " << eta << std::endl;
+  logger << "Best learning rate: " << eta << std::endl;
   return 1.0 / (lambda * eta);
 }
 
@@ -568,10 +568,10 @@ double Tagger::Impl::sgd_epoch(InstancePtrs &instance_ptrs, double *weights,
   loss += norm;
 
   if (log) {
-    std::cout << "  Loss: " << loss << std::endl;
-    std::cout << "  Feature L2 norm " <<  sqrt(norm) << std::endl;
-    std::cout << "  Learning rate (eta) " <<  eta << std::endl;
-    std::cout << "  Total feature updates " << t << std::endl;
+    logger << "  Loss: " << loss << std::endl;
+    logger << "  Feature L2 norm " <<  sqrt(norm) << std::endl;
+    logger << "  Learning rate (eta) " <<  eta << std::endl;
+    logger << "  Total feature updates " << t << std::endl;
   }
 
   return loss;
@@ -617,7 +617,7 @@ double Tagger::Impl::sgd_iterate(InstancePtrs &instance_ptrs, double *weights,
     weights[i] = 0.0;
 
   for (size_t epoch = 1; epoch <= nepochs; ++epoch) {
-    std::cout << "Epoch " << epoch << std::endl;
+    logger << "Epoch " << epoch << std::endl;
     std::random_shuffle(instance_ptrs.begin(), instance_ptrs.end());
 
     loss = sgd_epoch(instance_ptrs, weights, nfeatures, nsamples, lambda, t0, t, true);
@@ -634,7 +634,7 @@ double Tagger::Impl::sgd_iterate(InstancePtrs &instance_ptrs, double *weights,
 
     previous[(epoch-1) % period] = loss;
     if (period < epoch)
-      std::cout << "  Improvement ratio " << improvement << '\n' << std::endl;
+      logger << "  Improvement ratio " << improvement << '\n' << std::endl;
 
     if (improvement < cfg.delta())
       break;
@@ -789,7 +789,7 @@ void Tagger::Impl::train_lbfgs(Reader &reader, double *weights) {
 
   int ret = lbfgs(n, weights, NULL, lbfgs_evaluate, lbfgs_progress, (void *)this, &param);
 
-  std::cerr << "L-BFGS optimization terminated with status code " << ret << std::endl;
+  logger << "L-BFGS optimization terminated with status code " << ret << std::endl;
 }
 
 /**
@@ -989,10 +989,10 @@ void Tagger::Impl::_read_attributes(Model &model) {
  *          attributes dictionary
  */
 void Tagger::Impl::extract(Reader &reader, Instances &instances) {
-  std::cout << "beginning pass 1" << std::endl;
+  logger << "beginning pass 1" << std::endl;
   _pass1(reader);
   reader.reset();
-  std::cout << "beginning pass 2" << std::endl;
+  logger << "beginning pass 2" << std::endl;
   _pass2(reader);
 
   attributes.apply_cutoff(Types::w, cfg.cutoff_words(), cfg.cutoff_default());
@@ -1000,7 +1000,7 @@ void Tagger::Impl::extract(Reader &reader, Instances &instances) {
     attributes.apply_attrib_cutoff(cfg.cutoff_attribs());
 
   reader.reset();
-  std::cout << "beginning pass 3" << std::endl;
+  logger << "beginning pass 3" << std::endl;
   _pass3(reader, instances);
 
 }
@@ -1085,10 +1085,11 @@ int Tagger::Impl::lbfgs_progress(void *instance, const lbfgsfloatval_t *x,
     if (x[i] != 0.0)
       ++nactives;
 
-  std::cout << "Iteration " << k << '\n' << "  llhood = " << fx;
-  std::cout << ", xnorm = " << xnorm << ", gnorm = " << gnorm;
-  std::cout << ", step = " << step << ", trials = " << ls;
-  std::cout << ", nactives = " << nactives << '/' << n << std::endl;
+  Log &logger = reinterpret_cast<Tagger::Impl *>(instance)->logger;
+  logger << "Iteration " << k << '\n' << "  llhood = " << fx;
+  logger << ", xnorm = " << xnorm << ", gnorm = " << gnorm;
+  logger << ", step = " << step << ", trials = " << ls;
+  logger << ", nactives = " << nactives << '/' << n << std::endl;
   return 0;
 }
 

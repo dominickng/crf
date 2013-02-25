@@ -150,6 +150,7 @@ namespace NLP {
             config::OpPath attributes;
             config::OpPath features;
             config::OpPath weights;
+            config::OpPath log;
             config::Op<double> sigma;
             config::Op<double> eta;
             config::Op<double> delta;
@@ -172,6 +173,7 @@ namespace NLP {
             attributes(*this, "attributes", "location to save the attributes file", "//attributes", true, &model),
             features(*this, "features", "location to save the features file", "//features", true, &model),
             weights(*this, "weights", "location to save the weights file", "//weights", true, &model),
+            log(*this, "log", "location to save the training log file", "//log", true, &model),
             sigma(*this, "sigma", "sigma value for L2 regularization", sigma, true),
             eta(*this, "eta", "eta calibration value for SGD (ignored for L-BFGS)", 0.1, true, true),
             delta(*this, "delta", "SGD optimization converges when log-likelihood improvement over the last (period) iterations is no larger than this value (ignored for L-BFGS)", 1e-6, true, true),
@@ -276,6 +278,7 @@ namespace NLP {
         Types &types;
         Model model;
         Registry registry;
+        Log logger;
 
         Lexicon lexicon;
         TagSet tags;
@@ -325,7 +328,7 @@ namespace NLP {
         Impl(Config &cfg, Types &types, const std::string &preface)
           : Util::Shared(), cfg(cfg), types(types),
             model("info", "Tagger model info file", cfg.model),
-            registry(cfg.rare_cutoff()),
+            registry(cfg.rare_cutoff()), logger(cfg.log(), std::cout),
             lexicon(cfg.lexicon()), tags(cfg.tags()),
             attributes(), instances(), weights(), attribs2weights(),
             w_dict(lexicon), ww_dict(lexicon), a_dict(), t_dict(),
