@@ -1043,6 +1043,7 @@ void Tagger::Impl::train(Reader &reader, const std::string &trainer) {
   model.nfeatures(attributes.nfeatures());
   model.save(preface);
   attributes.save_features(cfg.features(), preface);
+  attributes.zero_lambdas();
   delete [] weights;
 }
 

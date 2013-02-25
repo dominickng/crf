@@ -43,6 +43,7 @@ namespace NLP {
 
         double sum_lambda_sq(void);
         void assign_lambdas(double *x);
+        void zero_lambdas(void);
         void copy_gradients(double *x, double inv_sigma_sq);
         bool inc_next_lambda(double val);
         void print_current_gradient(double val, double inv_sigma_sq);

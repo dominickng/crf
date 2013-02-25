@@ -242,6 +242,15 @@ namespace NLP {
         }
 
         /**
+         * zero_lambdas.
+         * Sets all lambda pointers to NULL.
+         */
+        void zero_lambdas(void) {
+          for (Features::iterator i = features.begin(); i != features.end(); ++i)
+            i->lambda = NULL;
+        }
+
+        /**
          * copy_gradients.
          * Computes the gradient of each feature attached to this attribute,
          * and copies that gradient to the supplied array of doubles.
@@ -500,6 +509,11 @@ namespace NLP {
             (*i)->assign_lambdas(x, index);
         }
 
+        void zero_lambdas(void) {
+          for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
+            (*i)->zero_lambdas();
+        }
+
         void copy_gradients(double *x, double inv_sigma_sq) {
           size_t index = 0;
           for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
@@ -613,6 +627,7 @@ namespace NLP {
 
     double Attributes::sum_lambda_sq(void) { return _impl->sum_lambda_sq(); }
     void Attributes::assign_lambdas(double *x) { _impl->assign_lambdas(x);; }
+    void Attributes::zero_lambdas(void) { _impl->zero_lambdas();; }
     void Attributes::copy_gradients(double *x, double inv_sigma_sq) { _impl->copy_gradients(x, inv_sigma_sq);; }
 
     bool Attributes::inc_next_lambda(double val) { return _impl->inc_next_lambda(val); }
