@@ -15,8 +15,8 @@ namespace Util {
 
         Main(const std::string &program_name, const std::string &desc)
           : Config(program_name, desc),
-            input(*this, "input", "input file location"),
-            output(*this, "output", "output file location") { }
+            input(*this, "input", "input file location", false),
+            output(*this, "output", "output file location", false) { }
     };
   }
 }

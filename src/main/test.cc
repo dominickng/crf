@@ -25,8 +25,8 @@ class TestConfig : public config::Config {
       flag_option(*this, "flag", "this is a flag option", false),
       restricted_option(*this, "restrict", "this is a restricted option", "a", "a|b|c|d"),
       list_option(*this, "list", "this is a list option", "a,b,c"),
-      input_option(*this, "input", "this is an input option", true),
-      output_option(*this, "output", "this is an output option")
+      input_option(*this, "input", "this is an input option", false),
+      output_option(*this, "output", "this is an output option", false)
   { }
 };
 

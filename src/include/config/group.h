@@ -3,17 +3,19 @@ namespace Util {
     class OpGroup : public OptionBase {
       // represents a group of options
       protected:
-        OpGroup(const std::string &name, const std::string &desc) :
-          OptionBase(name, desc), _children() { }
+        OpGroup(const std::string &name, const std::string &desc,
+            const bool hide_help) :
+          OptionBase(name, desc, hide_help, false), _children() { }
 
         typedef std::vector<OptionBase *> Children;
         Children _children;
 
-        virtual void help(std::ostream &out, const std::string &prefix, const unsigned int depth) const;
+        virtual void help(std::ostream &out, const std::string &prefix,
+            const unsigned int depth, const bool full=false) const;
 
       public:
         OpGroup(OpGroup &group, const std::string &name,
-            const std::string &desc);
+            const std::string &desc, const bool hide_help);
 
         virtual ~OpGroup(void) { }
 
@@ -21,7 +23,6 @@ namespace Util {
           _children.push_back(child);
         }
 
-        void help(std::ostream &out) const { help(out, "  --", 0); };
         virtual OptionBase *process(const std::string &orig_key, const std::string &key);
         virtual void set(const std::string &value);
         virtual void validate(void);
@@ -34,17 +35,22 @@ namespace Util {
 
     class Config : public OpGroup {
       protected:
-        virtual void help(std::ostream &out, const std::string &prefix, const unsigned int depth) const;
+        virtual void help(std::ostream &out, const std::string &prefix,
+            const unsigned int depth, const bool full=false) const;
 
       public:
         Config(const std::string &name, const std::string &desc) :
-          OpGroup(name, desc) { }
+          OpGroup(name, desc, false) { }
 
         virtual ~Config(void) { }
 
-        using OpGroup::help;
+        void help(std::ostream &out, const bool full=false) const {
+          help(out, "  --", 0, full);
+        };
+
         OptionBase *process(const std::string &orig_key, const std::string &key);
-        bool process(const int argc, const char *const argv[], std::ostream &out=std::cerr);
+        bool process(const int argc, const char *const argv[],
+            std::ostream &out=std::cerr);
     };
 
   }

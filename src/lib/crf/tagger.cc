@@ -983,6 +983,9 @@ void Tagger::Impl::train(Reader &reader, const std::string &trainer) {
   extract(reader, instances);
   ntags = tags.size();
 
+  // initialize the working vectors. each one is prepopulated to the size
+  // of the longest sentence seen in the training data to avoid the overhead
+  // of extra memory allocations during training
   for (size_t i = 0; i < ntags; ++i)
     trans_marginals.push_back(PDF(ntags, 0.0));
 
@@ -1002,7 +1005,7 @@ void Tagger::Impl::train(Reader &reader, const std::string &trainer) {
   else if (trainer == "sgd")
     train_sgd(reader, weights);
   else
-    throw Exception("Unknown training algorithm");
+    throw ValueException("Unknown training algorithm");
 
   model.nattributes(attributes.size());
   model.nfeatures(attributes.nfeatures());

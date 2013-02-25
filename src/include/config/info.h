@@ -4,8 +4,8 @@ namespace Util {
       protected:
         const OpPath &base;
       public:
-        Info(const std::string &name, const std::string &desc, const OpPath &base) :
-          Config(name, desc), base(base) { }
+        Info(const std::string &name, const std::string &desc,
+            const OpPath &base) : Config(name, desc), base(base) { }
 
         virtual ~Info(void) { }
 

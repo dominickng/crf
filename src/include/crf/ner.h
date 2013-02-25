@@ -13,7 +13,7 @@ namespace NLP {
             Config(const std::string &name="ner",
                 const std::string &desc="ner CRF tagger config")
               : Tagger::Config(name, desc, 0.707, 400),
-                pos(*this, "pos", "location to save the pos tag file", "//postags", &model) { }
+                pos(*this, "pos", "location to save the pos tag file", "//postags", true, &model) { }
         };
 
         NER(NER::Config &cfg, Types &types, const std::string &preface);

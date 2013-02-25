@@ -5,10 +5,11 @@
 
 namespace Util { namespace config {
 
-OpBase::OpBase(OpGroup &group, const std::string &name, const std::string &desc,
-    const bool has_default, const bool requires_arg) :
-  OptionBase(name, desc, requires_arg), _has_default(has_default) {
-  group.add(this);
+OpBase::OpBase(OpGroup &group, const std::string &name,
+    const std::string &desc, const bool has_default, const bool hide_help,
+    const bool requires_arg) :
+  OptionBase(name, desc, hide_help, requires_arg), _has_default(has_default) {
+    group.add(this);
 }
 
 OptionBase *OpBase::process(const std::string &, const std::string &key) {
@@ -68,6 +69,26 @@ void OpOutput::_validate(void) {
   }
   else {
     _is_stdout = false;
+    _out = new std::ofstream(_value.c_str());
+    if (!_out)
+      throw ConfigException("Could not open file for writing", _name, _value);
+  }
+}
+
+const char *const OpError::STDERR = "stderr";
+
+OpError::~OpError(void) {
+  if (!_is_stderr)
+    delete _out;
+}
+
+void OpError::_validate(void) {
+  if (_value == STDERR) {
+    _is_stderr = true;
+    _out = &std::cerr;
+  }
+  else {
+    _is_stderr = false;
     _out = new std::ofstream(_value.c_str());
     if (!_out)
       throw ConfigException("Could not open file for writing", _name, _value);

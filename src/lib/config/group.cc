@@ -5,18 +5,23 @@
 namespace Util { namespace config {
 
 OpGroup::OpGroup(OpGroup &group, const std::string &name,
-    const std::string &desc) : OptionBase(name, desc), _children() {
+    const std::string &desc, const bool hide_help) :
+    OptionBase(name, desc, hide_help, false), _children() {
   group.add(this);
 }
 
-void OpGroup::help(std::ostream &out, const std::string &prefix, const unsigned int depth) const {
-  const std::string me = prefix + _name + "-";
-  if (depth != 0)
-    out << std::endl;
-  out << port::BOLD << _name << port::OFF << ": " << _desc << std::endl;
+void OpGroup::help(std::ostream &out, const std::string &prefix,
+    const unsigned int depth, const bool full) const {
+  if (!hide_help() || full) {
+    const std::string me = prefix + _name + "-";
+    if (depth != 0)
+      out << std::endl;
+    out << port::BOLD << _name << port::OFF << ": " << _desc << std::endl;
 
-  for (std::vector<OptionBase *>::const_iterator child = _children.begin(); child != _children.end(); ++child)
-    (*child)->help(out, me, depth + 1);
+    for (std::vector<OptionBase *>::const_iterator child = _children.begin(); child != _children.end(); ++child)
+      if (!(*child)->hide_help() || full)
+        (*child)->help(out, me, depth + 1, full);
+  }
 }
 
 OptionBase *OpGroup::process(const std::string &orig_key, const std::string &key) {
@@ -103,16 +108,24 @@ bool OpGroup::read_config(std::string &filename) {
   return true;
 }
 
-void Config::help(std::ostream &out, const std::string &prefix, const unsigned int depth) const {
+void Config::help(std::ostream &out, const std::string &prefix,
+    const unsigned int depth, const bool full) const {
   if (depth != 0)
     out << std::endl;
   out << port::BOLD << _name << port::OFF << ": " << _desc << '\n' << std::endl;
-  for (std::vector<OptionBase *>::const_iterator child = _children.begin(); child != _children.end(); ++child)
-    (*child)->help(out, prefix, depth + 1);
+
+  if (depth == 0) {
+    out << prefix << "help: show the short help message" << std::endl;
+    out << prefix << "more: show the long help message" << std::endl;
+    out << prefix << "version: show the program version\n" << std::endl;
+  }
+
+  for (Children::const_iterator child = _children.begin(); child != _children.end(); ++child)
+    (*child)->help(out, prefix, depth + 1, full);
 }
 
 OptionBase *Config::process(const std::string &orig_key, const std::string &key) {
-  for (std::vector<OptionBase *>::iterator child = _children.begin(); child != _children.end(); ++child) {
+  for (Children::iterator child = _children.begin(); child != _children.end(); ++child) {
     OptionBase *const p = (*child)->process(orig_key, key);
     if (p)
       return p;
@@ -121,15 +134,22 @@ OptionBase *Config::process(const std::string &orig_key, const std::string &key)
 }
 
 bool Config::process(const int argc, const char *const argv[], std::ostream &out) {
-  for (int i = 0; i < argc; ++i) {
-    if (strcmp(argv[i], "--help") == 0) {
-      help(out);
-      return false;
-    }
+  bool print_help = false;
+  bool print_more = false;
+  for (int i = 1; i < argc; ++i) {
+    if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0)
+      print_help = true;
+    else if (strcmp(argv[i], "--more") == 0)
+      print_more = true;
     else if (strcmp(argv[i], "--version") == 0) {
       out << argv[0] << " " << VERSION << std::endl;
       return false;
     }
+  }
+
+  if (print_more || print_help) {
+    help(out, print_more);
+    return 0;
   }
 
   for (int i = 1; i < argc; ++i) {

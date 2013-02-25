@@ -42,24 +42,25 @@ namespace NLP {
             config::Op<uint64_t> cutoff_attribs;
             config::Op<uint64_t> rare_cutoff;
 
-            Config(const std::string &name, const std::string &desc, double sigma, uint64_t niterations)
-              : config::OpGroup(name, desc),
-            model(*this, "model", "location to save the model"),
-            lexicon(*this, "lexicon", "location to save the lexicon file", "//lexicon", &model),
-            tags(*this, "tags", "location to save the tag file", "//tags", &model),
-            attributes(*this, "attributes", "location to save the attributes file", "//attributes", &model),
-            features(*this, "features", "location to save the features file", "//features", &model),
-            weights(*this, "weights", "location to save the weights file", "//weights", &model),
+            Config(const std::string &name, const std::string &desc,
+                double sigma, uint64_t niterations)
+              : config::OpGroup(name, desc, true),
+            model(*this, "model", "location of the model directory", true),
+            lexicon(*this, "lexicon", "location to save the lexicon file", "//lexicon", true, &model),
+            tags(*this, "tags", "location to save the tag file", "//tags", true, &model),
+            attributes(*this, "attributes", "location to save the attributes file", "//attributes", true, &model),
+            features(*this, "features", "location to save the features file", "//features", true, &model),
+            weights(*this, "weights", "location to save the weights file", "//weights", true, &model),
             sigma(*this, "sigma", "sigma value for L2 regularization", sigma, true),
-            eta(*this, "eta", "eta calibration value for SGD (ignored for L-BFGS)", 0.1, true),
-            delta(*this, "delta", "SGD optimization converges when log-likelihood improvement over the last (period) iterations is no larger than this value (ignored for L-BFGS)", 1e-6, true),
-            batch(*this, "batch", "batch size for SGD optimization (ignored for L-BFGS)", 1, true),
-            period(*this, "period", "period size for checking SGD convergence (ignored for L-BFGS)", 10, true),
+            eta(*this, "eta", "eta calibration value for SGD (ignored for L-BFGS)", 0.1, true, true),
+            delta(*this, "delta", "SGD optimization converges when log-likelihood improvement over the last (period) iterations is no larger than this value (ignored for L-BFGS)", 1e-6, true, true),
+            batch(*this, "batch", "batch size for SGD optimization (ignored for L-BFGS)", 1, true, true),
+            period(*this, "period", "period size for checking SGD convergence (ignored for L-BFGS)", 10, true, true),
             niterations(*this, "niterations", "number of training iterations", niterations, true),
-            cutoff_default(*this, "cutoff_default", "minimum frequency cutoff for features", 1, true),
-            cutoff_words(*this, "cutoff_words", "minimum frequency cutoff for word features", 1, true),
-            cutoff_attribs(*this, "cutoff_attribs", "minimum frequency cutoff for attributes", 1, true),
-            rare_cutoff(*this, "rare_cutoff", "cutoff to apply rare word features", 5, true)
+            cutoff_default(*this, "cutoff_default", "minimum frequency cutoff for features", 1, true, true),
+            cutoff_words(*this, "cutoff_words", "minimum frequency cutoff for word features", 1, true, true),
+            cutoff_attribs(*this, "cutoff_attribs", "minimum frequency cutoff for attributes", 1, true, true),
+            rare_cutoff(*this, "rare_cutoff", "cutoff to apply rare word features", 5, true, true)
           { }
 
             virtual ~Config(void) { /* nothing */ }
@@ -76,9 +77,9 @@ namespace NLP {
             config::Op<uint64_t> max_size;
             Model(const std::string &name, const std::string &desc, const config::OpPath &base)
               : config::Info(name, desc, base),
-              nattributes(*this, "nattributes", "the number of attributes", 0, true),
-              nfeatures(*this, "nfeatures", "the number of features", 0, true),
-              max_size(*this, "max_size", "the size of the largest sentence", 0, true)
+              nattributes(*this, "nattributes", "the number of attributes", 0),
+              nfeatures(*this, "nfeatures", "the number of features", 0),
+              max_size(*this, "max_size", "the size of the largest sentence", 0)
           { }
 
             virtual ~Model(void) { }

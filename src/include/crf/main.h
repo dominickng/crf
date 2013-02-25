@@ -12,10 +12,10 @@ namespace NLP {
       typename TAGGER::Config tagger_cfg;
       Types types;
 
-      config::OpAlias model(cfg, "model", "location to store the model", tagger_cfg.model);
-      config::OpAlias sigma(cfg, "sigma", "sigma value for regularization", tagger_cfg.sigma);
-      config::Op<std::string> ifmt(cfg, "ifmt", "input file format", IFMT, true);
-      config::OpRestricted<std::string> trainer(cfg, "trainer", "training algorithm to use", TRAINER, "lbfgs|sgd");
+      config::OpAlias model(cfg, "model", "location to store the model", false, tagger_cfg.model);
+      config::OpAlias sigma(cfg, "sigma", "sigma value for regularization", false, tagger_cfg.sigma);
+      config::Op<std::string> ifmt(cfg, "ifmt", "input file format", IFMT, false);
+      config::OpRestricted<std::string> trainer(cfg, "trainer", "training algorithm to use", TRAINER, "lbfgs|sgd", false, '|');
 
       tagger_cfg.add(&types);
       cfg.add(&tagger_cfg);
@@ -38,9 +38,9 @@ namespace NLP {
       typename TAGGER::Config tagger_cfg;
       Types types;
 
-      config::OpAlias model(cfg, "model", "location of the model", tagger_cfg.model);
-      config::Op<std::string> ifmt(cfg, "ifmt", "input file format", IFMT, true);
-      config::Op<std::string> ofmt(cfg, "ofmt", "output file format", OFMT, true);
+      config::OpAlias model(cfg, "model", "location of the model", false, tagger_cfg.model);
+      config::Op<std::string> ifmt(cfg, "ifmt", "input file format", IFMT, false);
+      config::Op<std::string> ofmt(cfg, "ofmt", "output file format", OFMT, false);
 
       tagger_cfg.add(&types);
       cfg.add(&tagger_cfg);
