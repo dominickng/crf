@@ -1016,7 +1016,9 @@ void Tagger::Impl::train(Reader &reader, const std::string &trainer) {
 
 /**
  * lbfgs_evaluate.
- * Static function required for libLBFGS.
+ * Static function required for libLBFGS. Casts the instance parameter to
+ * its true type of a Tagger::Impl pointer, and then calls the
+ * _lbfgs_evaluate method on it.
  */
 lbfgsfloatval_t Tagger::Impl::lbfgs_evaluate(void *_instance, const lbfgsfloatval_t *x,
     lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step) {
@@ -1027,6 +1029,18 @@ lbfgsfloatval_t Tagger::Impl::lbfgs_evaluate(void *_instance, const lbfgsfloatva
  * lbfgs_progress.
  * Static function required for libLBFGS. Prints out the progress of training
  * at each iteration
+ *
+ * instance: pointer to a Tagger::Impl subclass
+ * x: array of doubles of size n; holds the current lambda values
+ * g: array of doubles of size n; holds the current gradients
+ * fx: current negative log-likelihood value
+ * xnorm: the Euclidean norm of the current lambdas
+ * gnorm: the Euclidean norm of the current gradients
+ * step: the size of the line search step used in this iteration
+ * n: the number of feature lambdas
+ * k: the iteration count
+ * ls: the number of line search evaluations called in this iteration
+ *
  */
 int Tagger::Impl::lbfgs_progress(void *instance, const lbfgsfloatval_t *x,
     const lbfgsfloatval_t *g, const lbfgsfloatval_t fx,
