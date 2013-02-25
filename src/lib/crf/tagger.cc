@@ -457,6 +457,21 @@ void Tagger::Impl::finite_differences(lbfgsfloatval_t *g, bool overwrite) {
 /**
  * calibrate.
  * Calibrates the learning rate for stochastic gradient descent optimization.
+ *
+ * The calibration process first computes an initial loss based on max_samples
+ * number of training instances. This initial loss uses uniform weights of 0,
+ * so it is essentially just the summed log partition factor over each of
+ * the training instances. Then, we consider up to ncandidates number of
+ * candidates for the learning rate eta, with each new candidate being the
+ * previous candidate divided by calibration_rate. We reset the search up to
+ * once if we run out of candidates or the loss explodes, setting eta to half
+ * its original value and looking again through ncandidates potential learning
+ * rates.
+ *
+ * For each candidate learning rate, we perform one epoch of stochastic
+ * gradient descent using that learning rate. We check the loss from that
+ * epoch, choosing the learning rate that results in the lowest possible
+ * loss.
  */
 double Tagger::Impl::calibrate(InstancePtrs &instance_ptrs, double *weights,
     double lambda, double initial_eta, const int nfeatures) {
