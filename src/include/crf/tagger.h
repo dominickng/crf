@@ -1,5 +1,126 @@
 /**
- * tagger.h: common functionality for CRF training and tagging
+ * tagger.h: common functionality for conditional random field (CRF) training
+ * and tagging
+ *
+ * A CRF is a kind of undirected graphical model commonly used for sequence
+ * tagging. The unobserved variables in the model (tags) depend only upon the
+ * entire observation sequence (e.g. a sentence), and in a linear-chain CRF,
+ * some fixed Markov window of previous tags. In this implementation, we use a
+ * Markov window of 1 previous tag.
+ *
+ * We can describe the conditional probability of a sequence of tags Y given
+ * an observation sequence X of length T as follows:
+ *
+ * p(Y|X,theta) = ( (1 / Z(X)) * product [t from 1 to T] (psi(y(t-1), y(t), theta, X)))
+ *
+ *  Z(X) is the log partition function (normalising constant)
+ *    Z(X) = sum [over all possible tag sequences Y] (
+ *             product [from 1 to T] (
+ *              psi(y(t), y(t-1), theta, X)
+ *             )
+ *           )
+ *  y(t) is the tag at position t in the sequence
+ *  y(t-1) is the tag preceding y(t)
+ *  psi(y(t), y(t-1), theta, X)
+ *        = exp(sum [k from 1 to K] (theta(k) * f(y(t-1), y(t), X)))
+ *    for k feature functions that extract values from the observation sequence.
+ *    Each feature has a corresponding real-valued weight that is represented
+ *    here by the K-vector theta.
+ *    Features may depend on the current tag y(t), the previous tag y(t-1), both
+ *    of them, or neither of them. State features depend only on y(t), and
+ *    transition features depend on y(t) and y(t-1).
+ *
+ *    The result of the psi function is also referred to as the
+ *    activation value at position t between tags y(t-1) and y(t). This is the
+ *    typically log-linear format common in many machine learning techniques
+ *
+ * The training process estimates the optimal theta values. Given fully
+ * observed training data of N (X, Y) pairs, the process is supervised, and
+ * like many machine learning models, CRFs are trained by optimizing the log
+ * likelihood given training data (which is a convex objective). The log
+ * likelihood is the sum of log probabilities of the gold sequences X given the
+ * corresponding observation X and parameters theta:
+ *
+ * llhood(theta) = sum [i from 1 to N] (log P(Y(i) | X(i), theta))
+ *
+ * Substituting in the definition of the conditional probability from above,
+ * and adding an L2 regularization term to penalise weights that become too
+ * large, we have:
+ *
+ * llhood(theta) = sum [i from 1 to N] (
+ *                    sum [t from 1 to T] (
+ *                      sum [k from 1 to K] (
+ *                        theta(k) * f(y(i)(t-1), y(i)(t), X(i))
+ *                      )
+ *                    )
+ *                 )
+ *                 -
+ *                 sum [i from 1 to N] (log Z(X(i)))
+ *                 -
+ *                 sum [k from 1 to K] (theta(k)^2 / (2 * sigma^2))
+ *
+ *              where sigma is a parameter that indicates the strength of the
+ *              regularization.
+ *
+ * The first component of the log likelihood is simply computed by iterating
+ * over the training data and summing the appropriate activation values. The
+ * third component is also trivially calculated by summing the square of the
+ * current weights. Unfortunately, the second term, which corresponds to the sum
+ * of log partition factors for each instance, is exponential in the
+ * number of possible tag sequences. Thankfully, in linear-chain CRFs, we can
+ * use a variant of the forward-backward (or Baum-Welch) algorithm used for
+ * training Hidden Markov Models (HMMs) to efficiently calculate the log Z term.
+ *
+ * Forward-backward performs two passes over each training instance. The
+ * forward pass computes the score of reaching tag t at position i given
+ * the scores of every tag p at position i-1. This is done by summing over all
+ * previous tags p, the score of a tag p at position i-1 multipled by the
+ * transition score to move from tag p to tag t at the current position.
+ * The backward pass analagously computes the score of reaching tag t at
+ * position i given the scores of every tag n at position i+1. Then the forward
+ * and backward scores can be combined to efficiently estimate marginal
+ * probabilities of tag sequences and the log partition factor.
+ *
+ * The llhood objective typically does not have a closed form solution, so
+ * iterative methods must be employed for optimization. These methods compute
+ * the derivative (gradient) of each component of the theta weight vector, and
+ * adjust the values of the components so to make the gradients go to 0 (a
+ * stationary point, and since the objective is convex, this is a unique optima
+ * that maximises log likelihood). Two popular techinques are L-BFGS and
+ * stochastic gradient descent (SGD).
+ *
+ * BFGS is a second-order Newton method. It uses the Hessian matrix of second
+ * derivatives to compute the curvature of the likelihood, making it faster
+ * than vanilla steepest descent along the negative gradient direction. The size
+ * of the Hessian is quadratic in the size of the theta vector, so it is
+ * impractical to directly compute it. Instead, BFGS approximates the Hessian
+ * using only the first derivatives of the objectvive function. This full
+ * approximation still requires quadratic space, so limited-memory BFGS
+ * (L-BFGS) that keeps only a fixed window of derivative histories to estimate
+ * the Hessian is typically used. At each iteration, L-BFGS requires the value
+ * of the objective function and the gradient of each component of the theta
+ * vector.
+ *
+ * Computing the objective value and gradients for L-BFGS requires a full pass
+ * through the training data before any updates are made - i.e. batch
+ * optimization. However, if the training examples are drawn iid from the same
+ * distribution, it seems wasteful to require seeing all of the training
+ * examples before updating the feature weights. Stochastic gradient descent
+ * uses this insight: the basic idea is pick training instances at random, and
+ * take little steps in the direction indicated by the gradient of the chosen
+ * instance only. This can be computed much faster than an L-BFGS update, and
+ * while each individual update may not be globally optimal, the randomness
+ * helps to achieve convergence at much faster rates than L-BFGS. The rate of
+ * descent is controlled by a learning rate that may require tuning based on
+ * the size of the problem. The learning rate decreases as optimization
+ * continues to help ensure that the objective is not overshot.
+ *
+ * A variant of the Viterbi algorithm used in HMMs is used at tagging time.
+ * Viterbi is very much like the forward pass of the forward-backward algorithm,
+ * except that the sum operation is replaced by a maximization, and backpointers
+ * to each previous maximising state are stored. The end state with the highest
+ * score is then traced backwards to yield the most probable sequence given
+ * the model parameters.
  *
  */
 
