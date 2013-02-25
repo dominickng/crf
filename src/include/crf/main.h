@@ -14,7 +14,7 @@ namespace NLP {
 
       config::OpAlias model(cfg, "model", "location to store the model", false, tagger_cfg.model);
       config::OpAlias sigma(cfg, "sigma", "sigma value for regularization", false, tagger_cfg.sigma);
-      config::Op<std::string> ifmt(cfg, "ifmt", "input file format", IFMT, false);
+      config::Op<std::string> ifmt(cfg, "ifmt", "input file format", IFMT, false, true);
       config::OpRestricted<std::string> trainer(cfg, "trainer", "training algorithm to use", TRAINER, "lbfgs|sgd", false, '|');
 
       tagger_cfg.add(&types);
