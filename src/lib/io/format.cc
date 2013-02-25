@@ -18,13 +18,13 @@ void Format::parse(const std::string &format) {
   }
 
   if (!*s)
-    throw ValueException("format string must contain at least one field");
+    throw Exception("format string must contain at least one field");
 
   for (; *s; s += 3) {
     if (s[0] != '%')
       break;
     if (!s[1])
-      throw ValueException("unexpected end of format string after %");
+      throw Exception("unexpected end of format string after %");
     if (s[1] == '%')
       break;
     if (Sentence::type(s[1]) == Sentence::TYPE_INVALID)
@@ -37,7 +37,7 @@ void Format::parse(const std::string &format) {
       if (s[3] == '%')
         ++s;
       else
-        throw ValueException("missing separator after %");
+        throw Exception("missing separator after %");
     }
     separators += s[2];
   }
@@ -46,7 +46,7 @@ void Format::parse(const std::string &format) {
   separators.erase(separators.size() - 1);
 
   if (!s[0])
-    throw ValueException("sentence separator is missing in format string");
+    throw Exception("sentence separator is missing in format string");
 
   for (; *s; ++s) {
     if (s[0] == '%') {

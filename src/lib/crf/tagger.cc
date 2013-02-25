@@ -1005,7 +1005,7 @@ void Tagger::Impl::train(Reader &reader, const std::string &trainer) {
   else if (trainer == "sgd")
     train_sgd(reader, weights);
   else
-    throw ValueException("Unknown training algorithm");
+    throw ValueException("Unknown training algorithm", trainer);
 
   model.nattributes(attributes.size());
   model.nfeatures(attributes.nfeatures());

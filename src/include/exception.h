@@ -3,7 +3,6 @@
  * Defines broad exception classes used in the CRF
  */
 
-
 /**
  * Exception.
  * general errors with a message
@@ -55,7 +54,9 @@ class FormatException : public Exception {
  */
 class ValueException : public Exception {
   public:
-    ValueException(const std::string &msg) : Exception(msg) { }
-    ValueException(const ValueException &other) : Exception(other) { }
+    const std::string &value;
+
+    ValueException(const std::string &msg, const std::string &value) : Exception(msg), value(value) { }
+    ValueException(const ValueException &other) : Exception(other), value(other.value) { }
     virtual ~ValueException(void) throw() { }
 };
