@@ -226,52 +226,52 @@ namespace NLP {
 
         virtual void reset(const size_t size);
 
-        virtual void compute_psis(Context &context, PDFs &dist, double decay=1.0);
-        virtual void compute_psis(Contexts &contexts, PSIs &psis, double decay=1.0);
+        void compute_psis(Context &context, PDFs &dist, double decay=1.0);
+        void compute_psis(Contexts &contexts, PSIs &psis, double decay=1.0);
         void compute_expectations(Contexts &c);
-        virtual void forward(Contexts &contexts, PDFs &alphas, PSIs &psis, PDF &scale);
-        virtual void forward_noscale(Contexts &contexts, PDFs &alphas, PSIs &psis);
-        virtual void backward(Contexts &contexts, PDFs &betas, PSIs &psis, PDF &scale);
-        virtual void backward_noscale(Contexts &contexts, PDFs &betas, PSIs &psis);
-        virtual double sum_llhood(Contexts &contexts, double decay=1.0);
-        virtual lbfgsfloatval_t regularised_llhood(void);
+        void forward(Contexts &contexts, PDFs &alphas, PSIs &psis, PDF &scale);
+        void forward_noscale(Contexts &contexts, PDFs &alphas, PSIs &psis);
+        void backward(Contexts &contexts, PDFs &betas, PSIs &psis, PDF &scale);
+        void backward_noscale(Contexts &contexts, PDFs &betas, PSIs &psis);
+        double sum_llhood(Contexts &contexts, double decay=1.0);
+        lbfgsfloatval_t regularised_llhood(void);
         lbfgsfloatval_t _lbfgs_evaluate(const lbfgsfloatval_t *x,
             lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step);
 
-        virtual void print_psis(Contexts &contexts, PSIs &psis);
-        virtual void print_fwd_bwd(Contexts &contexts, PDFs &pdfs, PDF &scale);
+        void print_psis(Contexts &contexts, PSIs &psis);
+        void print_fwd_bwd(Contexts &contexts, PDFs &pdfs, PDF &scale);
 
-        virtual void finite_differences(lbfgsfloatval_t *g, bool overwrite=false);
+        void finite_differences(lbfgsfloatval_t *g, bool overwrite=false);
 
-        virtual double calibrate(InstancePtrs &instance_ptrs, double *weights,
+        double calibrate(InstancePtrs &instance_ptrs, double *weights,
             double lambda, double initial_eta, const int nfeatures);
-        virtual double sgd_epoch(InstancePtrs &instance_ptrs, double *weights,
+        double sgd_epoch(InstancePtrs &instance_ptrs, double *weights,
             const int nfeatures, const int nsamples, const double lambda,
             const int t0, int &t, const bool log=false);
-        virtual double sgd_iterate_calibrate(InstancePtrs &instance_ptrs,
+        double sgd_iterate_calibrate(InstancePtrs &instance_ptrs,
             double *weights, const int nfeatures, const int nsamples,
             const double t0, const double lambda);
-        virtual double sgd_iterate(InstancePtrs &instance_ptrs, double *weights,
+        double sgd_iterate(InstancePtrs &instance_ptrs, double *weights,
             const int nfeatures, const int nsamples, const double t0,
             const double lambda, const int nepochs, const int period);
         void compute_marginals(Contexts &c, double decay=1.0);
         void compute_weights(Contexts &c, double gain);
-        virtual double score(Contexts &contexts, double decay=1.0);
-        virtual double score_instance(Contexts &contexts, double decay=1.0,
+        double score(Contexts &contexts, double decay=1.0);
+        double score_instance(Contexts &contexts, double decay=1.0,
             double gain=1.0);
 
         virtual void _pass1(Reader &reader) = 0;
         virtual void _pass2(Reader &reader) = 0;
         virtual void _pass3(Reader &reader, Instances &instances) = 0;
 
-        virtual void train_lbfgs(Reader &reader, double *weights);
-        virtual void train_sgd(Reader &reader, double *weights);
+        void train_lbfgs(Reader &reader, double *weights);
+        void train_sgd(Reader &reader, double *weights);
 
         virtual void reg(void);
         virtual void load(void);
         virtual void _load_model(Model &model);
-        virtual void _read_weights(Model &model);
-        virtual void _read_attributes(Model &model);
+        void _read_weights(Model &model);
+        void _read_attributes(Model &model);
 
       public:
         Config &cfg;
@@ -338,8 +338,8 @@ namespace NLP {
 
         virtual ~Impl(void) { /* nothing */ }
 
-        virtual void extract(Reader &reader, Instances &instances);
-        virtual void train(Reader &reader, const std::string &trainer);
+        void extract(Reader &reader, Instances &instances);
+        void train(Reader &reader, const std::string &trainer);
 
         static lbfgsfloatval_t lbfgs_evaluate(void *instance,
             const lbfgsfloatval_t *x, lbfgsfloatval_t *g, const int n,
