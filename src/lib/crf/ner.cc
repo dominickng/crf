@@ -17,7 +17,7 @@
 namespace NLP { namespace CRF {
 
 const std::string NER::name = "ner";
-const std::string NER::desc = "description";
+const std::string NER::desc = "Named entity recognising CRF tagger";
 const std::string NER::reader = "conll";
 
 class NER::Impl : public Tagger::Impl {

@@ -17,7 +17,7 @@
 namespace NLP { namespace CRF {
 
 const std::string POS::name = "pos";
-const std::string POS::desc = "description";
+const std::string POS::desc = "Part of speech CRF tagger";
 const std::string POS::reader = "format";
 
 class POS::Impl : public Tagger::Impl {

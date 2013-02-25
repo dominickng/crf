@@ -17,7 +17,7 @@
 namespace NLP { namespace CRF {
 
 const std::string Chunk::name = "chunk";
-const std::string Chunk::desc = "description";
+const std::string Chunk::desc = "Chunking CRF tagger";
 const std::string Chunk::reader = "conll";
 
 class Chunk::Impl : public Tagger::Impl {
