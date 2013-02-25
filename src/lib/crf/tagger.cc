@@ -458,9 +458,9 @@ void Tagger::Impl::finite_differences(lbfgsfloatval_t *g, bool overwrite) {
  * calibrate.
  * Calibrates the learning rate for stochastic gradient descent optimization.
  */
-double Tagger::Impl::calibrate(InstancePtrs &instance_ptrs, double *weights, double lambda, double initial_eta, const size_t n) {
+double Tagger::Impl::calibrate(InstancePtrs &instance_ptrs, double *weights,
+    double lambda, double initial_eta, const int nfeatures) {
   size_t max_samples = fmin(1000, instances.size());
-  size_t nsamples = max_samples;
   const int max_trials = 20;
   int ntrials = 1;
   const int max_candidates = 10;
@@ -472,11 +472,10 @@ double Tagger::Impl::calibrate(InstancePtrs &instance_ptrs, double *weights, dou
   bool dec = false;
 
   std::random_shuffle(instance_ptrs.begin(), instance_ptrs.end());
-
-  for (size_t i = 0; i < n; ++i)
+  for (size_t i = 0; i < nfeatures; ++i)
     weights[i] = 0.0;
 
-  for (size_t i = 0; i < nsamples; ++i)
+  for (size_t i = 0; i < max_samples; ++i)
     initial_loss += score(*(instance_ptrs[i]));
 
   initial_loss += (attributes.sum_lambda_sq() * inv_sigma_sq * 0.5);
@@ -484,7 +483,7 @@ double Tagger::Impl::calibrate(InstancePtrs &instance_ptrs, double *weights, dou
 
   while (ncandidates > 0 || !dec) {
     std::cout << "Trial " << ntrials << ", eta = " << eta << std::endl;
-    loss = sgd_iterate(instance_ptrs, weights, n, nsamples, 1.0 / (lambda * eta), lambda, 1, 1, true);
+    loss = sgd_iterate_calibrate(instance_ptrs, weights, nfeatures, max_samples, 1.0 / (lambda * eta), lambda);
 
     bool check = !isinf(loss) && loss < initial_loss;
     if (check) {
@@ -521,6 +520,64 @@ double Tagger::Impl::calibrate(InstancePtrs &instance_ptrs, double *weights, dou
 }
 
 /**
+ * sgd_epoch
+ * Performs one epoch of stochastic gradient descent.
+ *
+ * Each epoch iterates through the first nsamples of the training data and
+ * adjusts the learning parameters for each one based on the number of updates
+ * so far. For each instance, the loss on the instance with the current
+ * lambdas is calculated, and the lambdas are updated based on the
+ * instance. Once nsamples have been considered, the weights are scaled by the
+ * decay factor and the loss incremented by the L2 norm of the weights
+ */
+double Tagger::Impl::sgd_epoch(InstancePtrs &instance_ptrs, double *weights,
+    const int nfeatures, const int nsamples, const double lambda,
+    const int t0, int &t, const bool log) {
+  double eta, norm, gain, decay = 1.0;
+  double loss = 0.0;
+
+  for (int i = 0; i < nsamples; ++i) {
+    Contexts &contexts = *(instance_ptrs[i]);
+    eta = 1 / (lambda * (t0 + t));
+    decay *= (1.0 - eta * lambda);
+    gain = eta / decay;
+    loss += score_instance(contexts, decay, gain);
+    ++t;
+  }
+
+  if (isinf(loss))
+    std::cout << "oh dear" << std::endl;
+
+  vector_scale(weights, decay, nfeatures);
+  norm = attributes.sum_lambda_sq() * inv_sigma_sq * 0.5;
+  loss += norm;
+
+  if (log) {
+    std::cout << "  Loss: " << loss << std::endl;
+    std::cout << "  Feature L2 norm " <<  sqrt(norm) << std::endl;
+    std::cout << "  Learning rate (eta) " <<  eta << std::endl;
+    std::cout << "  Total feature updates " << t << std::endl;
+  }
+
+  return loss;
+}
+
+/**
+ * sgd_iterate_calibrate.
+ * Performs one epoch of stochastic gradient descent. Used in the process
+ * of calibrating the learning rate.
+ */
+double Tagger::Impl::sgd_iterate_calibrate(InstancePtrs &instance_ptrs,
+    double *weights, const int nfeatures, const int nsamples, const double t0,
+    const double lambda) {
+  int t = 0;
+  for (size_t i = 0; i < nfeatures; ++i)
+    weights[i] = 0.0;
+
+  return sgd_epoch(instance_ptrs, weights, nfeatures, nsamples, lambda, t0, t);
+}
+
+/**
  * sgd_iterate.
  * Performs up to nepochs iterations of stochastic gradient descent.
  *
@@ -528,90 +585,50 @@ double Tagger::Impl::calibrate(InstancePtrs &instance_ptrs, double *weights, dou
  * each training instance, performing the SGD update.
  *
  * The optimization terminates after nepochs, or if the percentage
- * improvement in the * summed loss over all the training instance falls
+ * improvement in the summed loss over all the training instance falls
  * below cfg.delta()
  */
 double Tagger::Impl::sgd_iterate(InstancePtrs &instance_ptrs, double *weights,
-    const int n, const int nsamples, const double t0, const double lambda,
-    const int nepochs, const int period, bool calibration) {
-  double *previous, gain, eta;
-  double decay = 1;
-  double loss = 0.0;
-  double improvement = 0.0;
+    const int nfeatures, const int nsamples, const double t0,
+    const double lambda, const int nepochs, const int period) {
+  double loss, improvement = 0.0;
   double best_loss = std::numeric_limits<double>::max();
+  double *best_weights = new double[nfeatures];
+  double *previous = new double[period];
   int t = 0;
-  double *best_weights = 0;
 
-  if (!calibration) {
-    best_weights = new double[n];
-    previous = new double[period];
-  }
-
-  for (size_t i = 0; i < n; ++i)
+  for (size_t i = 0; i < nfeatures; ++i)
     weights[i] = 0.0;
 
   for (size_t epoch = 1; epoch <= nepochs; ++epoch) {
-    if (!calibration) {
-      std::cout << "Epoch " << epoch << std::endl;
-      std::random_shuffle(instance_ptrs.begin(), instance_ptrs.end());
+    std::cout << "Epoch " << epoch << std::endl;
+    std::random_shuffle(instance_ptrs.begin(), instance_ptrs.end());
+
+    loss = sgd_epoch(instance_ptrs, weights, nfeatures, nsamples, lambda, t0, t, true);
+
+    if (loss < best_loss) {
+      best_loss = loss;
+      memcpy(best_weights, weights, sizeof(double) * nfeatures);
     }
 
-    loss = 0.0;
-    for (int i = 0; i < nsamples; ++i) {
-      Contexts &contexts = *(instance_ptrs[i]);
-      eta = 1 / (lambda * (t0 + t));
-      decay *= (1.0 - eta * lambda);
-      gain = eta / decay;
+    if (period < epoch)
+      improvement = (previous[(epoch-1) % period] - loss) / loss;
+    else
+      improvement = cfg.delta();
 
-      double l = score_instance(contexts, decay, gain);
-      //std::cout << "  lambda: " << lambda << ", eta: " << eta <<", gain: " << gain << ", decay: " << decay << ", l: " << l << std::endl;
-      //vector_print(weights, n);
+    previous[(epoch-1) % period] = loss;
+    if (period < epoch)
+      std::cout << "  Improvement ratio " << improvement << '\n' << std::endl;
 
-      loss += l;
-      ++t;
-    }
-
-    if (isinf(loss))
-      std::cout << "oh dear" << std::endl;
-
-    vector_scale(weights, decay, n);
-    decay = 1.0;
-    double norm = attributes.sum_lambda_sq() * inv_sigma_sq * 0.5;
-    loss += norm;
-    //vector_print(weights, n);
-    //std::cout << norm << std::endl;
-
-    if (!calibration) {
-      if (loss < best_loss) {
-        best_loss = loss;
-        memcpy(best_weights, weights, sizeof(double) * n);
-      }
-
-      if (period < epoch)
-        improvement = (previous[(epoch-1) % period] - loss) / loss;
-      else
-        improvement = cfg.delta();
-
-      previous[(epoch-1) % period] = loss;
-      std::cout << "  Loss: " << loss << std::endl;
-      if (period < epoch)
-        std::cout << "  Improvement ratio " << improvement << std::endl;
-      std::cout << "  Feature L2 norm " <<  sqrt(norm) << std::endl;
-      std::cout << "  Learning rate (eta) " <<  eta << std::endl;
-      std::cout << "  Total feature updates " << t << std::endl;
-
-      if (improvement < cfg.delta())
-        break;
-    }
+    if (improvement < cfg.delta())
+      break;
   }
 
   if (best_weights)
-    memcpy(best_weights, weights, sizeof(double) * n);
+    memcpy(best_weights, weights, sizeof(double) * nfeatures);
 
-  if (!calibration) {
-    delete [] best_weights;
-    delete [] previous;
-  }
+  delete [] best_weights;
+  delete [] previous;
 
   return loss;
 }
@@ -778,7 +795,7 @@ void Tagger::Impl::train_sgd(Reader &reader, double *weights) {
   attributes.assign_lambdas(weights);
 
   double t0 = calibrate(instance_ptrs, weights, lambda, cfg.eta(), n);
-  sgd_iterate(instance_ptrs, weights, n, instance_ptrs.size(), t0, lambda, cfg.niterations(), cfg.period(), false);
+  sgd_iterate(instance_ptrs, weights, n, instance_ptrs.size(), t0, lambda, cfg.niterations(), cfg.period());
 }
 
 /**

@@ -120,12 +120,22 @@ namespace NLP {
 
         virtual void finite_differences(lbfgsfloatval_t *g, bool overwrite=false);
 
-        virtual double calibrate(InstancePtrs &instance_ptrs, double *weights, double lambda, double initial_eta, const size_t n);
-        virtual double sgd_iterate(InstancePtrs &instance_ptrs, double *weights, const int n, const int nsamples, const double t0, const double lambda, const int nepochs, const int period, bool calibration);
+        virtual double calibrate(InstancePtrs &instance_ptrs, double *weights,
+            double lambda, double initial_eta, const int nfeatures);
+        virtual double sgd_epoch(InstancePtrs &instance_ptrs, double *weights,
+            const int nfeatures, const int nsamples, const double lambda,
+            const int t0, int &t, const bool log=false);
+        virtual double sgd_iterate_calibrate(InstancePtrs &instance_ptrs,
+            double *weights, const int nfeatures, const int nsamples,
+            const double t0, const double lambda);
+        virtual double sgd_iterate(InstancePtrs &instance_ptrs, double *weights,
+            const int nfeatures, const int nsamples, const double t0,
+            const double lambda, const int nepochs, const int period);
         void compute_marginals(Contexts &c, double decay=1.0);
         void compute_weights(Contexts &c, double gain);
         virtual double score(Contexts &contexts, double decay=1.0);
-        virtual double score_instance(Contexts &contexts, double decay=1.0, double gain=1.0);
+        virtual double score_instance(Contexts &contexts, double decay=1.0,
+            double gain=1.0);
 
         virtual void _pass1(Reader &reader) = 0;
         virtual void _pass2(Reader &reader) = 0;
