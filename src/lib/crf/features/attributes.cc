@@ -91,7 +91,7 @@ namespace NLP {
          * this attribute.
          */
         void insert(TagPair &tp) {
-          features.push_back(Feature(tp, 1, strcmp(type, "trans") == 0)); //hackety hack
+          features.push_back(Feature(tp, 1));
         }
 
         /**

@@ -643,7 +643,7 @@ double Tagger::Impl::sgd_iterate(InstancePtrs &instance_ptrs, double *weights,
     previous[(epoch-1) % period] = loss;
     if (period < epoch)
       logger << "  Improvement ratio = " << improvement << std::endl;
-    logger << "  Epoch time = " << duration_s() << " seconds\n" << std::endl;
+    logger << "  Epoch time = " << duration_s() << " s\n" << std::endl;
 
     if (improvement < cfg.delta())
       break;
@@ -1109,7 +1109,7 @@ int Tagger::Impl::lbfgs_progress(void *instance, const lbfgsfloatval_t *x,
   logger << ", xnorm = " << xnorm << ", gnorm = " << gnorm;
   logger << ", step = " << step << ", trials = " << ls;
   logger << ", nactives = " << nactives << '/' << n;
-  logger << ", iteration time = " << impl->duration_s() << " seconds" << std::endl;
+  logger << ", time = " << impl->duration_s() << " s" << std::endl;
 
   impl->clock_begin = clock();
   return 0;
