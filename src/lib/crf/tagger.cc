@@ -25,6 +25,14 @@ Tagger::Tagger(Tagger::Config &cfg, const std::string &preface, Impl *impl)
 Tagger::Tagger(const Tagger &other)
   : _impl(share(other._impl)) { }
 
+double Tagger::Impl::duration_s(void) {
+  return (clock() - clock_begin) / (double) CLOCKS_PER_SEC;
+}
+
+double Tagger::Impl::duration_m(void) {
+  return (clock() - clock_begin) / (60.0 * CLOCKS_PER_SEC);
+}
+
 void Tagger::Impl::reset(const size_t size) {
   std::fill(scale.begin(), scale.begin() + size, 1.0);
 
@@ -567,10 +575,10 @@ double Tagger::Impl::sgd_epoch(InstancePtrs &instance_ptrs, double *weights,
   loss += norm;
 
   if (log) {
-    logger << "  Loss: " << loss << std::endl;
-    logger << "  Feature L2 norm " <<  sqrt(norm) << std::endl;
-    logger << "  Learning rate (eta) " <<  eta << std::endl;
-    logger << "  Total feature updates " << t << std::endl;
+    logger << "  Loss = " << loss << std::endl;
+    logger << "  Feature L2 norm = " <<  sqrt(norm) << std::endl;
+    logger << "  Learning rate (eta) = " <<  eta << std::endl;
+    logger << "  Total feature updates = " << t << std::endl;
   }
 
   return loss;
@@ -616,6 +624,7 @@ double Tagger::Impl::sgd_iterate(InstancePtrs &instance_ptrs, double *weights,
     weights[i] = 0.0;
 
   for (size_t epoch = 1; epoch <= nepochs; ++epoch) {
+    clock_begin = clock();
     logger << "Epoch " << epoch << std::endl;
     std::random_shuffle(instance_ptrs.begin(), instance_ptrs.end());
 
@@ -633,7 +642,8 @@ double Tagger::Impl::sgd_iterate(InstancePtrs &instance_ptrs, double *weights,
 
     previous[(epoch-1) % period] = loss;
     if (period < epoch)
-      logger << "  Improvement ratio " << improvement << '\n' << std::endl;
+      logger << "  Improvement ratio = " << improvement << std::endl;
+    logger << "  Epoch time = " << duration_s() << " seconds\n" << std::endl;
 
     if (improvement < cfg.delta())
       break;
@@ -785,6 +795,7 @@ void Tagger::Impl::train_lbfgs(Reader &reader, double *weights) {
   param.past = 10;
 
   attributes.assign_lambdas(weights);
+  clock_begin = clock();
 
   int ret = lbfgs(n, weights, NULL, lbfgs_evaluate, lbfgs_progress, (void *)this, &param);
 
@@ -809,7 +820,11 @@ void Tagger::Impl::train_sgd(Reader &reader, double *weights) {
 
   attributes.assign_lambdas(weights);
 
+  clock_begin = clock();
   double t0 = calibrate(instance_ptrs, weights, lambda, cfg.eta(), n);
+  logger << "Calibration time: " << duration_s() << " seconds" << std::endl;
+
+  clock_begin = clock();
   sgd_iterate(instance_ptrs, weights, n, instance_ptrs.size(), t0, lambda, cfg.niterations(), cfg.period());
 }
 
@@ -1010,6 +1025,7 @@ void Tagger::Impl::extract(Reader &reader, Instances &instances) {
  * for CRF tagging.
  */
 void Tagger::Impl::train(Reader &reader, const std::string &trainer) {
+  clock_t begin = clock();
   reg();
   inv_sigma_sq = 1.0 / (cfg.sigma() * cfg.sigma());
   extract(reader, instances);
@@ -1045,6 +1061,8 @@ void Tagger::Impl::train(Reader &reader, const std::string &trainer) {
   attributes.save_features(cfg.features(), preface);
   attributes.zero_lambdas();
   delete [] weights;
+
+  logger << "Total training time: " << (clock() - begin) / (60.0 * CLOCKS_PER_SEC) << " minutes" << std::endl;
 }
 
 /**
@@ -1085,11 +1103,15 @@ int Tagger::Impl::lbfgs_progress(void *instance, const lbfgsfloatval_t *x,
     if (x[i] != 0.0)
       ++nactives;
 
-  Log &logger = reinterpret_cast<Tagger::Impl *>(instance)->logger;
+  Tagger::Impl *impl = reinterpret_cast<Tagger::Impl *>(instance);
+  Log &logger = impl->logger;
   logger << "Iteration " << k << '\n' << "  llhood = " << fx;
   logger << ", xnorm = " << xnorm << ", gnorm = " << gnorm;
   logger << ", step = " << step << ", trials = " << ls;
-  logger << ", nactives = " << nactives << '/' << n << std::endl;
+  logger << ", nactives = " << nactives << '/' << n;
+  logger << ", iteration time = " << impl->duration_s() << " seconds" << std::endl;
+
+  impl->clock_begin = clock();
   return 0;
 }
 

@@ -224,6 +224,8 @@ namespace NLP {
       protected:
         typedef std::vector<Contexts *> InstancePtrs; //for SGD
 
+        double duration_s(void);
+        double duration_m(void);
         virtual void reset(const size_t size);
 
         void compute_psis(Context &context, PDFs &dist, double decay=1.0);
@@ -296,6 +298,7 @@ namespace NLP {
         double inv_sigma_sq;
         double log_z;
         uint64_t ntags;
+        clock_t clock_begin;
 
         /**
          * working vectors for training
@@ -329,11 +332,11 @@ namespace NLP {
           : Util::Shared(), cfg(cfg), types(types),
             model("info", "Tagger model info file", cfg.model),
             registry(cfg.rare_cutoff()), logger(cfg.log(), std::cout),
-            lexicon(cfg.lexicon()), tags(cfg.tags()),
-            attributes(), instances(), weights(), attribs2weights(),
-            w_dict(lexicon), ww_dict(lexicon), a_dict(), t_dict(),
-            preface(preface), inv_sigma_sq(), log_z(0.0),
-            ntags(), alphas(), betas(), state_marginals(), trans_marginals(),
+            lexicon(cfg.lexicon()), tags(cfg.tags()), attributes(),
+            instances(), weights(), attribs2weights(), w_dict(lexicon),
+            ww_dict(lexicon), a_dict(), t_dict(), preface(preface),
+            inv_sigma_sq(), log_z(0.0), ntags(), clock_begin(),
+            alphas(), betas(), state_marginals(), trans_marginals(),
             psis(), scale() { }
 
         virtual ~Impl(void) { /* nothing */ }
