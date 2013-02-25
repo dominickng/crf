@@ -1,4 +1,5 @@
 #include "base.h"
+
 #include "hash.h"
 #include "hashtable/entry.h"
 

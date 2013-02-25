@@ -1,7 +1,7 @@
 #include "base.h"
-#include "hashtable.h"
-#include "lbfgs.h"
+
 #include "config.h"
+#include "hashtable.h"
 #include "crf/features/types.h"
 #include "crf/features/feature.h"
 #include "crf/features/context.h"
@@ -236,7 +236,7 @@ namespace NLP {
          * correctly sized as this function is called for each attribute and
          * does not do any bounds checking.
          */
-        void assign_lambdas(lbfgsfloatval_t *x, size_t &index) {
+        void assign_lambdas(double *x, size_t &index) {
           for (Features::iterator i = features.begin(); i != features.end(); ++i)
             i->lambda = &x[index++];
         }
@@ -246,7 +246,7 @@ namespace NLP {
          * Computes the gradient of each feature attached to this attribute,
          * and copies that gradient to the supplied array of doubles.
          */
-        void copy_gradients(lbfgsfloatval_t *x, double inv_sigma_sq, size_t &index) {
+        void copy_gradients(double *x, double inv_sigma_sq, size_t &index) {
           for (Features::iterator i = features.begin(); i != features.end(); ++i)
             x[index++] = i->gradient(inv_sigma_sq);
         }
@@ -494,13 +494,13 @@ namespace NLP {
           return lambda_sq;
         }
 
-        void assign_lambdas(lbfgsfloatval_t *x) {
+        void assign_lambdas(double *x) {
           size_t index = 0;
           for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
             (*i)->assign_lambdas(x, index);
         }
 
-        void copy_gradients(lbfgsfloatval_t *x, double inv_sigma_sq) {
+        void copy_gradients(double *x, double inv_sigma_sq) {
           size_t index = 0;
           for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
             (*i)->copy_gradients(x, inv_sigma_sq, index);
@@ -612,8 +612,8 @@ namespace NLP {
     void Attributes::apply_cutoff(const Type &type, const uint64_t freq, const uint64_t def) { _impl->apply_cutoff(type.name, freq, def); }
 
     double Attributes::sum_lambda_sq(void) { return _impl->sum_lambda_sq(); }
-    void Attributes::assign_lambdas(lbfgsfloatval_t *x) { _impl->assign_lambdas(x);; }
-    void Attributes::copy_gradients(lbfgsfloatval_t *x, double inv_sigma_sq) { _impl->copy_gradients(x, inv_sigma_sq);; }
+    void Attributes::assign_lambdas(double *x) { _impl->assign_lambdas(x);; }
+    void Attributes::copy_gradients(double *x, double inv_sigma_sq) { _impl->copy_gradients(x, inv_sigma_sq);; }
 
     bool Attributes::inc_next_lambda(double val) { return _impl->inc_next_lambda(val); }
     void Attributes::print_current_gradient(double val, double inv_sigma_sq) { _impl->print_current_gradient(val, inv_sigma_sq); }

@@ -1,11 +1,9 @@
 #include "base.h"
 
-#include "shared.h"
 #include "config.h"
 #include "hashtable.h"
 #include "lexicon.h"
 #include "tagset.h"
-#include "lbfgs.h"
 #include "crf/features.h"
 
 namespace NLP {

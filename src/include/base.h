@@ -1,6 +1,3 @@
-#ifndef _BASE_H_
-#define _BASE_H_
-
 #include "std.h"
 
 namespace NLP {
@@ -40,5 +37,3 @@ namespace NLP {
 
 #include "pool.h"
 #include "shared.h"
-
-#endif

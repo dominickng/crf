@@ -1,4 +1,5 @@
 #include "base.h"
+
 #include "config.h"
 #include "crf/features/types.h"
 

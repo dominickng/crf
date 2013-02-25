@@ -1,7 +1,5 @@
-#ifndef _LEXICON_H
-#define _LEXICON_H
-
 #include "base.h"
+
 #include "hashtable.h"
 #include "tagset.h"
 
@@ -156,5 +154,3 @@ namespace NLP {
 
   size_t TagSet::index(TagPair &tp) const { return tp.index(size()); }
 }
-
-#endif

@@ -1,7 +1,5 @@
-#ifndef _LEXICON_H
-#define _LEXICON_H
-
 #include "base.h"
+
 #include "hashtable.h"
 #include "lexicon.h"
 
@@ -160,5 +158,3 @@ namespace NLP {
 
   size_t Lexicon::size(void) const { return _impl->size(); }
 }
-
-#endif

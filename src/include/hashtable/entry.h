@@ -1,5 +1,3 @@
-#include "pool.h"
-
 namespace Util {
   namespace hashtable {
 

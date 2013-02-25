@@ -1,6 +1,3 @@
-#include <cmath>
-#include <vector>
-
 namespace NLP {
 
   inline void vector_scale(PDF &vec, const double scale, const size_t size) {

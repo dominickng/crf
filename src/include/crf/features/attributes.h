@@ -42,8 +42,8 @@ namespace NLP {
         void apply_cutoff(const Type &type, const uint64_t freq, const uint64_t def);
 
         double sum_lambda_sq(void);
-        void assign_lambdas(lbfgsfloatval_t *x);
-        void copy_gradients(lbfgsfloatval_t *x, double inv_sigma_sq);
+        void assign_lambdas(double *x);
+        void copy_gradients(double *x, double inv_sigma_sq);
         bool inc_next_lambda(double val);
         void print_current_gradient(double val, double inv_sigma_sq);
         void print(double inv_sigma_sq);

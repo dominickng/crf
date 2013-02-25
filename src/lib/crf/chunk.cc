@@ -4,7 +4,6 @@
 #include "io.h"
 #include "lbfgs.h"
 #include "hashtable/size.h"
-#include "shared.h"
 #include "lexicon.h"
 #include "tagset.h"
 #include "crf/nodepool.h"
