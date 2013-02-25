@@ -606,7 +606,8 @@ double Tagger::Impl::sgd_iterate_calibrate(InstancePtrs &instance_ptrs,
 double Tagger::Impl::sgd_iterate(InstancePtrs &instance_ptrs, double *weights,
     const int nfeatures, const int nsamples, const double t0,
     const double lambda, const int nepochs, const int period) {
-  double loss, improvement = 0.0;
+  double loss = 0.0;
+  double improvement = 0.0;
   double best_loss = std::numeric_limits<double>::max();
   double *best_weights = new double[nfeatures];
   double *previous = new double[period];
