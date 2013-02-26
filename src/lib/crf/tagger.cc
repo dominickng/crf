@@ -534,7 +534,7 @@ double Tagger::Impl::calibrate(InstancePtrs &instance_ptrs, double *weights,
     logger << "Trial " << ntrials << ", eta = " << eta << std::endl;
     loss = sgd_iterate_calibrate(instance_ptrs, weights, nfeatures, max_samples, 1.0 / (lambda * eta), lambda);
 
-    bool check = !isinf(loss) && loss < initial_loss;
+    bool check = !isinf(loss) && !std::isnan(loss) && loss < initial_loss;
     if (check) {
       --ncandidates;
       logger << "Loss: " << loss << std::endl;

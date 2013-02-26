@@ -5,7 +5,7 @@
 #include <cctype>
 #include <cfloat>
 #include <climits>
-#include <cmath>
+#include <math.h>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
