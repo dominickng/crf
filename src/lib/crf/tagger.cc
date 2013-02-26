@@ -79,8 +79,12 @@ void Tagger::Impl::compute_psis(Context &context, PDFs &dist, double decay) {
   }
 
   for (Tag prev = 0; prev < ntags; ++prev)
-    for (Tag curr = 0; curr < ntags; ++curr)
-      dist[prev][curr] = exp(dist[prev][curr] * decay);
+    for (Tag curr = 0; curr < ntags; ++curr) {
+      if (dist[prev][curr] == 0)
+        dist[prev][curr] = 1;
+      else
+        dist[prev][curr] = exp(dist[prev][curr] * decay);
+    }
 }
 
 /**
