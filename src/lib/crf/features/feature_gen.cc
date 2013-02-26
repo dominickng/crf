@@ -25,7 +25,7 @@ void FeatureGen::_add_features(Attribute attrib, PDFs &dist) {
 const std::string TransGen::name = "trans";
 
 TransGen::TransGen(TransDict &dict, const bool add_state, const bool add_trans)
-  : FeatureGen(add_state, add_trans), dict(dict) { }
+  : FeatureGen(add_state, add_trans), dict(dict), trans_loaded(false) { }
 
 Attribute &TransGen::load(const Type &type, std::istream &in) {
   return dict.load(type, in);
@@ -37,8 +37,12 @@ void TransGen::operator()(const Type &type, Attributes &attributes, Sentence &se
 }
 
 void TransGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i) {
-  if (i > 0)
-    attributes(type.name, name, c);
+  // load the trans features into one vector in attributes rather than
+  // wastefully add feature pointers to every single context
+  if (!trans_loaded) {
+    attributes.load_trans_features(type.name, name);
+    trans_loaded = true;
+  }
 }
 
 void TransGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int i) {

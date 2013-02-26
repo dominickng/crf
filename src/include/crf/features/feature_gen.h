@@ -73,6 +73,7 @@ namespace NLP {
 
         TransDict &dict;
         const static std::string name;
+        bool trans_loaded;
     };
 
     class OffsetGen : public FeatureGen {

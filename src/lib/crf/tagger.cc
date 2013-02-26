@@ -61,12 +61,21 @@ void Tagger::Impl::reset(const size_t size) {
 void Tagger::Impl::compute_psis(Context &context, PDFs &dist, double decay) {
   //TODO profiling shows that this is the bottleneck in training
   //(50% of training time!)
+  FeaturePtrs &trans_features = attributes.trans_features();
+
   for (size_t j = 0; j != context.features.size(); ++j) {
     Feature &f = *context.features[j];
     dist[f.klasses.prev][f.klasses.curr] += *(f.lambda);
     if (f.klasses.prev == None::val)
       for (Tag prev = 1; prev < ntags; ++prev)
         dist[prev][f.klasses.curr] += *(f.lambda);
+  }
+
+  if (context.index > 0) {
+    for (size_t j = 0; j != trans_features.size(); ++j) {
+      Feature &f = *trans_features[j];
+      dist[f.klasses.prev][f.klasses.curr] += *(f.lambda);
+    }
   }
 
   for (Tag prev = 0; prev < ntags; ++prev)
@@ -97,6 +106,8 @@ void Tagger::Impl::compute_psis(Contexts &contexts, PSIs &psis, double decay) {
  * is the current gold tag
  */
 void Tagger::Impl::compute_expectations(Contexts &c) {
+  FeaturePtrs &trans_features = attributes.trans_features();
+
   for (size_t i = 0; i < c.size(); ++i) {
     double inv_scale = (1.0 / scale[i]);
     for (size_t j = 0; j < c[i].features.size(); ++j) {
@@ -115,8 +126,16 @@ void Tagger::Impl::compute_expectations(Contexts &c) {
         double beta = betas[i][klasses.curr];
         f.exp += alpha * psis[i][klasses.prev][klasses.curr] * beta;
       }
+    }
 
-      //std::cout << j << ' ' << tags.str(klasses.prev) << ' ' << tags.str(klasses.curr) << ' ' << alpha << ' ' << beta << ' ' << psis[j][klasses.prev][klasses.curr] << std::endl;
+    if (i > 0) {
+      for (size_t j = 0; j < trans_features.size(); ++j) {
+        Feature &f = *trans_features[j];
+        TagPair &klasses = f.klasses;
+        double alpha = alphas[i-1][klasses.prev];
+        double beta = betas[i][klasses.curr];
+        f.exp += alpha * psis[i][klasses.prev][klasses.curr] * beta;
+      }
     }
   }
 }
@@ -279,10 +298,18 @@ void Tagger::Impl::backward_noscale(Contexts &contexts, PDFs &betas, PSIs &psis)
  */
 double Tagger::Impl::sum_llhood(Contexts &contexts, double decay) {
   double score = 0.0;
+  FeaturePtrs &trans_features = attributes.trans_features();
+
   for (Contexts::iterator i = contexts.begin(); i != contexts.end(); ++i) {
     for (FeaturePtrs::iterator j = i->features.begin(); j != i->features.end(); ++j)
       if ((*j)->klasses == i->klasses || ((*j)->klasses.prev == None::val && (*j)->klasses.curr == i->klasses.curr))
         score += *((*j)->lambda) * decay;
+
+    for (FeaturePtrs::iterator j = trans_features.begin(); j != trans_features.end(); ++j)
+      if ((*j)->klasses == i->klasses) {
+        score += *((*j)->lambda) * decay;
+        continue;
+      }
   }
   return score;
 }
@@ -706,33 +733,33 @@ void Tagger::Impl::compute_marginals(Contexts &c, double decay) {
  * Used for stochastic gradient descent optimization.
  */
 void Tagger::Impl::compute_weights(Contexts &c, double gain) {
+  FeaturePtrs &trans_features = attributes.trans_features();
+
   for (size_t i = 0; i < c.size(); ++i) {
     for (size_t j = 0; j < c[i].features.size(); ++j) {
       Feature &f = *(c[i].features[j]);
       TagPair &klasses = f.klasses;
       if (klasses.prev == None::val) {
-        if (klasses.curr == c[i].klasses.curr) {
+        if (klasses.curr == c[i].klasses.curr)
           *f.lambda += gain;
-          //std::cout << "incrementing state lambda " << klasses.curr << " by " << gain << " at position " << i << " to " << *f.lambda << std::endl;
-        }
         *f.lambda -= state_marginals[i][klasses.curr] * gain;
-        //std::cout << "decrementing state lambda " << klasses.curr << " by " << gain * state_marginals[i][klasses.curr] << " at position " << i << " to " << *f.lambda << " (" << gain << " * " << state_marginals[i][klasses.curr] << ")" << std::endl;
-        //std::cout << alpha << ' ' << beta << ' ' << inv_scale << std::endl;
-        //std::cout << (*f.lambda) << std::endl;
       }
-      else if (klasses == c[i].klasses) {
+      else if (klasses == c[i].klasses)
         *f.lambda += gain;
-        //std::cout << "incrementing lambda by " << gain << std::endl;
-      }
+    }
+
+    for (size_t j = 0; j < trans_features.size(); ++j) {
+      Feature &f = *trans_features[j];
+      TagPair &klasses = f.klasses;
+      if (klasses == c[i].klasses)
+        *f.lambda += gain;
     }
   }
 
-  Features& trans_features = attributes.trans_features();
   for (size_t j = 0; j < trans_features.size(); ++j) {
-    Feature &f = trans_features[j];
+    Feature &f = *trans_features[j];
     TagPair &klasses = f.klasses;
     *f.lambda -= trans_marginals[klasses.prev][klasses.curr] * gain;
-    //std::cout << "decrementing lambda by " << gain * trans_marginals[klasses.prev][klasses.curr] << " (" << gain << " * " << trans_marginals[klasses.prev][klasses.curr] << ")" << std::endl;
   }
 }
 

@@ -49,7 +49,8 @@ namespace NLP {
         void print_current_gradient(double val, double inv_sigma_sq);
         void print(double inv_sigma_sq);
         void prep_finite_differences(void);
-        Features &trans_features(void);
+        void load_trans_features(const char *type, const std::string &str);
+        FeaturePtrs &trans_features(void);
 
         size_t size(void) const;
     };

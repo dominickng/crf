@@ -286,16 +286,16 @@ namespace NLP {
 
       public:
         Impl(const size_t nbuckets, const size_t pool_size)
-          : ImplBase(nbuckets, pool_size), Shared(), preface(), trans_features(0) { }
+          : ImplBase(nbuckets, pool_size), Shared(), preface(), trans_features() { }
         Impl(const std::string &filename, const size_t nbuckets,
             const size_t pool_size)
-          : ImplBase(nbuckets, pool_size), Shared(), preface(), trans_features(0) {
+          : ImplBase(nbuckets, pool_size), Shared(), preface(), trans_features() {
           load(filename);
         }
 
         Impl(const std::string &filename, std::istream &input,
             const size_t nbuckets, const size_t pool_size) :
-          ImplBase(nbuckets, pool_size), Shared(), preface(), trans_features(0) {
+          ImplBase(nbuckets, pool_size), Shared(), preface(), trans_features() {
             load(filename, input);
         }
 
@@ -304,11 +304,22 @@ namespace NLP {
             (*i)->~AttribEntry();
         }
 
-        AttribEntry *trans_features; //hack for SGD optimization
+        //cache the transition features to save memory; all possible
+        //transition features must be added to each context, so just store
+        //one list of them instead of duplicating several times
+        FeaturePtrs trans_features;
 
         using ImplBase::add;
         using ImplBase::insert;
         using ImplBase::find;
+
+        void load_trans_features(const char *type, const std::string &str) {
+          AttribEntry *e = Base::_buckets[AttribEntry::hash(type, str).value() % Base::_nbuckets]->find(type, str);
+          if (e) {
+            for (Features::iterator i = e->features.begin(); i != e->features.end(); ++i)
+              trans_features.push_back(&(*i));
+          }
+        }
 
         /**
          * add.
@@ -340,8 +351,6 @@ namespace NLP {
         void _add(const char *type, const std::string &str, TagPair &tp) {
           size_t bucket = AttribEntry::hash(type, str).value() % _nbuckets;
           AttribEntry *entry = _buckets[bucket]->find(type, str);
-          if (strcmp(type, "trans") == 0) //hackety hack
-            trans_features = entry;
           if (entry)
             return entry->increment(tp);
 
@@ -521,7 +530,7 @@ namespace NLP {
         }
 
         /**
-         * inc_next_gradient.
+         * inc_next_lambda.
          * Increments the next feature lambda by val. Restores the previously
          * incremented lambda to its former value. Used for finite
          * difference empirical gradient check.
@@ -636,6 +645,7 @@ namespace NLP {
     void Attributes::prep_finite_differences(void) { _impl->prep_finite_differences(); }
 
     size_t Attributes::size(void) const { return _impl->size(); }
-    Features &Attributes::trans_features(void) { return _impl->trans_features->features; }
-  }
-}
+    void Attributes::load_trans_features(const char *type, const std::string &str) { _impl->load_trans_features(type, str); }
+    FeaturePtrs &Attributes::trans_features(void) { return _impl->trans_features; }
+
+} }
