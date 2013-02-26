@@ -39,7 +39,19 @@ void Format::parse(const std::string &format) {
       else
         throw Exception("missing separator after %");
     }
-    separators += s[2];
+    if (s[2] == '\\') {
+      if (s[3] == 't')
+        separators += '\t';
+      else if (s[3] == 'n')
+        separators += '\n';
+      else if (s[3] == 'r')
+        separators += '\r';
+      else
+        throw FormatException("bad separator character following '\\'", s[3]);
+      ++s;
+    }
+    else
+      separators += s[2];
   }
 
   word_sep = separators[separators.size() - 1];
@@ -55,7 +67,20 @@ void Format::parse(const std::string &format) {
       else
         break;
     }
-    sent_post += *s;
+
+    if (s[0] == '\\') {
+      if (s[1] == 't')
+        sent_post += '\t';
+      else if (s[1] == 'n')
+        sent_post += '\n';
+      else if (s[1] == 'r')
+        sent_post += '\r';
+      else
+        throw FormatException("bad separator character following '\\'", s[1]);
+      ++s;
+    }
+    else
+      sent_post += *s;
   }
 }
 
