@@ -670,7 +670,7 @@ double Tagger::Impl::sgd_iterate(InstancePtrs &instance_ptrs, double *weights,
     previous[(epoch-1) % period] = loss;
     if (period < epoch)
       logger << "  Improvement ratio = " << improvement << std::endl;
-    logger << "  Epoch time = " << duration_s() << " s\n" << std::endl;
+    logger << "  Epoch time = " << duration_s() << "s\n" << std::endl;
 
     if (improvement < cfg.delta())
       break;
@@ -849,7 +849,7 @@ void Tagger::Impl::train_sgd(Reader &reader, double *weights) {
 
   clock_begin = clock();
   double t0 = calibrate(instance_ptrs, weights, lambda, cfg.eta(), n);
-  logger << "Calibration time: " << duration_s() << " seconds" << std::endl;
+  logger << "Calibration time: " << duration_s() << "s" << std::endl;
 
   clock_begin = clock();
   sgd_iterate(instance_ptrs, weights, n, instance_ptrs.size(), t0, lambda, cfg.niterations(), cfg.period());
@@ -1136,7 +1136,7 @@ int Tagger::Impl::lbfgs_progress(void *instance, const lbfgsfloatval_t *x,
   logger << ", xnorm = " << xnorm << ", gnorm = " << gnorm;
   logger << ", step = " << step << ", trials = " << ls;
   logger << ", nactives = " << nactives << '/' << n;
-  logger << ", time = " << impl->duration_s() << " s" << std::endl;
+  logger << ", time = " << impl->duration_s() << "s" << std::endl;
 
   impl->clock_begin = clock();
   return 0;
