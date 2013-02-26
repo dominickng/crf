@@ -32,8 +32,7 @@ C++11.
 * There is a mini printf-style language for specifying input and output formats.
   The format specifies how each word in the sentence should be formatted along with
   its accompanying tags. Each word in the sentence is printed in the same way.
-* Formats look like the following (`+` means "at least one"):
-    > "<sent_pre>(<format><sep>)+<word_sep><sent_pos>"
+* Formats look like the following (`+` means "at least one"): `"<sent_pre>(<format><sep>)+<word_sep><sent_pos>"`
     * `<sent_pre>` is a string printed before each sentence
     * `<format>` is one of the format strings
     * `<sep>` is a one character (only) separator between format items (escapes like `\n` are allowed)
