@@ -23,6 +23,32 @@ C++11.
 * Compile with `make`. Binaries will be placed in the `bin` directory
 * You may need to set your `DYLD_LIBRARY_PATH` or `LD_LIBRARY_PATH` for the code to run: `export DYLD_LIBRARY_PATH=/path/to/ext/lbfgs/lib`
 
+## Input and output
+
+* Formats are controlled by the "--ifmt" and "--ofmt" command line options.
+* The Chunker and NER taggers currently only read the CoNLL 2000 and CoNLL 2003 data
+  formats. The POS tagger can read flexible formats
+* All the taggers can produce output in flexible formats
+* There is a mini printf-style language for specifying input and output formats.
+  The format specifies how each word in the sentence should be formatted along with
+  its accompanying tags. Each word in the sentence is printed in the same way.
+* Formats look like the following (`+` means "at least one"):
+    > "<sent_pre>(<format><sep>)+<word_sep><sent_pos>"
+    * `<sent_pre>` is a string printed before each sentence
+    * `<format>` is one of the format strings
+    * `<sep>` is a one character (only) separator between format items (escapes like `\n` are allowed)
+    * `<word_sep>` is a one character (only) separator between each word block (escapes like `\n` are allowed)
+    * `<sent_pos>` is a string printed at the end of each sentence
+* Available format strings are:
+    * `%w` for the word
+    * `%p` for the part of speech tag
+    * `%c` for the chunk tag
+    * `%e` for the entity tag
+* Note that you should only print out format strings that are actually present
+  in the input or produced by the tagger.
+* For example, to produce output from the chunker in the CoNLL 2000 evaluation format:
+  `--ofmt "%w %p %c %e\n\n\n"`
+
 ## POS instructions
 
 * `bin/train_pos` will train a model for POS tagging.
