@@ -1,5 +1,7 @@
 namespace NLP {
   class Format {
+    protected:
+      void _parse_escape(const char **str, std::string &dest);
     public:
       std::string fields;
       std::string separators;
@@ -8,7 +10,8 @@ namespace NLP {
 
       char word_sep;
 
-      Format(const std::string &format) : fields(), separators(), sent_pre(), sent_post() {
+      Format(const std::string &format)
+        : fields(), separators(), sent_pre(), sent_post() {
         parse(format);
       }
 

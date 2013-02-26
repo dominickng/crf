@@ -4,6 +4,23 @@
 
 namespace NLP {
 
+void Format::_parse_escape(const char **str, std::string &dest) {
+  const char *s = *str;
+  if (s[0] == '\\') {
+    if (s[1] == 't')
+      dest += '\t';
+    else if (s[1] == 'n')
+      dest += '\n';
+    else if (s[1] == 'r')
+      dest += '\r';
+    else
+      throw FormatException("bad separator character following '\\'", s[1]);
+    ++(*str);
+  }
+  else
+    dest += *s;
+}
+
 void Format::parse(const std::string &format) {
   const char *s = format.c_str();
 
@@ -14,13 +31,13 @@ void Format::parse(const std::string &format) {
       else
         break;
     }
-    sent_pre += *s;
+    _parse_escape(&s, sent_pre);
   }
 
   if (!*s)
     throw Exception("format string must contain at least one field");
 
-  for (; *s; s += 3) {
+  while (*s) {
     if (s[0] != '%')
       break;
     if (!s[1])
@@ -29,29 +46,20 @@ void Format::parse(const std::string &format) {
       break;
     if (Sentence::type(s[1]) == Sentence::TYPE_INVALID)
       throw FormatException("unrecognised format string specifier %", s[1]);
+
     fields += s[1];
     if (!s[2])
       throw FormatException("format string is missing separator after %", s[1]);
 
-    if (s[2] == '%') {
-      if (s[3] == '%')
+    s += 2;
+    if (s[0] == '%') {
+      if (s[1] == '%')
         ++s;
       else
         throw Exception("missing separator after %");
     }
-    if (s[2] == '\\') {
-      if (s[3] == 't')
-        separators += '\t';
-      else if (s[3] == 'n')
-        separators += '\n';
-      else if (s[3] == 'r')
-        separators += '\r';
-      else
-        throw FormatException("bad separator character following '\\'", s[3]);
-      ++s;
-    }
-    else
-      separators += s[2];
+    _parse_escape(&s, separators);
+    ++s;
   }
 
   word_sep = separators[separators.size() - 1];
@@ -67,20 +75,7 @@ void Format::parse(const std::string &format) {
       else
         break;
     }
-
-    if (s[0] == '\\') {
-      if (s[1] == 't')
-        sent_post += '\t';
-      else if (s[1] == 'n')
-        sent_post += '\n';
-      else if (s[1] == 'r')
-        sent_post += '\r';
-      else
-        throw FormatException("bad separator character following '\\'", s[1]);
-      ++s;
-    }
-    else
-      sent_post += *s;
+    _parse_escape(&s, sent_post);
   }
 }
 
