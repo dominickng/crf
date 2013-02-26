@@ -6,13 +6,16 @@ for training are currently implemented. However, the CRF will train a model and
 can use it to tag new sentences.
 
 Currently, the underlying CRF training code as well as part-of-speech,
-chunking, and named-entity tagging layers are implemented. This code should
-compile with any reasonably modern version of g++ or clang++.
+chunking, and named-entity tagging layers are implemented.
+
+If you're interested in how CRFs work, there is a brief introduction in
+`src/include/crf/tagger.h`. There are also good tutorials on the web, such as
+[Sutton and McCallum (2012)](http://homepages.inf.ed.ac.uk/csutton/publications/crftut-fnt.pdf)
 
 The code has an external dependency on the excellent [libLBFGS
 library](http://www.chokkan.org/software/liblbfgs/) by Naoaki Okazaki.
 Otherwise, it only uses the standard C++ library, and does not require
-C++11.
+C++11. It should compile with any reasonably modern version of g++ or clang++.
 
 ## Compiling instructions
 
