@@ -39,8 +39,8 @@ namespace NLP {
       Types types;
 
       config::OpAlias model(cfg, "model", "location of the model", false, tagger_cfg.model);
-      config::Op<std::string> ifmt(cfg, "ifmt", "input file format", IFMT, false);
-      config::Op<std::string> ofmt(cfg, "ofmt", "output file format", OFMT, false);
+      config::Op<std::string> ifmt(cfg, "ifmt", "input file format", IFMT, false, true);
+      config::Op<std::string> ofmt(cfg, "ofmt", "output file format", OFMT, false, true);
 
       tagger_cfg.add(&types);
       cfg.add(&tagger_cfg);
