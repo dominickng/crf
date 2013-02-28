@@ -1,0 +1,24 @@
+#!/bin/bash
+
+PROGRAM=`basename $0`
+
+if [ ! $# == 2 ]; then
+  (
+    echo "$PROGRAM: incorrect number of command line arguments"
+    echo "usage: $PROGRAM <model> <input>"
+    echo "model: model directory"
+    echo "input: test input file"
+  ) > /dev/stderr;
+    exit 1;
+fi
+
+BIN=bin/pos
+MODEL=$1
+INPUT=$2
+EVAL=$MODEL/eval
+OUT=`basename $INPUT`
+
+mkdir -p $EVAL
+
+$BIN --model $MODEL --input $INPUT --ifmt "%w|%p \n" --ofmt "%w_%p \n" > $EVAL/$OUT.out
+src/scripts/pos_compare.perl <(egrep -v '^#|^$' $INPUT | sed 's/\|/_/g') $EVAL/$OUT.out

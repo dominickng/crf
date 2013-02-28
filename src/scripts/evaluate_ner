@@ -1,0 +1,25 @@
+#!/bin/bash
+
+PROGRAM=`basename $0`
+
+if [ ! $# == 2 ]; then
+  (
+    echo "$PROGRAM: incorrect number of command line arguments"
+    echo "usage: $PROGRAM <model> <input>"
+    echo "model: model directory"
+    echo "input: test input file"
+  ) > /dev/stderr;
+    exit 1;
+fi
+
+BIN=bin/ner
+MODEL=$1
+INPUT=$2
+EVAL=$MODEL/eval
+OUT=`basename $INPUT`
+
+mkdir -p $EVAL
+
+$BIN --model $MODEL --input $INPUT --ofmt "%e\n\n\n" > $EVAL/$OUT.out
+paste -d' ' $INPUT $EVAL/$OUT.out > $EVAL/$OUT.conll
+src/scripts/conlleval < $EVAL/$OUT.conll
