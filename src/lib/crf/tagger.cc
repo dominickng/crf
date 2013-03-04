@@ -86,7 +86,11 @@ void Tagger::Impl::compute_psis(Context &context, PDFs &dist, double decay) {
       if (dist[prev][curr] == 0)
         dist[prev][curr] = 1;
       else
+#ifdef FASTEXP
+        dist[prev][curr] = fastexp(dist[prev][curr] * decay);
+#else
         dist[prev][curr] = exp(dist[prev][curr] * decay);
+#endif
     }
 }
 
