@@ -2,14 +2,11 @@ namespace NLP {
   namespace CRF {
     class State {
       public:
-        OffsetWords words;
-        OffsetTags pos;
-        OffsetTags entities;
         Lattice lattice;
         PDFs dist;
 
         State(const size_t ntags)
-          : words(), pos(), entities(), lattice(ntags), dist() {
+          : lattice(ntags), dist() {
           for (size_t i = 0; i < ntags; ++i)
             dist.push_back(PDF(ntags, 0.0));
         }
