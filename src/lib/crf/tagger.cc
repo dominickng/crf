@@ -532,7 +532,7 @@ lbfgsfloatval_t Tagger::Impl::calibrate(InstancePtrs &instance_ptrs,
   bool dec = false;
 
   std::random_shuffle(instance_ptrs.begin(), instance_ptrs.end());
-  for (size_t i = 0; i < nfeatures; ++i)
+  for (int i = 0; i < nfeatures; ++i)
     weights[i] = 0.0;
 
   for (size_t i = 0; i < max_samples; ++i)
@@ -631,7 +631,7 @@ lbfgsfloatval_t Tagger::Impl::sgd_iterate_calibrate(InstancePtrs &instance_ptrs,
     lbfgsfloatval_t *weights, const int nfeatures, const int nsamples,
     const lbfgsfloatval_t t0, const lbfgsfloatval_t lambda) {
   int t = 0;
-  for (size_t i = 0; i < nfeatures; ++i)
+  for (int i = 0; i < nfeatures; ++i)
     weights[i] = 0.0;
 
   return sgd_epoch(instance_ptrs, weights, nfeatures, nsamples, lambda, t0, t);
@@ -659,10 +659,10 @@ lbfgsfloatval_t Tagger::Impl::sgd_iterate(InstancePtrs &instance_ptrs,
   lbfgsfloatval_t *previous = new lbfgsfloatval_t[period];
   int t = 0;
 
-  for (size_t i = 0; i < nfeatures; ++i)
+  for (int i = 0; i < nfeatures; ++i)
     weights[i] = 0.0;
 
-  for (size_t epoch = 1; epoch <= nepochs; ++epoch) {
+  for (int epoch = 1; epoch <= nepochs; ++epoch) {
     clock_begin = clock();
     logger << "Epoch " << epoch << std::endl;
     std::random_shuffle(instance_ptrs.begin(), instance_ptrs.end());

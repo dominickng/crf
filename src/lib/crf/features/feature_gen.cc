@@ -61,7 +61,7 @@ const Raw *OffsetGen::_get_raw(Raws &raws, int i) {
   const Raw *raw = 0;
   i += offset;
 
-  if (i >= 0 && i < raws.size())
+  if (i >= 0 && (size_t)i < raws.size())
     raw = &raws[i];
   else
     raw = &Sentinel::str;
@@ -290,10 +290,10 @@ void OffsetPosGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int 
  */
 void BigramGen::_get_raw(Raws &raws, Raw &raw, int i) {
   i += offset;
-  if (i >= 0 && i < raws.size()) {
+  if (i >= 0 && (size_t)i < raws.size()) {
     raw += raws[i++];
     raw += ' ';
-    if (i >= 0 && i < raws.size())
+    if (i >= 0 && (size_t)i < raws.size())
       raw += raws[i];
     else
       raw += Sentinel::str;
@@ -301,7 +301,7 @@ void BigramGen::_get_raw(Raws &raws, Raw &raw, int i) {
   else {
     raw += Sentinel::str;
     raw += ' ';
-    if (++i >= 0 && i < raws.size())
+    if (++i >= 0 && (size_t)i < raws.size())
       raw += raws[i];
     else
       raw += Sentinel::str;
@@ -332,16 +332,16 @@ void BigramWordGen::operator()(const Type &type, Attributes &attributes, Sentenc
 void BigramWordGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int i) {
   const Raw *raw1, *raw2;
 
-  if (i >= 0 && i < sent.size()) {
+  if (i >= 0 && (size_t)i < sent.size()) {
     raw1 = &sent.words[i++];
-    if (i >= 0 && i < sent.size())
+    if (i >= 0 && (size_t)i < sent.size())
       raw2 = &sent.words[i];
     else
       raw2 = &Sentinel::str;
   }
   else {
     raw1 = &Sentinel::str;
-    if (++i >= 0 && i < sent.size())
+    if (++i >= 0 && (size_t)i < sent.size())
       raw2 = &sent.words[i];
     else
       raw2 = &Sentinel::str;
@@ -374,16 +374,16 @@ void BigramPosGen::operator()(const Type &type, Attributes &attributes, Sentence
 void BigramPosGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int i) {
   const Raw *raw1, *raw2;
 
-  if (i >= 0 && i < sent.size()) {
+  if (i >= 0 && (size_t)i < sent.size()) {
     raw1 = &sent.pos[i++];
-    if (i >= 0 && i < sent.size())
+    if (i >= 0 && (size_t)i < sent.size())
       raw2 = &sent.pos[i];
     else
       raw2 = &Sentinel::str;
   }
   else {
     raw1 = &Sentinel::str;
-    if (i >= 0 && i < sent.size())
+    if (i >= 0 && (size_t)i < sent.size())
       raw2 = &sent.pos[i];
     else
       raw2 = &Sentinel::str;
