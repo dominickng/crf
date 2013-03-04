@@ -33,6 +33,10 @@ namespace NLP {
         void operator()(const char *type, const std::string &str, Context &c);
         void sort_by_freq(void);
         void reset_expectations(void);
+        void reset(void);
+
+        void adagrad_update(double *weights, double *history, const double t0,
+            const double inv_sigma_sq, const double inv_n);
 
         uint64_t nfeatures(void) const;
 
@@ -48,6 +52,7 @@ namespace NLP {
         bool inc_next_lambda(double val);
         void print_current_gradient(double val, double inv_sigma_sq);
         void print(double inv_sigma_sq);
+        void print_adagrad(double inv_sigma_sq, double inv_n);
         void prep_finite_differences(void);
         void load_trans_features(const char *type, const std::string &str);
         FeaturePtrs &trans_features(void);

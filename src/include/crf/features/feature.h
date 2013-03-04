@@ -24,6 +24,10 @@ namespace NLP {
         double gradient(double inv_sigma_sq) {
           return -(freq - exp - *lambda * inv_sigma_sq);
         }
+
+        double gradient_adagrad(double inv_sigma_sq, const int inv_n) {
+          return exp + *lambda * inv_sigma_sq * inv_n;
+        }
     };
 
     typedef std::vector<Feature> Features;

@@ -143,6 +143,17 @@ namespace NLP {
           return false;
         }
 
+        void adagrad_update(double *weights, double *history, const double t0,
+            const double inv_sigma_sq, const double inv_n, uint64_t &index) {
+          for (Features::iterator i = features.begin(); i != features.end(); ++i) {
+            double gradient = i->gradient_adagrad(inv_sigma_sq, inv_n);
+            history[index] += gradient * gradient;
+            //std::cout << gradient << " " << t0 << " " << t0 / sqrt(history[index]) << " " << (t0 / sqrt(history[index]) * gradient) << std::endl;
+            weights[index] -= (t0 / sqrt(history[index])) * gradient;
+            ++index;
+          }
+        }
+
         /**
          * cutoff.
          * Eliminates features with a frequency less than cutoff.
@@ -216,6 +227,18 @@ namespace NLP {
         }
 
         /**
+         * reset.
+         * Resets feature counts and model expected feature counts to 0 for
+         * each SGD ADAGRAD iteration
+         */
+        void reset(void) {
+          for (Features::iterator i = features.begin(); i != features.end(); ++i) {
+            i->freq = 0.0;
+            i->exp = 0.0;
+          }
+        }
+
+        /**
          * sum_lambda_sq.
          * Returns the sum of the squared lambda values of each feature
          * attached to this attribute
@@ -267,7 +290,12 @@ namespace NLP {
          */
         void print(double inv_sigma_sq) {
           for (Features::iterator i = features.begin(); i != features.end(); ++i)
-            std::cout << "gradient: " << i->gradient(inv_sigma_sq) << " lambda: " << *(i->lambda) << std::endl;
+            std::cout << "freq: " << i->freq << " exp: " << i->exp << " gradient: " << i->gradient(inv_sigma_sq) << " lambda: " << *(i->lambda) << " (" << i->klasses.prev << ' ' << i->klasses.curr << ")" << std::endl;
+        }
+
+        void print_adagrad(double inv_sigma_sq, double inv_n) {
+          for (Features::iterator i = features.begin(); i != features.end(); ++i)
+            std::cout << "freq: " << i->freq << " exp: " << i->exp << " gradient: " << i->gradient_adagrad(inv_sigma_sq, inv_n) << " lambda: " << *(i->lambda) << " (" << i->klasses.prev << ' ' << i->klasses.curr << ")" << std::endl;
         }
     };
 
@@ -505,6 +533,18 @@ namespace NLP {
             (*i)->reset_expectations();
         }
 
+        void reset(void) {
+          for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
+            (*i)->reset();
+        }
+
+        void adagrad_update(double *weights, double *history, const double t0,
+            const double inv_sigma_sq, const double inv_n) {
+          uint64_t index = 0;
+          for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
+            (*i)->adagrad_update(weights, history, t0, inv_sigma_sq, inv_n, index);
+        }
+
         double sum_lambda_sq(void) {
           double lambda_sq = 0.0;
           for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
@@ -583,6 +623,11 @@ namespace NLP {
           for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
             (*i)->print(inv_sigma_sq);
         }
+
+        void print_adagrad(double inv_sigma_sq, double inv_n) {
+          for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
+            (*i)->print_adagrad(inv_sigma_sq, inv_n);
+        }
     };
 
     Attributes::Attributes(const size_t nbuckets, const size_t pool_size)
@@ -626,6 +671,10 @@ namespace NLP {
 
     void Attributes::sort_by_freq(void) { _impl->sort_by_rev_value(); }
     void Attributes::reset_expectations(void) { _impl->reset_expectations(); }
+    void Attributes::reset(void) { _impl->reset(); }
+
+    void Attributes::adagrad_update(double *weights, double *history,
+        const double t0,const double inv_sigma_sq, const double inv_n) { _impl->adagrad_update(weights, history, t0, inv_sigma_sq, inv_n); }
 
     uint64_t Attributes::nfeatures(void) const { return _impl->nfeatures(); }
 
@@ -642,6 +691,7 @@ namespace NLP {
     bool Attributes::inc_next_lambda(double val) { return _impl->inc_next_lambda(val); }
     void Attributes::print_current_gradient(double val, double inv_sigma_sq) { _impl->print_current_gradient(val, inv_sigma_sq); }
     void Attributes::print(double inv_sigma_sq) { _impl->print(inv_sigma_sq); }
+    void Attributes::print_adagrad(double inv_sigma_sq, double inv_n) { _impl->print_adagrad(inv_sigma_sq, inv_n); }
     void Attributes::prep_finite_differences(void) { _impl->prep_finite_differences(); }
 
     size_t Attributes::size(void) const { return _impl->size(); }

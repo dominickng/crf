@@ -144,6 +144,52 @@ void Tagger::Impl::compute_expectations(Contexts &c) {
   }
 }
 
+void Tagger::Impl::compute_expectations_from_marginals(Contexts &c) {
+  FeaturePtrs &trans_features = attributes.trans_features();
+
+  for (size_t i = 0; i < c.size(); ++i) {
+    for (size_t j = 0; j < c[i].features.size(); ++j) {
+      Feature &f = *(c[i].features[j]);
+      TagPair &klasses = f.klasses;
+      if (klasses.prev == None::val)
+        f.exp += state_marginals[i][klasses.curr];
+    }
+
+    for (size_t j = 0; j < trans_features.size(); ++j) {
+      Feature &f = *trans_features[j];
+      TagPair &klasses = f.klasses;
+      f.exp += trans_marginals[klasses.prev][klasses.curr];
+    }
+  }
+}
+
+/**
+ * compute_frequencies.
+ */
+void Tagger::Impl::compute_frequencies(Contexts &c) {
+  FeaturePtrs &trans_features = attributes.trans_features();
+
+  for (size_t i = 0; i < c.size(); ++i) {
+    for (size_t j = 0; j < c[i].features.size(); ++j) {
+      Feature &f = *(c[i].features[j]);
+      TagPair &klasses = f.klasses;
+      if (klasses == c[i].klasses || (klasses.prev == None::val && klasses.curr == c[i].klasses.curr))
+        f.exp -= 1;
+    }
+
+    if (i > 0) {
+      for (size_t j = 0; j < trans_features.size(); ++j) {
+        Feature &f = *trans_features[j];
+        TagPair &klasses = f.klasses;
+        if (klasses == c[i].klasses) {
+          f.exp -= 1;
+          break;
+        }
+      }
+    }
+  }
+}
+
 /**
  * forward.
  * The forward pass of the forward-backward algorithm. This pass calculates the
@@ -573,7 +619,42 @@ double Tagger::Impl::calibrate(InstancePtrs &instance_ptrs, double *weights,
 }
 
 /**
- * sgd_epoch
+ * sgd_epoch_adagrad.
+ * Performs one epoch of stochastic gradient descent, computing the learning
+ * rate using ADAGRAD.
+ */
+double Tagger::Impl::sgd_epoch_adagrad(InstancePtrs &instance_ptrs,
+    double *weights, double *history, const int nfeatures,
+    const int nsamples, const double t0, int &t, const bool log) {
+  double norm, loss = 0.0;
+  double inv_n = 1.0 / nfeatures;
+
+  for (int i = 0; i < nsamples; ++i) {
+    attributes.reset_expectations();
+    Contexts &contexts = *(instance_ptrs[i]);
+    loss += score_instance_adagrad(contexts);
+    attributes.adagrad_update(weights, history, t0, inv_sigma_sq, inv_n);
+    //attributes.print_adagrad(inv_sigma_sq, inv_n);
+    ++t;
+  }
+
+  if (isinf(loss))
+    std::cout << "oh dear" << std::endl;
+
+  norm = attributes.sum_lambda_sq() * inv_sigma_sq * 0.5;
+  loss += norm;
+
+  if (log) {
+    logger << "  Loss = " << loss << std::endl;
+    logger << "  Feature L2 norm = " <<  sqrt(norm) << std::endl;
+    logger << "  Total feature updates = " << t << std::endl;
+  }
+
+  return loss;
+}
+
+/**
+ * sgd_epoch.
  * Performs one epoch of stochastic gradient descent.
  *
  * Each epoch iterates through the first nsamples of the training data and
@@ -637,29 +718,41 @@ double Tagger::Impl::sgd_iterate_calibrate(InstancePtrs &instance_ptrs,
  * Each epoch randomly shuffles the training data, and then iterates through
  * each training instance, performing the SGD update.
  *
+ * In ADAGRAD, there is
+ * an independent learning rate for each lambda, calculated by divided a
+ * fixed constant by the square root of the sum of all gradients for that
+ * lambda.
+ *
  * The optimization terminates after nepochs, or if the percentage
  * improvement in the summed loss over all the training instance falls
  * below cfg.delta()
  */
 double Tagger::Impl::sgd_iterate(InstancePtrs &instance_ptrs, double *weights,
     const int nfeatures, const int nsamples, const double t0,
-    const double lambda, const int nepochs, const int period) {
+    const double lambda, const int nepochs, const int period,
+    const bool use_adagrad) {
   double loss = 0.0;
   double improvement = 0.0;
   double best_loss = std::numeric_limits<double>::max();
   double *best_weights = new double[nfeatures];
+  double *history = new double[nfeatures];
   double *previous = new double[period];
   int t = 0;
 
-  for (size_t i = 0; i < nfeatures; ++i)
+  for (size_t i = 0; i < nfeatures; ++i) {
     weights[i] = 0.0;
+    history[i] = 1.0;
+  }
 
   for (size_t epoch = 1; epoch <= nepochs; ++epoch) {
     clock_begin = clock();
     logger << "Epoch " << epoch << std::endl;
     std::random_shuffle(instance_ptrs.begin(), instance_ptrs.end());
 
-    loss = sgd_epoch(instance_ptrs, weights, nfeatures, nsamples, lambda, t0, t, true);
+    if (use_adagrad)
+      loss = sgd_epoch_adagrad(instance_ptrs, weights, history, nfeatures, nsamples, t0, t, true);
+    else
+      loss = sgd_epoch(instance_ptrs, weights, nfeatures, nsamples, lambda, t0, t, true);
 
     if (loss < best_loss) {
       best_loss = loss;
@@ -805,6 +898,26 @@ double Tagger::Impl::score_instance(Contexts &contexts, double decay, double gai
 }
 
 /**
+ * score_instance_adagrad.
+ * Updates the weights for features active on a particular training instance,
+ * and computes the unregularized loss for that instance. Used in stochastic
+ * gradient descent optimization.
+ */
+double Tagger::Impl::score_instance_adagrad(Contexts &contexts) {
+  double score;
+  log_z = 0.0;
+  reset(contexts.size());
+  score = (sum_llhood(contexts));
+  compute_psis(contexts, psis);
+  forward(contexts, alphas, psis, scale);
+  backward(contexts, betas, psis, scale);
+  compute_frequencies(contexts);
+  compute_expectations(contexts);
+  //std::cout << -score << ' ' << log_z << ' ' << (attributes.sum_lambda_sq() * inv_sigma_sq * 0.5) <<  std::endl;
+  return -score + log_z;
+}
+
+/**
  * train_lbfgs.
  * Perform L-BFGS optimization given a labelled training dataset. Uses the
  * libLBFGS library for the optimization, which requires the calculation of
@@ -857,6 +970,29 @@ void Tagger::Impl::train_sgd(Reader &reader, double *weights) {
 
   clock_begin = clock();
   sgd_iterate(instance_ptrs, weights, n, instance_ptrs.size(), t0, lambda, cfg.niterations(), cfg.period());
+}
+
+/**
+ * train_sgd_adagrad.
+ * Perform stochastic gradient descent optimization given a labelled training
+ * dataset. Uses ADAGRAD to calculate the learning rate.
+ */
+void Tagger::Impl::train_sgd_adagrad(Reader &reader, double *weights) {
+  const size_t n = attributes.nfeatures();
+  double lambda = 1.0 / (instances.size() * cfg.sigma() * cfg.sigma());
+  double t0 = 0.02;
+  InstancePtrs instance_ptrs; // randomly shuffling pointers is faster
+
+  for (Instances::iterator i = instances.begin(); i != instances.end(); ++i)
+    instance_ptrs.push_back(&(*i));
+
+  for (size_t i = 0; i < n; ++i)
+    weights[i] = 0.0;
+
+  attributes.assign_lambdas(weights);
+
+  clock_begin = clock();
+  sgd_iterate(instance_ptrs, weights, n, instance_ptrs.size(), t0, lambda, cfg.niterations(), cfg.period(), true);
 }
 
 /**
@@ -1083,6 +1219,8 @@ void Tagger::Impl::train(Reader &reader, const std::string &trainer) {
     train_lbfgs(reader, weights);
   else if (trainer == "sgd")
     train_sgd(reader, weights);
+  else if (trainer == "sgd_adagrad")
+    train_sgd_adagrad(reader, weights);
   else
     throw ValueException("Unknown training algorithm", trainer);
 

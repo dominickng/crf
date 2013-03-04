@@ -230,7 +230,9 @@ namespace NLP {
 
         void compute_psis(Context &context, PDFs &dist, double decay=1.0);
         void compute_psis(Contexts &contexts, PSIs &psis, double decay=1.0);
+        void compute_frequencies(Contexts &c);
         void compute_expectations(Contexts &c);
+        void compute_expectations_from_marginals(Contexts &c);
         void forward(Contexts &contexts, PDFs &alphas, PSIs &psis, PDF &scale);
         void forward_noscale(Contexts &contexts, PDFs &alphas, PSIs &psis);
         void backward(Contexts &contexts, PDFs &betas, PSIs &psis, PDF &scale);
@@ -250,17 +252,22 @@ namespace NLP {
         double sgd_epoch(InstancePtrs &instance_ptrs, double *weights,
             const int nfeatures, const int nsamples, const double lambda,
             const int t0, int &t, const bool log=false);
+        double sgd_epoch_adagrad(InstancePtrs &instance_ptrs, double *weights,
+            double *history, const int nfeatures, const int nsamples,
+            const double t0, int &t, const bool log=false);
         double sgd_iterate_calibrate(InstancePtrs &instance_ptrs,
             double *weights, const int nfeatures, const int nsamples,
             const double t0, const double lambda);
         double sgd_iterate(InstancePtrs &instance_ptrs, double *weights,
             const int nfeatures, const int nsamples, const double t0,
-            const double lambda, const int nepochs, const int period);
+            const double lambda, const int nepochs, const int period,
+            const bool use_adagrad=false);
         void compute_marginals(Contexts &c, double decay=1.0);
         void compute_weights(Contexts &c, double gain);
         double score(Contexts &contexts, double decay=1.0);
         double score_instance(Contexts &contexts, double decay=1.0,
             double gain=1.0);
+        double score_instance_adagrad(Contexts &contexts);
 
         virtual void _pass1(Reader &reader) = 0;
         virtual void _pass2(Reader &reader) = 0;
@@ -268,6 +275,7 @@ namespace NLP {
 
         void train_lbfgs(Reader &reader, double *weights);
         void train_sgd(Reader &reader, double *weights);
+        void train_sgd_adagrad(Reader &reader, double *weights);
 
         virtual void reg(void);
         virtual void load(void);
