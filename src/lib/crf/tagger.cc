@@ -4,7 +4,6 @@
 #include "fastmath.h"
 #include "hashtable/size.h"
 #include "io.h"
-#include "lbfgs.h"
 #include "lexicon.h"
 #include "prob.h"
 #include "tagset.h"
@@ -28,11 +27,11 @@ Tagger::Tagger(Tagger::Config &cfg, const std::string &preface, Impl *impl)
 Tagger::Tagger(const Tagger &other)
   : _impl(share(other._impl)) { }
 
-double Tagger::Impl::duration_s(void) {
-  return (clock() - clock_begin) / (double) CLOCKS_PER_SEC;
+lbfgsfloatval_t Tagger::Impl::duration_s(void) {
+  return (clock() - clock_begin) / (lbfgsfloatval_t) CLOCKS_PER_SEC;
 }
 
-double Tagger::Impl::duration_m(void) {
+lbfgsfloatval_t Tagger::Impl::duration_m(void) {
   return (clock() - clock_begin) / (60.0 * CLOCKS_PER_SEC);
 }
 
@@ -61,7 +60,7 @@ void Tagger::Impl::reset(const size_t size) {
  * State features (previous_Tag = None::val) are uniformly added to every
  * (x, current_tag) for each tag x
  */
-void Tagger::Impl::compute_psis(Context &context, PDFs &dist, double decay) {
+void Tagger::Impl::compute_psis(Context &context, PDFs &dist, lbfgsfloatval_t decay) {
   //TODO profiling shows that this is the bottleneck in training
   //(50% of training time!)
   FeaturePtrs &trans_features = attributes.trans_features();
@@ -98,7 +97,7 @@ void Tagger::Impl::compute_psis(Context &context, PDFs &dist, double decay) {
  * compute_psis.
  * Iterate through contexts, computing the activation values for each one.
  */
-void Tagger::Impl::compute_psis(Contexts &contexts, PSIs &psis, double decay) {
+void Tagger::Impl::compute_psis(Contexts &contexts, PSIs &psis, lbfgsfloatval_t decay) {
   for (size_t i = 0; i < contexts.size(); ++i)
     compute_psis(contexts[i], psis[i], decay);
 }
@@ -120,21 +119,21 @@ void Tagger::Impl::compute_expectations(Contexts &c) {
   FeaturePtrs &trans_features = attributes.trans_features();
 
   for (size_t i = 0; i < c.size(); ++i) {
-    double inv_scale = (1.0 / scale[i]);
+    lbfgsfloatval_t inv_scale = (1.0 / scale[i]);
     for (size_t j = 0; j < c[i].features.size(); ++j) {
       Feature &f = *(c[i].features[j]);
       TagPair &klasses = f.klasses;
       if (klasses.prev == None::val) { //state feature
-        double alpha = alphas[i][klasses.curr];
-        double beta = betas[i][klasses.curr];
+        lbfgsfloatval_t alpha = alphas[i][klasses.curr];
+        lbfgsfloatval_t beta = betas[i][klasses.curr];
         f.exp += alpha * beta * inv_scale;
       }
       else {
         //trans feature
         //FIXME TODO WARNING for some reason, trans features that look
         //further than 1 word back don't work
-        double alpha = (i > 0) ? alphas[i-1][klasses.prev] : 1.0;
-        double beta = betas[i][klasses.curr];
+        lbfgsfloatval_t alpha = (i > 0) ? alphas[i-1][klasses.prev] : 1.0;
+        lbfgsfloatval_t beta = betas[i][klasses.curr];
         f.exp += alpha * psis[i][klasses.prev][klasses.curr] * beta;
       }
     }
@@ -143,8 +142,8 @@ void Tagger::Impl::compute_expectations(Contexts &c) {
       for (size_t j = 0; j < trans_features.size(); ++j) {
         Feature &f = *trans_features[j];
         TagPair &klasses = f.klasses;
-        double alpha = alphas[i-1][klasses.prev];
-        double beta = betas[i][klasses.curr];
+        lbfgsfloatval_t alpha = alphas[i-1][klasses.prev];
+        lbfgsfloatval_t beta = betas[i][klasses.curr];
         f.exp += alpha * psis[i][klasses.prev][klasses.curr] * beta;
       }
     }
@@ -177,10 +176,10 @@ void Tagger::Impl::compute_expectations(Contexts &c) {
  *
  */
 void Tagger::Impl::forward(Contexts &contexts, PDFs &alphas, PSIs &psis, PDF &scale) {
-  double sum = 0.0;
+  lbfgsfloatval_t sum = 0.0;
 
   for (Tag curr(2); curr < ntags; ++curr) {
-    double val = psis[0][Sentinel::val][curr];
+    lbfgsfloatval_t val = psis[0][Sentinel::val][curr];
     alphas[0][curr] = val;
     sum += val;
     //std::cout << tags.str(curr) << ' ' << val << ' ' << sum << std::endl;
@@ -197,7 +196,7 @@ void Tagger::Impl::forward(Contexts &contexts, PDFs &alphas, PSIs &psis, PDF &sc
     sum = 0.0;
     for (Tag curr(2); curr < ntags; ++curr) {
       for (Tag prev(2); prev < ntags; ++prev) {
-        double val = alphas[i-1][prev] * psis[i][prev][curr];
+        lbfgsfloatval_t val = alphas[i-1][prev] * psis[i][prev][curr];
         //std::cout << tags.str(prev) << ' ' << tags.str(curr) << ' ' << alphas[i-1][prev] << ' ' << psis[i][prev][curr] << ' ' << val << std::endl;
         alphas[i][curr] += val;
         sum += val;
@@ -224,14 +223,14 @@ void Tagger::Impl::forward(Contexts &contexts, PDFs &alphas, PSIs &psis, PDF &sc
  */
 void Tagger::Impl::forward_noscale(Contexts &contexts, PDFs &alphas, PSIs &psis) {
   for (Tag curr(2); curr < ntags; ++curr) {
-    double val = psis[0][Sentinel::val][curr];
+    lbfgsfloatval_t val = psis[0][Sentinel::val][curr];
     alphas[0][curr] = val;
   }
 
   for (size_t i = 1; i < contexts.size(); ++i) {
     for (Tag curr(2); curr < ntags; ++curr) {
       for (Tag prev(2); prev < ntags; ++prev) {
-        double val = alphas[i-1][prev] * psis[i][prev][curr];
+        lbfgsfloatval_t val = alphas[i-1][prev] * psis[i][prev][curr];
         //std::cout << tags.str(prev) << ' ' << tags.str(curr) << ' ' << alphas[i-1][prev] << ' ' << psis[i][prev][curr] << ' ' << val << std::endl;
         alphas[i][curr] += val;
       }
@@ -296,7 +295,7 @@ void Tagger::Impl::backward_noscale(Contexts &contexts, PDFs &betas, PSIs &psis)
       }
     }
   }
-  double z = 0.0;
+  lbfgsfloatval_t z = 0.0;
   for (Tag next(2); next < ntags; ++next)
     z += betas[0][next] * psis[0][Sentinel::val][next];
   //std::cout << "noscale Z: " << log(z) << std::endl;
@@ -307,8 +306,8 @@ void Tagger::Impl::backward_noscale(Contexts &contexts, PDFs &betas, PSIs &psis)
  * Iterates through a given vector of contexts and computes the sum of all
  * active features on each context. Returns the sum.
  */
-double Tagger::Impl::sum_llhood(Contexts &contexts, double decay) {
-  double score = 0.0;
+lbfgsfloatval_t Tagger::Impl::sum_llhood(Contexts &contexts, lbfgsfloatval_t decay) {
+  lbfgsfloatval_t score = 0.0;
   FeaturePtrs &trans_features = attributes.trans_features();
 
   for (Contexts::iterator i = contexts.begin(); i != contexts.end(); ++i) {
@@ -338,8 +337,8 @@ double Tagger::Impl::sum_llhood(Contexts &contexts, double decay) {
  * libLBFGS minimizes a given function, thus this returns the negative
  * regularised log likelihood.
  */
-double Tagger::Impl::regularised_llhood(void) {
-  double llhood = 0.0;
+lbfgsfloatval_t Tagger::Impl::regularised_llhood(void) {
+  lbfgsfloatval_t llhood = 0.0;
   for (Instances::iterator i = instances.begin(); i != instances.end(); ++i)
     llhood += sum_llhood(*i);
   //std::cout << llhood << ' ' << log_z << ' ' << (attributes.sum_lambda_sq() * inv_sigma_sq * 0.5) << std::endl;
@@ -473,10 +472,10 @@ void Tagger::Impl::print_fwd_bwd(Contexts &contexts, PDFs &pdfs, PDF &scale) {
  * CALCULATED WILL BE INCORRECT
  */
 void Tagger::Impl::finite_differences(lbfgsfloatval_t *g, bool overwrite) {
-  double old_log_z = log_z; //store to restore later
-  double EPSILON = 1.0e-4;
+  lbfgsfloatval_t old_log_z = log_z; //store to restore later
+  lbfgsfloatval_t EPSILON = 1.0e-4;
   int index = 0;
-  double llhood = regularised_llhood();
+  lbfgsfloatval_t llhood = regularised_llhood();
 
   while (attributes.inc_next_lambda(EPSILON)) {
     log_z = 0.0;
@@ -488,8 +487,8 @@ void Tagger::Impl::finite_differences(lbfgsfloatval_t *g, bool overwrite) {
       forward(contexts, alphas, psis, scale);
     }
 
-    double plus_llhood = regularised_llhood();
-    double val = (plus_llhood - llhood) / EPSILON;
+    lbfgsfloatval_t plus_llhood = regularised_llhood();
+    lbfgsfloatval_t val = (plus_llhood - llhood) / EPSILON;
     if (overwrite)
       g[index++] = val;
     else
@@ -518,17 +517,18 @@ void Tagger::Impl::finite_differences(lbfgsfloatval_t *g, bool overwrite) {
  * epoch, choosing the learning rate that results in the lowest possible
  * loss.
  */
-double Tagger::Impl::calibrate(InstancePtrs &instance_ptrs, double *weights,
-    double lambda, double initial_eta, const int nfeatures) {
+lbfgsfloatval_t Tagger::Impl::calibrate(InstancePtrs &instance_ptrs,
+    lbfgsfloatval_t *weights, lbfgsfloatval_t lambda,
+    lbfgsfloatval_t initial_eta, const int nfeatures) {
   size_t max_samples = fmin(1000, instances.size());
   const int max_trials = 20;
   int ntrials = 1;
   const int max_candidates = 10;
   int ncandidates = max_candidates;
-  const double calibration_rate = 2.0;
-  double loss, best_eta = initial_eta, eta = initial_eta;
-  double initial_loss = 0.0;
-  double best_loss = std::numeric_limits<double>::max();
+  const lbfgsfloatval_t calibration_rate = 2.0;
+  lbfgsfloatval_t loss, best_eta = initial_eta, eta = initial_eta;
+  lbfgsfloatval_t initial_loss = 0.0;
+  lbfgsfloatval_t best_loss = std::numeric_limits<lbfgsfloatval_t>::max();
   bool dec = false;
 
   std::random_shuffle(instance_ptrs.begin(), instance_ptrs.end());
@@ -590,11 +590,11 @@ double Tagger::Impl::calibrate(InstancePtrs &instance_ptrs, double *weights,
  * instance. Once nsamples have been considered, the weights are scaled by the
  * decay factor and the loss incremented by the L2 norm of the weights
  */
-double Tagger::Impl::sgd_epoch(InstancePtrs &instance_ptrs, double *weights,
-    const int nfeatures, const int nsamples, const double lambda,
-    const int t0, int &t, const bool log) {
-  double eta, norm, gain, decay = 1.0;
-  double loss = 0.0;
+lbfgsfloatval_t Tagger::Impl::sgd_epoch(InstancePtrs &instance_ptrs,
+    lbfgsfloatval_t *weights, const int nfeatures, const int nsamples,
+    const lbfgsfloatval_t lambda, const int t0, int &t, const bool log) {
+  lbfgsfloatval_t eta, norm, gain, decay = 1.0;
+  lbfgsfloatval_t loss = 0.0;
 
   for (int i = 0; i < nsamples; ++i) {
     Contexts &contexts = *(instance_ptrs[i]);
@@ -627,9 +627,9 @@ double Tagger::Impl::sgd_epoch(InstancePtrs &instance_ptrs, double *weights,
  * Performs one epoch of stochastic gradient descent. Used in the process
  * of calibrating the learning rate.
  */
-double Tagger::Impl::sgd_iterate_calibrate(InstancePtrs &instance_ptrs,
-    double *weights, const int nfeatures, const int nsamples, const double t0,
-    const double lambda) {
+lbfgsfloatval_t Tagger::Impl::sgd_iterate_calibrate(InstancePtrs &instance_ptrs,
+    lbfgsfloatval_t *weights, const int nfeatures, const int nsamples,
+    const lbfgsfloatval_t t0, const lbfgsfloatval_t lambda) {
   int t = 0;
   for (size_t i = 0; i < nfeatures; ++i)
     weights[i] = 0.0;
@@ -648,14 +648,15 @@ double Tagger::Impl::sgd_iterate_calibrate(InstancePtrs &instance_ptrs,
  * improvement in the summed loss over all the training instance falls
  * below cfg.delta()
  */
-double Tagger::Impl::sgd_iterate(InstancePtrs &instance_ptrs, double *weights,
-    const int nfeatures, const int nsamples, const double t0,
-    const double lambda, const int nepochs, const int period) {
-  double loss = 0.0;
-  double improvement = 0.0;
-  double best_loss = std::numeric_limits<double>::max();
-  double *best_weights = new double[nfeatures];
-  double *previous = new double[period];
+lbfgsfloatval_t Tagger::Impl::sgd_iterate(InstancePtrs &instance_ptrs,
+    lbfgsfloatval_t *weights, const int nfeatures, const int nsamples,
+    const lbfgsfloatval_t t0, const lbfgsfloatval_t lambda, const int nepochs,
+    const int period) {
+  lbfgsfloatval_t loss = 0.0;
+  lbfgsfloatval_t improvement = 0.0;
+  lbfgsfloatval_t best_loss = std::numeric_limits<lbfgsfloatval_t>::max();
+  lbfgsfloatval_t *best_weights = new lbfgsfloatval_t[nfeatures];
+  lbfgsfloatval_t *previous = new lbfgsfloatval_t[period];
   int t = 0;
 
   for (size_t i = 0; i < nfeatures; ++i)
@@ -670,7 +671,7 @@ double Tagger::Impl::sgd_iterate(InstancePtrs &instance_ptrs, double *weights,
 
     if (loss < best_loss) {
       best_loss = loss;
-      memcpy(best_weights, weights, sizeof(double) * nfeatures);
+      memcpy(best_weights, weights, sizeof(lbfgsfloatval_t) * nfeatures);
     }
 
     if (period < epoch)
@@ -688,7 +689,7 @@ double Tagger::Impl::sgd_iterate(InstancePtrs &instance_ptrs, double *weights,
   }
 
   if (best_weights)
-    memcpy(best_weights, weights, sizeof(double) * nfeatures);
+    memcpy(best_weights, weights, sizeof(lbfgsfloatval_t) * nfeatures);
 
   delete [] best_weights;
   delete [] previous;
@@ -717,20 +718,19 @@ double Tagger::Impl::sgd_iterate(InstancePtrs &instance_ptrs, double *weights,
  * out of the transition expectations.
  *
  */
-void Tagger::Impl::compute_marginals(Contexts &c, double decay) {
+void Tagger::Impl::compute_marginals(Contexts &c, lbfgsfloatval_t decay) {
   for (size_t i = 0; i < c.size(); ++i) {
-    double inv_scale = (1.0 / scale[i]);
-    //std::cout << "computing expectation for state " << klasses.curr << " at position " << i << std::endl;
+    lbfgsfloatval_t inv_scale = (1.0 / scale[i]);
     for (Tag curr = 2; curr < ntags; ++curr) {
-      double alpha = alphas[i][curr];
-      double beta = betas[i][curr];
+      lbfgsfloatval_t alpha = alphas[i][curr];
+      lbfgsfloatval_t beta = betas[i][curr];
       state_marginals[i][curr] += alpha * beta * inv_scale;
     }
     if (i > 0) {
       for (Tag prev = 2; prev < ntags; ++prev) {
         for (Tag curr = 2; curr < ntags; ++curr) {
-          double alpha = alphas[i-1][prev];
-          double beta = betas[i][curr];
+          lbfgsfloatval_t alpha = alphas[i-1][prev];
+          lbfgsfloatval_t beta = betas[i][curr];
           trans_marginals[prev][curr] += alpha * psis[i][prev][curr] * beta;
         }
       }
@@ -743,7 +743,7 @@ void Tagger::Impl::compute_marginals(Contexts &c, double decay) {
  * Updates the feature lambdas for features active on a training instance.
  * Used for stochastic gradient descent optimization.
  */
-void Tagger::Impl::compute_weights(Contexts &c, double gain) {
+void Tagger::Impl::compute_weights(Contexts &c, lbfgsfloatval_t gain) {
   FeaturePtrs &trans_features = attributes.trans_features();
 
   for (size_t i = 0; i < c.size(); ++i) {
@@ -780,8 +780,8 @@ void Tagger::Impl::compute_weights(Contexts &c, double gain) {
  * Used to compute the initial loss in the calibration process for stochastic
  * gradient descent optimization.
  */
-double Tagger::Impl::score(Contexts &contexts, double decay) {
-  double score = 0.0;
+lbfgsfloatval_t Tagger::Impl::score(Contexts &contexts, lbfgsfloatval_t decay) {
+  lbfgsfloatval_t score = 0.0;
   log_z = 0.0;
   reset(contexts.size());
   compute_psis(contexts, psis, decay);
@@ -797,8 +797,8 @@ double Tagger::Impl::score(Contexts &contexts, double decay) {
  * and computes the unregularized loss for that instance. Used in stochastic
  * gradient descent optimization.
  */
-double Tagger::Impl::score_instance(Contexts &contexts, double decay, double gain) {
-  double score;
+lbfgsfloatval_t Tagger::Impl::score_instance(Contexts &contexts, lbfgsfloatval_t decay, lbfgsfloatval_t gain) {
+  lbfgsfloatval_t score;
   log_z = 0.0;
   reset(contexts.size());
   score = (sum_llhood(contexts, decay));
@@ -818,7 +818,7 @@ double Tagger::Impl::score_instance(Contexts &contexts, double decay, double gai
  * the function objective value (negative regularised log likelihood) and
  * the gradient of each feature lambda at each iteration.
  */
-void Tagger::Impl::train_lbfgs(Reader &reader, double *weights) {
+void Tagger::Impl::train_lbfgs(Reader &reader, lbfgsfloatval_t *weights) {
   logger << "beginning L-BFGS optimization" << std::endl;
   const size_t n = model.nfeatures();
   lbfgs_parameter_t param;
@@ -846,10 +846,10 @@ void Tagger::Impl::train_lbfgs(Reader &reader, double *weights) {
  * Perform stochastic gradient descent optimization given a labelled training
  * dataset.
  */
-void Tagger::Impl::train_sgd(Reader &reader, double *weights) {
+void Tagger::Impl::train_sgd(Reader &reader, lbfgsfloatval_t *weights) {
   logger << "beginning SGD optimization" << std::endl;
   const size_t n = model.nfeatures();
-  double lambda = 1.0 / (instances.size() * cfg.sigma() * cfg.sigma());
+  lbfgsfloatval_t lambda = 1.0 / (instances.size() * cfg.sigma() * cfg.sigma());
   InstancePtrs instance_ptrs; // randomly shuffling pointers is faster
 
   for (Instances::iterator i = instances.begin(); i != instances.end(); ++i)
@@ -861,7 +861,7 @@ void Tagger::Impl::train_sgd(Reader &reader, double *weights) {
   attributes.assign_lambdas(weights);
 
   clock_begin = clock();
-  double t0 = calibrate(instance_ptrs, weights, lambda, cfg.eta(), n);
+  lbfgsfloatval_t t0 = calibrate(instance_ptrs, weights, lambda, cfg.eta(), n);
   logger << "Calibration time: " << duration_s() << "s\n" << std::endl;
 
   clock_begin = clock();
@@ -947,7 +947,7 @@ void Tagger::Impl::_load_model(Model &model) {
 void Tagger::Impl::_read_weights(Model &model) {
   uint64_t prev_klass, curr_klass, freq, attrib = 0, nlines = 0;
   uint64_t previous = static_cast<uint64_t>(-1);
-  double lambda;
+  lbfgsfloatval_t lambda;
   std::string preface;
   const std::string &filename = cfg.features();
 
@@ -1092,7 +1092,7 @@ void Tagger::Impl::train(Reader &reader, const std::string &trainer) {
 
   model.nattributes(attributes.size());
   model.nfeatures(attributes.nfeatures());
-  double *weights = new double[model.nfeatures()];
+  lbfgsfloatval_t *weights = new lbfgsfloatval_t[model.nfeatures()];
 
   if (trainer == "lbfgs")
     train_lbfgs(reader, weights);
@@ -1115,8 +1115,9 @@ void Tagger::Impl::train(Reader &reader, const std::string &trainer) {
  * its true type of a Tagger::Impl pointer, and then calls the
  * _lbfgs_evaluate method on it.
  */
-lbfgsfloatval_t Tagger::Impl::lbfgs_evaluate(void *_instance, const lbfgsfloatval_t *x,
-    lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step) {
+lbfgsfloatval_t Tagger::Impl::lbfgs_evaluate(void *_instance,
+    const lbfgsfloatval_t *x, lbfgsfloatval_t *g, const int n,
+    const lbfgsfloatval_t step) {
   return reinterpret_cast<Tagger::Impl *>(_instance)->_lbfgs_evaluate(x, g, n, step);
 }
 
@@ -1126,8 +1127,8 @@ lbfgsfloatval_t Tagger::Impl::lbfgs_evaluate(void *_instance, const lbfgsfloatva
  * at each iteration
  *
  * instance: pointer to a Tagger::Impl subclass
- * x: array of doubles of size n; holds the current lambda values
- * g: array of doubles of size n; holds the current gradients
+ * x: array of floatvals of size n; holds the current lambda values
+ * g: array of floatvals of size n; holds the current gradients
  * fx: current negative log-likelihood value
  * xnorm: the Euclidean norm of the current lambdas
  * gnorm: the Euclidean norm of the current gradients

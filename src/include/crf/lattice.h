@@ -4,13 +4,13 @@ namespace NLP {
       public:
         mutable const Node *prev;
         Tag tag;
-        double score;
+        lbfgsfloatval_t score;
 
         void *operator new(size_t size, NodePool<Node> *pool) { return pool->alloc(size); }
 
         void operator delete(void *, NodePool<Node> *) { }
 
-        Node(const Node *prev, Tag tag, double score)
+        Node(const Node *prev, Tag tag, lbfgsfloatval_t score)
           : prev(prev), tag(tag), score(score) { }
     };
 
@@ -35,7 +35,7 @@ namespace NLP {
           if (nodes.size() == 0) {
             for (size_t curr = 2; curr < nklasses; ++curr) {
               //std::cout << "score " << dist[Sentinel::val][curr] << " for " << curr << std::endl;
-              double score = dist[None::val][curr] + dist[Sentinel::val][curr];
+              lbfgsfloatval_t score = dist[None::val][curr] + dist[Sentinel::val][curr];
               Node *n = new (pool) Node(NULL, curr, score);
               nodes.push_back(n);
               if (!max || max->score < n->score)
@@ -46,11 +46,11 @@ namespace NLP {
             size_t size = nodes.size();
             const Node *new_max = NULL;
             for (size_t curr = 2; curr < nklasses; ++curr) {
-              double best_score = -std::numeric_limits<double>::max();
+              lbfgsfloatval_t best_score = -std::numeric_limits<lbfgsfloatval_t>::max();
               Node *best_prev = NULL;
               for (size_t prev = 2; prev < nklasses; ++prev) {
                 size_t prev_index = size - (nklasses - prev);
-                double score = dist[prev][curr] + nodes[prev_index]->score;
+                lbfgsfloatval_t score = dist[prev][curr] + nodes[prev_index]->score;
                 //std::cout << "considering score of " << score << " = " << dist[prev][curr] << " + " << nodes[prev_index]->score << " for " << prev << " -> " << curr << std::endl;
                 if (score > best_score) {
                   best_score = score;

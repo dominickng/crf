@@ -218,8 +218,8 @@ namespace NLP {
          * Returns the sum of the squared lambda values of each feature
          * attached to this attribute
          */
-        double sum_lambda_sq(void) {
-          double lambda_sq = 0.0;
+        lbfgsfloatval_t sum_lambda_sq(void) {
+          lbfgsfloatval_t lambda_sq = 0.0;
           for (Features::iterator i = features.begin(); i != features.end(); ++i)
             lambda_sq += (*(i->lambda) * *(i->lambda));
           return lambda_sq;
@@ -234,7 +234,7 @@ namespace NLP {
          * correctly sized as this function is called for each attribute and
          * does not do any bounds checking.
          */
-        void assign_lambdas(double *x, size_t &index) {
+        void assign_lambdas(lbfgsfloatval_t *x, size_t &index) {
           for (Features::iterator i = features.begin(); i != features.end(); ++i)
             i->lambda = &x[index++];
         }
@@ -253,7 +253,7 @@ namespace NLP {
          * Computes the gradient of each feature attached to this attribute,
          * and copies that gradient to the supplied array of doubles.
          */
-        void copy_gradients(double *x, double inv_sigma_sq, size_t &index) {
+        void copy_gradients(lbfgsfloatval_t *x, lbfgsfloatval_t inv_sigma_sq, size_t &index) {
           for (Features::iterator i = features.begin(); i != features.end(); ++i)
             x[index++] = i->gradient(inv_sigma_sq);
         }
@@ -263,7 +263,7 @@ namespace NLP {
          * Prints the features attached to this attribute to stdout along with
          * their gradient and lambda values.
          */
-        void print(double inv_sigma_sq) {
+        void print(lbfgsfloatval_t inv_sigma_sq) {
           for (Features::iterator i = features.begin(); i != features.end(); ++i)
             std::cout << "gradient: " << i->gradient(inv_sigma_sq) << " lambda: " << *(i->lambda) << std::endl;
         }
@@ -280,7 +280,7 @@ namespace NLP {
         std::string preface;
         Entries::iterator e; //used for finite differences gradient checking
         Features::iterator f; //used for finite differences gradient checking
-        double prev_lambda; //used for finite differences gradient checking
+        lbfgsfloatval_t prev_lambda; //used for finite differences gradient checking
 
       public:
         Impl(const size_t nbuckets, const size_t pool_size)
@@ -503,14 +503,14 @@ namespace NLP {
             (*i)->reset_expectations();
         }
 
-        double sum_lambda_sq(void) {
-          double lambda_sq = 0.0;
+        lbfgsfloatval_t sum_lambda_sq(void) {
+          lbfgsfloatval_t lambda_sq = 0.0;
           for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
             lambda_sq += (*i)->sum_lambda_sq();
           return lambda_sq;
         }
 
-        void assign_lambdas(double *x) {
+        void assign_lambdas(lbfgsfloatval_t *x) {
           size_t index = 0;
           for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
             (*i)->assign_lambdas(x, index);
@@ -521,7 +521,7 @@ namespace NLP {
             (*i)->zero_lambdas();
         }
 
-        void copy_gradients(double *x, double inv_sigma_sq) {
+        void copy_gradients(lbfgsfloatval_t *x, lbfgsfloatval_t inv_sigma_sq) {
           size_t index = 0;
           for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
             (*i)->copy_gradients(x, inv_sigma_sq, index);
@@ -533,7 +533,7 @@ namespace NLP {
          * incremented lambda to its former value. Used for finite
          * difference empirical gradient check.
          */
-        bool inc_next_lambda(double val) {
+        bool inc_next_lambda(lbfgsfloatval_t val) {
           if (e == _entries.end() && (f+1) == (*e)->features.end()) {
             *(f->lambda) = prev_lambda;
             return false;
@@ -566,8 +566,8 @@ namespace NLP {
          * Prints the feature that is currently having its empirical gradient
          * checked.
          */
-        void print_current_gradient(double val, double inv_sigma_sq) {
-          double gradient = f->gradient(inv_sigma_sq);
+        void print_current_gradient(lbfgsfloatval_t val, lbfgsfloatval_t inv_sigma_sq) {
+          lbfgsfloatval_t gradient = f->gradient(inv_sigma_sq);
           if (fabs(gradient - val) >= 1.0e-2) {
             std::cout << "freq: " << f->freq << " exp: " << f->exp;
             std::cout << " lambda: " << prev_lambda << " gradient: " << f->gradient(inv_sigma_sq);
@@ -577,7 +577,7 @@ namespace NLP {
 
         size_t size(void) const { return Base::_size; }
 
-        void print(double inv_sigma_sq) {
+        void print(lbfgsfloatval_t inv_sigma_sq) {
           for (Entries::iterator i = _entries.begin(); i != _entries.end(); ++i)
             (*i)->print(inv_sigma_sq);
         }
@@ -632,14 +632,14 @@ namespace NLP {
     void Attributes::apply_cutoff(const Type &type, const uint64_t freq) { _impl->apply_cutoff(type.name, freq); }
     void Attributes::apply_cutoff(const Type &type, const uint64_t freq, const uint64_t def) { _impl->apply_cutoff(type.name, freq, def); }
 
-    double Attributes::sum_lambda_sq(void) { return _impl->sum_lambda_sq(); }
-    void Attributes::assign_lambdas(double *x) { _impl->assign_lambdas(x);; }
+    lbfgsfloatval_t Attributes::sum_lambda_sq(void) { return _impl->sum_lambda_sq(); }
+    void Attributes::assign_lambdas(lbfgsfloatval_t *x) { _impl->assign_lambdas(x);; }
     void Attributes::zero_lambdas(void) { _impl->zero_lambdas();; }
-    void Attributes::copy_gradients(double *x, double inv_sigma_sq) { _impl->copy_gradients(x, inv_sigma_sq);; }
+    void Attributes::copy_gradients(lbfgsfloatval_t *x, lbfgsfloatval_t inv_sigma_sq) { _impl->copy_gradients(x, inv_sigma_sq);; }
 
-    bool Attributes::inc_next_lambda(double val) { return _impl->inc_next_lambda(val); }
-    void Attributes::print_current_gradient(double val, double inv_sigma_sq) { _impl->print_current_gradient(val, inv_sigma_sq); }
-    void Attributes::print(double inv_sigma_sq) { _impl->print(inv_sigma_sq); }
+    bool Attributes::inc_next_lambda(lbfgsfloatval_t val) { return _impl->inc_next_lambda(val); }
+    void Attributes::print_current_gradient(lbfgsfloatval_t val, lbfgsfloatval_t inv_sigma_sq) { _impl->print_current_gradient(val, inv_sigma_sq); }
+    void Attributes::print(lbfgsfloatval_t inv_sigma_sq) { _impl->print(inv_sigma_sq); }
     void Attributes::prep_finite_differences(void) { _impl->prep_finite_differences(); }
 
     size_t Attributes::size(void) const { return _impl->size(); }

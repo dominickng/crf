@@ -4,7 +4,6 @@
 #include "fastmath.h"
 #include "hashtable/size.h"
 #include "io.h"
-#include "lbfgs.h"
 #include "lexicon.h"
 #include "prob.h"
 #include "tagset.h"

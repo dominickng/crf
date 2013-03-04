@@ -18,9 +18,9 @@ namespace NLP {
     struct Weight {
       Tag prev;
       Tag curr;
-      double lambda;
+      lbfgsfloatval_t lambda;
 
-      Weight(Tag prev, Tag curr, double lambda) :
+      Weight(Tag prev, Tag curr, lbfgsfloatval_t lambda) :
         prev(prev), curr(curr), lambda(lambda) { }
     };
 

@@ -23,6 +23,7 @@ namespace NLP {
 
 }
 
+#include "lbfgs.h"
 #include "port.h"
 #include "exception.h"
 #include "version.h"

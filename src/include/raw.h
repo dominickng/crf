@@ -4,10 +4,10 @@ namespace NLP {
 
   struct ScoredRaw {
     Raw raw;
-    double score;
+    lbfgsfloatval_t score;
 
     ScoredRaw(Raw &raw) : raw(raw), score(0.0) { }
-    ScoredRaw(Raw &raw, double score) : raw(raw), score(score) { }
+    ScoredRaw(Raw &raw, lbfgsfloatval_t score) : raw(raw), score(score) { }
   };
 
   //typedef std::vector<ScoredRaw> ScoredRaws;

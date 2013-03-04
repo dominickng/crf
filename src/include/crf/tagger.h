@@ -151,9 +151,9 @@ namespace NLP {
             config::OpPath features;
             config::OpPath weights;
             config::OpPath log;
-            config::Op<double> sigma;
-            config::Op<double> eta;
-            config::Op<double> delta;
+            config::Op<lbfgsfloatval_t> sigma;
+            config::Op<lbfgsfloatval_t> eta;
+            config::Op<lbfgsfloatval_t> delta;
 
             config::Op<uint64_t> batch;
             config::Op<uint64_t> period;
@@ -165,7 +165,7 @@ namespace NLP {
             config::Op<uint64_t> rare_cutoff;
 
             Config(const std::string &name, const std::string &desc,
-                double sigma, uint64_t niterations)
+                lbfgsfloatval_t sigma, uint64_t niterations)
               : config::OpGroup(name, desc, true),
             model(*this, "model", "location of the model directory", true),
             lexicon(*this, "lexicon", "location to save the lexicon file", "//lexicon", true, &model),
@@ -224,18 +224,18 @@ namespace NLP {
       protected:
         typedef std::vector<Contexts *> InstancePtrs; //for SGD
 
-        double duration_s(void);
-        double duration_m(void);
+        lbfgsfloatval_t duration_s(void);
+        lbfgsfloatval_t duration_m(void);
         virtual void reset(const size_t size);
 
-        void compute_psis(Context &context, PDFs &dist, double decay=1.0);
-        void compute_psis(Contexts &contexts, PSIs &psis, double decay=1.0);
+        void compute_psis(Context &context, PDFs &dist, lbfgsfloatval_t decay=1.0);
+        void compute_psis(Contexts &contexts, PSIs &psis, lbfgsfloatval_t decay=1.0);
         void compute_expectations(Contexts &c);
         void forward(Contexts &contexts, PDFs &alphas, PSIs &psis, PDF &scale);
         void forward_noscale(Contexts &contexts, PDFs &alphas, PSIs &psis);
         void backward(Contexts &contexts, PDFs &betas, PSIs &psis, PDF &scale);
         void backward_noscale(Contexts &contexts, PDFs &betas, PSIs &psis);
-        double sum_llhood(Contexts &contexts, double decay=1.0);
+        lbfgsfloatval_t sum_llhood(Contexts &contexts, lbfgsfloatval_t decay=1.0);
         lbfgsfloatval_t regularised_llhood(void);
         lbfgsfloatval_t _lbfgs_evaluate(const lbfgsfloatval_t *x,
             lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step);
@@ -245,29 +245,29 @@ namespace NLP {
 
         void finite_differences(lbfgsfloatval_t *g, bool overwrite=false);
 
-        double calibrate(InstancePtrs &instance_ptrs, double *weights,
-            double lambda, double initial_eta, const int nfeatures);
-        double sgd_epoch(InstancePtrs &instance_ptrs, double *weights,
-            const int nfeatures, const int nsamples, const double lambda,
+        lbfgsfloatval_t calibrate(InstancePtrs &instance_ptrs, lbfgsfloatval_t *weights,
+            lbfgsfloatval_t lambda, lbfgsfloatval_t initial_eta, const int nfeatures);
+        lbfgsfloatval_t sgd_epoch(InstancePtrs &instance_ptrs, lbfgsfloatval_t *weights,
+            const int nfeatures, const int nsamples, const lbfgsfloatval_t lambda,
             const int t0, int &t, const bool log=false);
-        double sgd_iterate_calibrate(InstancePtrs &instance_ptrs,
-            double *weights, const int nfeatures, const int nsamples,
-            const double t0, const double lambda);
-        double sgd_iterate(InstancePtrs &instance_ptrs, double *weights,
-            const int nfeatures, const int nsamples, const double t0,
-            const double lambda, const int nepochs, const int period);
-        void compute_marginals(Contexts &c, double decay=1.0);
-        void compute_weights(Contexts &c, double gain);
-        double score(Contexts &contexts, double decay=1.0);
-        double score_instance(Contexts &contexts, double decay=1.0,
-            double gain=1.0);
+        lbfgsfloatval_t sgd_iterate_calibrate(InstancePtrs &instance_ptrs,
+            lbfgsfloatval_t *weights, const int nfeatures, const int nsamples,
+            const lbfgsfloatval_t t0, const lbfgsfloatval_t lambda);
+        lbfgsfloatval_t sgd_iterate(InstancePtrs &instance_ptrs, lbfgsfloatval_t *weights,
+            const int nfeatures, const int nsamples, const lbfgsfloatval_t t0,
+            const lbfgsfloatval_t lambda, const int nepochs, const int period);
+        void compute_marginals(Contexts &c, lbfgsfloatval_t decay=1.0);
+        void compute_weights(Contexts &c, lbfgsfloatval_t gain);
+        lbfgsfloatval_t score(Contexts &contexts, lbfgsfloatval_t decay=1.0);
+        lbfgsfloatval_t score_instance(Contexts &contexts, lbfgsfloatval_t decay=1.0,
+            lbfgsfloatval_t gain=1.0);
 
         virtual void _pass1(Reader &reader) = 0;
         virtual void _pass2(Reader &reader) = 0;
         virtual void _pass3(Reader &reader, Instances &instances) = 0;
 
-        void train_lbfgs(Reader &reader, double *weights);
-        void train_sgd(Reader &reader, double *weights);
+        void train_lbfgs(Reader &reader, lbfgsfloatval_t *weights);
+        void train_sgd(Reader &reader, lbfgsfloatval_t *weights);
 
         virtual void reg(void);
         virtual void load(void);
@@ -295,8 +295,8 @@ namespace NLP {
         TransDict t_dict;
 
         const std::string preface;
-        double inv_sigma_sq;
-        double log_z;
+        lbfgsfloatval_t inv_sigma_sq;
+        lbfgsfloatval_t log_z;
         uint64_t ntags;
         clock_t clock_begin;
 
