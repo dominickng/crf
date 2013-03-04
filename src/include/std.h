@@ -1,14 +1,11 @@
-#ifndef _STD_H_
-#define _STD_H_
-
 #include <cassert>
 #include <cctype>
 #include <cfloat>
 #include <climits>
-#include <math.h>
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
+#include <math.h>
 
 #include <stdint.h>
 
@@ -32,5 +29,3 @@
 #include <utility>
 #include <valarray>
 #include <vector>
-
-#endif
