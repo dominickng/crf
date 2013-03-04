@@ -819,7 +819,8 @@ double Tagger::Impl::score_instance(Contexts &contexts, double decay, double gai
  * the gradient of each feature lambda at each iteration.
  */
 void Tagger::Impl::train_lbfgs(Reader &reader, double *weights) {
-  const size_t n = attributes.nfeatures();
+  logger << "beginning L-BFGS optimization" << std::endl;
+  const size_t n = model.nfeatures();
   lbfgs_parameter_t param;
 
   for (size_t i = 0; i < n; ++i)
@@ -846,7 +847,8 @@ void Tagger::Impl::train_lbfgs(Reader &reader, double *weights) {
  * dataset.
  */
 void Tagger::Impl::train_sgd(Reader &reader, double *weights) {
-  const size_t n = attributes.nfeatures();
+  logger << "beginning SGD optimization" << std::endl;
+  const size_t n = model.nfeatures();
   double lambda = 1.0 / (instances.size() * cfg.sigma() * cfg.sigma());
   InstancePtrs instance_ptrs; // randomly shuffling pointers is faster
 
@@ -860,7 +862,7 @@ void Tagger::Impl::train_sgd(Reader &reader, double *weights) {
 
   clock_begin = clock();
   double t0 = calibrate(instance_ptrs, weights, lambda, cfg.eta(), n);
-  logger << "Calibration time: " << duration_s() << "s" << std::endl;
+  logger << "Calibration time: " << duration_s() << "s\n" << std::endl;
 
   clock_begin = clock();
   sgd_iterate(instance_ptrs, weights, n, instance_ptrs.size(), t0, lambda, cfg.niterations(), cfg.period());
@@ -1054,7 +1056,6 @@ void Tagger::Impl::extract(Reader &reader, Instances &instances) {
   reader.reset();
   logger << "beginning pass 3" << std::endl;
   _pass3(reader, instances);
-
 }
 
 /**
@@ -1064,10 +1065,14 @@ void Tagger::Impl::extract(Reader &reader, Instances &instances) {
  */
 void Tagger::Impl::train(Reader &reader, const std::string &trainer) {
   clock_t begin = clock();
+  clock_begin = begin;
+  logger << "beginning feature extraction" << std::endl;
   reg();
-  inv_sigma_sq = 1.0 / (cfg.sigma() * cfg.sigma());
   extract(reader, instances);
+  logger << "completed feature extraction in " << duration_s() << "s\n" << std::endl;
+
   ntags = tags.size();
+  inv_sigma_sq = 1.0 / (cfg.sigma() * cfg.sigma());
 
   // initialize the working vectors. each one is prepopulated to the size
   // of the longest sentence seen in the training data to avoid the overhead
@@ -1085,7 +1090,10 @@ void Tagger::Impl::train(Reader &reader, const std::string &trainer) {
       psis[i].push_back(PDF(ntags, 0.0));
   }
 
-  double *weights = new double[attributes.nfeatures()];
+  model.nattributes(attributes.size());
+  model.nfeatures(attributes.nfeatures());
+  double *weights = new double[model.nfeatures()];
+
   if (trainer == "lbfgs")
     train_lbfgs(reader, weights);
   else if (trainer == "sgd")
@@ -1093,8 +1101,6 @@ void Tagger::Impl::train(Reader &reader, const std::string &trainer) {
   else
     throw ValueException("Unknown training algorithm", trainer);
 
-  model.nattributes(attributes.size());
-  model.nfeatures(attributes.nfeatures());
   model.save(preface);
   attributes.save_features(cfg.features(), preface);
   attributes.zero_lambdas();
