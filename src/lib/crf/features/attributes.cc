@@ -148,12 +148,10 @@ namespace NLP {
          * Eliminates features with a frequency less than cutoff.
          */
         void cutoff(const uint64_t freq) {
-          for (AttribEntry *l = this; l != NULL; l = l->next) {
-            for (Features::iterator i = l->features.begin(); i != l->features.end(); ++i) {
-              if (i->freq < freq) {
-                value -= i->freq;
-                i->freq = 0;
-              }
+          for (Features::iterator i = features.begin(); i != features.end(); ++i) {
+            if (i->freq < freq) {
+              value -= i->freq;
+              i->freq = 0;
             }
           }
         }
