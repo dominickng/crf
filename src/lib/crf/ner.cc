@@ -112,22 +112,20 @@ class NER::Impl : public Tagger::Impl {
       registry.reg(Types::ns, new OffsetShapeGen(a_dict, 1, true, false), types.use_next_shape());
       //registry.reg(Types::nns, new OffsetShapeGen(a_dict, 2, true, true), types.use_next_shape());
 
-      if (types.use_morph()) {
-        registry.reg(Types::has_digit, new MorphGen(m_dict, true, false), true, true);
-        registry.reg(Types::has_hyphen, new MorphGen(m_dict, true, false), true, true);
-        registry.reg(Types::has_period, new MorphGen(m_dict, true, false), true, true);
-        registry.reg(Types::has_punct, new MorphGen(m_dict, true, false), true, true);
-        registry.reg(Types::digits, new MorphGen(m_dict, true, false), true, true);
-        registry.reg(Types::number, new MorphGen(m_dict, true, false), true, true);
-        registry.reg(Types::alnum, new MorphGen(m_dict, true, false), true, true);
-        registry.reg(Types::roman, new MorphGen(m_dict, true, false), true, true);
-        registry.reg(Types::initial, new MorphGen(m_dict, true, false), true, true);
-        registry.reg(Types::acronym, new MorphGen(m_dict, true, false), true, true);
-        registry.reg(Types::uppercase, new MorphGen(m_dict, true, false), true, true);
-        registry.reg(Types::lowercase, new MorphGen(m_dict, true, false), true, true);
-        registry.reg(Types::titlecase, new MorphGen(m_dict, true, false), true, true);
-        registry.reg(Types::mixedcase, new MorphGen(m_dict, true, false), true, true);
-      }
+      registry.reg(Types::has_digit, new MorphGen(m_dict, true, false), types.use_morph(), true);
+      registry.reg(Types::has_hyphen, new MorphGen(m_dict, true, false), types.use_morph(), true);
+      registry.reg(Types::has_period, new MorphGen(m_dict, true, false), types.use_morph(), true);
+      registry.reg(Types::has_punct, new MorphGen(m_dict, true, false), types.use_morph(), true);
+      registry.reg(Types::digits, new MorphGen(m_dict, true, false), types.use_morph(), true);
+      registry.reg(Types::number, new MorphGen(m_dict, true, false), types.use_morph(), true);
+      registry.reg(Types::alnum, new MorphGen(m_dict, true, false), types.use_morph(), true);
+      registry.reg(Types::roman, new MorphGen(m_dict, true, false), types.use_morph(), true);
+      registry.reg(Types::initial, new MorphGen(m_dict, true, false), types.use_morph(), true);
+      registry.reg(Types::acronym, new MorphGen(m_dict, true, false), types.use_morph(), true);
+      registry.reg(Types::uppercase, new MorphGen(m_dict, true, false), types.use_morph(), true);
+      registry.reg(Types::lowercase, new MorphGen(m_dict, true, false), types.use_morph(), true);
+      registry.reg(Types::titlecase, new MorphGen(m_dict, true, false), types.use_morph(), true);
+      registry.reg(Types::mixedcase, new MorphGen(m_dict, true, false), types.use_morph(), true);
     }
 
     virtual void load(void) {

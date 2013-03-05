@@ -111,13 +111,12 @@ namespace NLP {
          * pointer to the feature generator
          */
         void reg(const Type &type, FeatureGen *gen, const bool active, const bool rare) {
-          if (active) {
-            size_t bucket = RegEntry::hash(type.name).value() % _nbuckets;
-            RegEntry *entry = RegEntry::create(ImplBase::_pool, type, gen, rare, _buckets[bucket]);
+          size_t bucket = RegEntry::hash(type.name).value() % _nbuckets;
+          RegEntry *entry = RegEntry::create(ImplBase::_pool, type, gen, rare, _buckets[bucket]);
+          _buckets[bucket] = entry;
+          ++_size;
+          if (active)
             _actives.push_back(entry);
-            _buckets[bucket] = entry;
-            ++_size;
-          }
         }
 
         using ImplBase::find;
