@@ -229,5 +229,19 @@ namespace NLP {
         BiTagDict &dict;
     };
 
+    class MorphGen : public FeatureGen {
+      public:
+        MorphGen(BinDict &dict, const bool add_state, const bool add_trans);
+        virtual ~MorphGen(void) { }
+
+        virtual Attribute &load(const Type &type, std::istream &in);
+        virtual void operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i);
+        virtual void operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i);
+        virtual void operator()(const Type &type, Sentence &sent, PDFs &dist, int i);
+
+        BinDict &dict;
+    };
+
+
   }
 }

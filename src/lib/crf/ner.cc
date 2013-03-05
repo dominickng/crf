@@ -111,6 +111,23 @@ class NER::Impl : public Tagger::Impl {
       registry.reg(Types::s, new ShapeGen(a_dict, true, false), types.use_shape());
       registry.reg(Types::ns, new OffsetShapeGen(a_dict, 1, true, false), types.use_next_shape());
       //registry.reg(Types::nns, new OffsetShapeGen(a_dict, 2, true, true), types.use_next_shape());
+
+      if (types.use_morph()) {
+        registry.reg(Types::has_digit, new MorphGen(m_dict, true, false), true, true);
+        registry.reg(Types::has_hyphen, new MorphGen(m_dict, true, false), true, true);
+        registry.reg(Types::has_period, new MorphGen(m_dict, true, false), true, true);
+        registry.reg(Types::has_punct, new MorphGen(m_dict, true, false), true, true);
+        registry.reg(Types::digits, new MorphGen(m_dict, true, false), true, true);
+        registry.reg(Types::number, new MorphGen(m_dict, true, false), true, true);
+        registry.reg(Types::alnum, new MorphGen(m_dict, true, false), true, true);
+        registry.reg(Types::roman, new MorphGen(m_dict, true, false), true, true);
+        registry.reg(Types::initial, new MorphGen(m_dict, true, false), true, true);
+        registry.reg(Types::acronym, new MorphGen(m_dict, true, false), true, true);
+        registry.reg(Types::uppercase, new MorphGen(m_dict, true, false), true, true);
+        registry.reg(Types::lowercase, new MorphGen(m_dict, true, false), true, true);
+        registry.reg(Types::titlecase, new MorphGen(m_dict, true, false), true, true);
+        registry.reg(Types::mixedcase, new MorphGen(m_dict, true, false), true, true);
+      }
     }
 
     virtual void load(void) {
@@ -131,6 +148,8 @@ class NER::Impl : public Tagger::Impl {
     BiTagDict p_np_p_dict;
     BiTagDict np_nnp_p_dict;
 
+    BinDict m_dict;
+
     const bool use_pos;
     const bool use_prev_pos;
     const bool use_next_pos;
@@ -139,6 +158,7 @@ class NER::Impl : public Tagger::Impl {
       : Base(cfg, types, preface), pos(cfg.pos()), p_dict(pos), p_p_dict(pos),
         pp_p_dict(pos), n_p_dict(pos), nn_p_dict(pos), ppp_pp_p_dict(pos),
         pp_p_p_dict(pos), p_np_p_dict(pos), np_nnp_p_dict(pos),
+        m_dict(Types::nmorph),
         use_pos(types.use_pos()), use_prev_pos(types.use_prev_pos()),
         use_next_pos(types.use_next_pos()) { }
 

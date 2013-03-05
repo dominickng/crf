@@ -6,6 +6,7 @@
 #include "prob.h"
 #include "tagset.h"
 #include "crf/features.h"
+#include "crf/morph.h"
 
 namespace NLP { namespace CRF {
 
@@ -391,4 +392,28 @@ void BigramPosGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int 
 
   _add_features(dict.get(type, *raw1, *raw2), dist);
 }
+
+MorphGen::MorphGen(BinDict &dict, const bool add_state, const bool add_trans) :
+  FeatureGen(add_state, add_trans), dict(dict) { }
+
+Attribute &MorphGen::load(const Type &type, std::istream &in) {
+  return dict.load(type, in);
+}
+
+void MorphGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) {
+  Morph morph(sent.words[i]);
+
+  morph.add_feature(type, attributes, tp, _add_state, _add_trans);
+}
+
+void MorphGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i) {
+  Morph morph(sent.words[i]);
+
+  morph.add_feature(type, attributes, c, _add_state, _add_trans);
+}
+
+void MorphGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int i) {
+  _add_features(dict.get(type), dist);
+}
+
 } }

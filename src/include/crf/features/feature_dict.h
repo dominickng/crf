@@ -181,5 +181,34 @@ namespace NLP {
         const TagSet tags;
         std::vector<Attribute> attributes;
     };
+
+    /**
+     * BinDict.
+     * Class to support lookup of binary valued features. Implemented as a vector,
+     * using the index of the Type object
+     */
+    class BinDict : public FeatureDict {
+      public:
+        BinDict(const size_t size) : attributes(size) { }
+        virtual ~BinDict(void) { };
+
+        virtual Attribute &load(const Type &type, std::istream &in) {
+          Raw value;
+          in >> value;
+          return insert(type.index);
+        }
+
+        Attribute get(const Type &type) {
+          return attributes[type.index];
+        }
+
+        Attribute &insert(const uint64_t index) {
+          return attributes[index];
+        }
+
+      private:
+        std::vector<Attribute> attributes;
+    };
+
   }
 }

@@ -41,19 +41,25 @@ const Type Types::nc_nnc = {"next 2 chunks", "nc_nnc", 3};
 const Type Types::prefix = {"prefix", "prefix", 0};
 const Type Types::suffix = {"suffix", "suffix", 1};
 
-const Type has_digit = {"contains a digit", "has_digit", 0};
-const Type has_hyphen = {"contains a hyphen", "has_hyphen", 0};
-const Type has_period = {"contains a period", "has_period", 0};
-const Type has_punct = {"contains punctuation", "has_punct", 0};
-const Type has_uppercase = {"contains a uppercase", "has_uppercase", 0};
-const Type kase = {"word case feature", "kase", 0};
-const Type digits = {"digits feature", "digits", 0};
-const Type number = {"number feature", "number", 0};
-const Type alnum = {"alnum feature", "alnum", 0};
-const Type length = {"length feature", "length", 0};
-const Type roman = {"roman feature", "roman", 0};
-const Type initial = {"initial feature", "initial", 0};
-const Type acronym = {"acronym feature", "acronym", 0};
+const size_t Types::nmorph = 18;
+const Type Types::has_digit = {"contains a digit", "has_digit", 0};
+const Type Types::has_hyphen = {"contains a hyphen", "has_hyphen", 1};
+const Type Types::has_period = {"contains a period", "has_period", 2};
+const Type Types::has_punct = {"contains punctuation", "has_punct", 3};
+const Type Types::has_uppercase = {"contains a uppercase", "has_uppercase", 4};
+const Type Types::kase = {"word case feature", "kase", 5};
+const Type Types::digits = {"digits feature", "digits", 6};
+const Type Types::number = {"number feature", "number", 7};
+const Type Types::alpha = {"alpha feature", "alpha", 8};
+const Type Types::alnum = {"alnum feature", "alnum", 9};
+const Type Types::length = {"length feature", "length", 10};
+const Type Types::roman = {"roman feature", "roman", 11};
+const Type Types::initial = {"initial feature", "initial", 12};
+const Type Types::acronym = {"acronym feature", "acronym", 13};
+const Type Types::uppercase = {"uppercase feature", "uppercase", 14};
+const Type Types::lowercase = {"lowercase feature", "lowercase", 15};
+const Type Types::titlecase = {"titlecase feature", "titlecase", 16};
+const Type Types::mixedcase = {"mixed case feature", "mixedcase", 17};
 
 const Type Types::pps = {"prev prev shape", "pps", 0};
 const Type Types::ps = {"prev shape", "ps", 1};
@@ -87,19 +93,7 @@ Types::Types(void) :
   use_prefix(*this, "use_prefix", "use prefix features", true, true, true),
   use_suffix(*this, "use_suffix", "use suffix features", true, true, true),
 
-  use_has_digit(*this, "use_has_digit", "use has digit features", true, true, true),
-  use_has_hyphen(*this, "use_has_hyphen", "use has hyphen features", true, true, true),
-  use_has_period(*this, "use_has_period", "use has period features", true, true, true),
-  use_has_punct(*this, "use_has_punct", "use has punct features", true, true, true),
-  use_has_uppercase(*this, "use_has_uppercase", "use has uppercase features", true, true, true),
-  use_case(*this, "use_case", "use case features", true, true, true),
-  use_digits(*this, "use_digits", "use digits features", true, true, true),
-  use_number(*this, "use_number", "use number features", true, true, true),
-  use_alnum(*this, "use_alnum", "use alnum features", true, true, true),
-  use_length(*this, "use_length", "use length features", true, true, true),
-  use_roman(*this, "use_roman", "use roman features", true, true, true),
-  use_initial(*this, "use_initial", "use initial features", true, true, true),
-  use_acronym(*this, "use_acronym", "use acronym features", true, true, true),
+  use_morph(*this, "use_morph", "use morphological features", true, true, true),
 
   use_shape(*this, "use_shape", "use shape features", true, true, true),
   use_prev_shape(*this, "use_prev_shape", "use prev shape features", true, true, true),

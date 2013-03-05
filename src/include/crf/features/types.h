@@ -55,20 +55,26 @@ namespace NLP {
           const static Type prefix;
           const static Type suffix;
 
-          //orthographic
+          //orthographic and morphological
+          const static size_t nmorph;
           const static Type has_digit;
-          const static Type has_hypen;
+          const static Type has_hyphen;
           const static Type has_period;
           const static Type has_punct;
           const static Type has_uppercase;
           const static Type kase;
           const static Type digits;
           const static Type number;
+          const static Type alpha;
           const static Type alnum;
           const static Type length;
           const static Type roman;
           const static Type initial;
           const static Type acronym;
+          const static Type uppercase;
+          const static Type lowercase;
+          const static Type titlecase;
+          const static Type mixedcase;
 
           //shapes
           const static Type s;
@@ -107,19 +113,7 @@ namespace NLP {
           config::Op<bool> use_prefix;
           config::Op<bool> use_suffix;
 
-          config::Op<bool> use_has_digit;
-          config::Op<bool> use_has_hyphen;
-          config::Op<bool> use_has_period;
-          config::Op<bool> use_has_punct;
-          config::Op<bool> use_has_uppercase;
-          config::Op<bool> use_case;
-          config::Op<bool> use_digits;
-          config::Op<bool> use_number;
-          config::Op<bool> use_alnum;
-          config::Op<bool> use_length;
-          config::Op<bool> use_roman;
-          config::Op<bool> use_initial;
-          config::Op<bool> use_acronym;
+          config::Op<bool> use_morph;
 
           config::Op<bool> use_shape;
           config::Op<bool> use_prev_shape;
