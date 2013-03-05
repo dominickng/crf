@@ -13,7 +13,7 @@ namespace NLP {
   inline lbfgsfloatval_t vector_sum_log(PDF &vec, const size_t size) {
     lbfgsfloatval_t sum = 0.0;
     for (size_t i = 0; i < size; ++i)
-      sum += log(vec[i]);
+      sum += std::log(vec[i]);
     return sum;
   }
 

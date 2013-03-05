@@ -88,7 +88,7 @@ void Tagger::Impl::compute_psis(Context &context, PDFs &dist, lbfgsfloatval_t de
 #ifdef FASTEXP
         dist[prev][curr] = fastexp(dist[prev][curr] * decay);
 #else
-        dist[prev][curr] = exp(dist[prev][curr] * decay);
+        dist[prev][curr] = std::exp(dist[prev][curr] * decay);
 #endif
     }
 }
@@ -318,7 +318,7 @@ lbfgsfloatval_t Tagger::Impl::sum_llhood(Contexts &contexts, lbfgsfloatval_t dec
     for (FeaturePtrs::iterator j = trans_features.begin(); j != trans_features.end(); ++j)
       if ((*j)->klasses == i->klasses) {
         score += *((*j)->lambda) * decay;
-        continue;
+        break;
       }
   }
   return score;
