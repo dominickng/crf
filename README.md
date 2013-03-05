@@ -1,3 +1,11 @@
+##WARNING
+
+Floats do not contain enough precision for the CRF to train properly;
+experimentation has shown that training will terminate too early (possibly
+with status code -1001 if using L-BFGS; this indicates that line searching
+failed). The regularization and log-likelihood calculation requires the summation
+of many small floating point values, and errors in rounding inevitably creep in.
+
 # CRF (in progress)
 
 This is an implementation of a conditional random field (CRF) sequence tagger
