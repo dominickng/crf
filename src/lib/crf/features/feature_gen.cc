@@ -224,7 +224,7 @@ void OffsetShapeGen::operator()(const Type &type, Sentence &sent, PDFs &dist, in
     _add_features(dict.get(type, shape(*raw)), dist);
 }
 
-PosGen::PosGen(TagDict &dict, const bool add_state, const bool add_trans)
+PosGen::PosGen(TagSetDict &dict, const bool add_state, const bool add_trans)
   : FeatureGen(add_state, add_trans), dict(dict) { }
 
 Attribute &PosGen::load(const Type &type, std::istream &in) {
@@ -262,7 +262,7 @@ void OffsetWordGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int
   _add_features(dict.get(type, *_get_raw(sent.words, i)), dist);
 }
 
-OffsetPosGen::OffsetPosGen(TagDict &dict, const int offset, const bool add_state, const bool add_trans)
+OffsetPosGen::OffsetPosGen(TagSetDict &dict, const int offset, const bool add_state, const bool add_trans)
   : OffsetGen(offset, add_state, add_trans), dict(dict) { }
 
 Attribute &OffsetPosGen::load(const Type &type, std::istream &in) {
@@ -351,7 +351,7 @@ void BigramWordGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int
   _add_features(dict.get(type, *raw1, *raw2), dist);
 }
 
-BigramPosGen::BigramPosGen(BiTagDict &dict, const int offset, const bool add_state, const bool add_trans)
+BigramPosGen::BigramPosGen(BiTagSetDict &dict, const int offset, const bool add_state, const bool add_trans)
   : BigramGen(offset, add_state, add_trans), dict(dict) { }
 
 Attribute &BigramPosGen::load(const Type &type, std::istream &in) {

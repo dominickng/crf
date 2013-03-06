@@ -120,27 +120,21 @@ class Chunk::Impl : public Tagger::Impl {
 
   public:
     TagSet pos;
-    TagDict p_dict;
-    TagDict p_p_dict;
-    TagDict pp_p_dict;
-    TagDict n_p_dict;
-    TagDict nn_p_dict;
+    TagSetDict p_dict;
+    TagSetDict p_p_dict;
+    TagSetDict pp_p_dict;
+    TagSetDict n_p_dict;
+    TagSetDict nn_p_dict;
 
-    BiTagDict ppp_pp_p_dict;
-    BiTagDict pp_p_p_dict;
-    BiTagDict p_np_p_dict;
-    BiTagDict np_nnp_p_dict;
-
-    const bool use_pos;
-    const bool use_prev_pos;
-    const bool use_next_pos;
+    BiTagSetDict ppp_pp_p_dict;
+    BiTagSetDict pp_p_p_dict;
+    BiTagSetDict p_np_p_dict;
+    BiTagSetDict np_nnp_p_dict;
 
     Impl(Chunk::Config &cfg, Types &types, const std::string &preface)
       : Base(cfg, types, preface), pos(cfg.pos()), p_dict(pos), p_p_dict(pos),
         pp_p_dict(pos), n_p_dict(pos), nn_p_dict(pos), ppp_pp_p_dict(pos),
-        pp_p_p_dict(pos), p_np_p_dict(pos), np_nnp_p_dict(pos),
-        use_pos(types.use_pos()), use_prev_pos(types.use_prev_pos()),
-        use_next_pos(types.use_next_pos()) { }
+        pp_p_p_dict(pos), p_np_p_dict(pos), np_nnp_p_dict(pos) { }
 
 };
 

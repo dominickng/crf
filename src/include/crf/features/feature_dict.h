@@ -117,16 +117,16 @@ namespace NLP {
     };
 
     /**
-     * TagDict.
+     * TagSetDict.
      * Class to support lookup of tagset features. Implemented as a vector,
      * as tag objects are already canonized into an integer based
      * representation
      */
-    class TagDict : public FeatureDict {
+    class TagSetDict : public FeatureDict {
       public:
-        TagDict(const TagSet tags)
+        TagSetDict(const TagSet tags)
           : tags(tags), attributes() { }
-        virtual ~TagDict(void) { };
+        virtual ~TagSetDict(void) { };
 
         virtual Attribute &load(const Type &type, std::istream &in) {
           if (!attributes.size())
@@ -150,16 +150,16 @@ namespace NLP {
     };
 
     /**
-     * BiTagDict.
+     * BiTagSetDict.
      * Class to support lookup of bigram tagset features. This is implemented
      * as a 2D vector, as each tag is canonized to an integer-based
      * representation.
      */
-    class BiTagDict : public FeatureDict {
+    class BiTagSetDict : public FeatureDict {
       public:
-        BiTagDict(const TagSet tags)
+        BiTagSetDict(const TagSet tags)
           : tags(tags), attributes() { }
-        virtual ~BiTagDict(void) { };
+        virtual ~BiTagSetDict(void) { };
 
         virtual Attribute &load(const Type &type, std::istream &in) {
           if (!attributes.size())

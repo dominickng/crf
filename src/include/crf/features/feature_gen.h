@@ -156,7 +156,7 @@ namespace NLP {
 
     class PosGen : public FeatureGen {
       public:
-        PosGen(TagDict &dict, const bool add_state, const bool add_trans);
+        PosGen(TagSetDict &dict, const bool add_state, const bool add_trans);
         virtual ~PosGen(void) { }
 
         virtual Attribute &load(const Type &type, std::istream &in);
@@ -164,7 +164,7 @@ namespace NLP {
         virtual void operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i);
         virtual void operator()(const Type &type, Sentence &sent, PDFs &dist, int i);
 
-        TagDict &dict;
+        TagSetDict &dict;
 
     };
 
@@ -183,7 +183,7 @@ namespace NLP {
 
     class OffsetPosGen : public OffsetGen {
       public:
-        OffsetPosGen(TagDict &dict, const int offset, const bool add_state, const bool add_trans);
+        OffsetPosGen(TagSetDict &dict, const int offset, const bool add_state, const bool add_trans);
         virtual ~OffsetPosGen(void) { }
 
         virtual Attribute &load(const Type &type, std::istream &in);
@@ -191,7 +191,7 @@ namespace NLP {
         virtual void operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i);
         virtual void operator()(const Type &type, Sentence &sent, PDFs &dist, int i);
 
-        TagDict &dict;
+        TagSetDict &dict;
     };
 
     class BigramGen : public OffsetGen {
@@ -218,7 +218,7 @@ namespace NLP {
 
     class BigramPosGen : public BigramGen {
       public:
-        BigramPosGen(BiTagDict &dict, const int offset, const bool add_state, const bool add_trans);
+        BigramPosGen(BiTagSetDict &dict, const int offset, const bool add_state, const bool add_trans);
         virtual ~BigramPosGen(void) { }
 
         virtual Attribute &load(const Type &type, std::istream &in);
@@ -226,7 +226,7 @@ namespace NLP {
         virtual void operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i);
         virtual void operator()(const Type &type, Sentence &sent, PDFs &dist, int i);
 
-        BiTagDict &dict;
+        BiTagSetDict &dict;
     };
 
     class MorphGen : public FeatureGen {
