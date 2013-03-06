@@ -147,6 +147,7 @@ namespace NLP {
             config::OpPath model;
             config::OpPath lexicon;
             config::OpPath tags;
+            config::OpPath tagdict;
             config::OpPath attributes;
             config::OpPath features;
             config::OpPath weights;
@@ -170,6 +171,7 @@ namespace NLP {
             model(*this, "model", "location of the model directory", true),
             lexicon(*this, "lexicon", "location to save the lexicon file", "//lexicon", true, &model),
             tags(*this, "tags", "location to save the tag file", "//tags", true, &model),
+            tagdict(*this, "tagdict", "location to save the tag dictionary file", "//tagdict", true, &model),
             attributes(*this, "attributes", "location to save the attributes file", "//attributes", true, &model),
             features(*this, "features", "location to save the features file", "//features", true, &model),
             weights(*this, "weights", "location to save the weights file", "//weights", true, &model),
@@ -284,6 +286,7 @@ namespace NLP {
 
         Lexicon lexicon;
         TagSet tags;
+        Lexicon words2tags;
         Attributes attributes;
         Instances instances;
         Weights weights;
@@ -332,7 +335,8 @@ namespace NLP {
           : Util::Shared(), cfg(cfg), types(types),
             model("info", "Tagger model info file", cfg.model),
             registry(cfg.rare_cutoff()), logger(cfg.log(), std::cout),
-            lexicon(cfg.lexicon()), tags(cfg.tags()), attributes(),
+            lexicon(cfg.lexicon()), tags(cfg.tags()),
+            words2tags(cfg.tagdict()), attributes(),
             instances(), weights(), attribs2weights(), w_dict(lexicon),
             ww_dict(lexicon), a_dict(), t_dict(), preface(preface),
             inv_sigma_sq(), log_z(0.0), ntags(), clock_begin(),

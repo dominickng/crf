@@ -157,4 +157,6 @@ namespace NLP {
   void Lexicon::sort_by_freq(void) { _impl->sort_by_rev_value(); }
 
   size_t Lexicon::size(void) const { return _impl->size(); }
+
+  void Lexicon::clear(void) { _impl->clear(); }
 }

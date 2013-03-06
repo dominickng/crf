@@ -57,6 +57,7 @@ class POS::Impl : public Tagger::Impl {
         for (size_t i = 0; i < sent.size(); ++i) {
           lexicon.add(sent.words[i]);
           tags.add(sent.pos[i]);
+          words2tags.add(sent.words[i] + ' ' + sent.pos[i]);
           if (sent.size() > max_size)
             max_size = sent.size();
         }
@@ -66,6 +67,7 @@ class POS::Impl : public Tagger::Impl {
       instances.reserve(nsents);
       lexicon.save(preface);
       tags.save(preface);
+      words2tags.save(preface);
       model.max_size(max_size);
     }
 

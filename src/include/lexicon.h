@@ -48,6 +48,8 @@ namespace NLP {
       void sort_by_freq(void);
 
       size_t size(void) const;
+
+      void clear(void);
   };
 
 }

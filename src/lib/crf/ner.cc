@@ -58,6 +58,7 @@ class NER::Impl : public Tagger::Impl {
           lexicon.add(sent.words[i]);
           pos.add(sent.pos[i]);
           tags.add(sent.entities[i]);
+          words2tags.add(sent.words[i] + ' ' + sent.entities[i]);
           if (sent.size() > max_size)
             max_size = sent.size();
         }
@@ -68,6 +69,7 @@ class NER::Impl : public Tagger::Impl {
       lexicon.save(preface);
       pos.save(preface);
       tags.save(preface);
+      words2tags.save(preface);
       model.max_size(max_size);
     }
 
