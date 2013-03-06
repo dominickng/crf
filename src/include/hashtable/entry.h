@@ -107,6 +107,7 @@ namespace Util {
         }
 
         size_t nchained(void) { return next ? next->nchained() + 1 : 1; }
-      };
+    };
+
   }
 }
