@@ -115,6 +115,7 @@ class NER::Impl : public Tagger::Impl {
       registry.reg(Types::ns, new OffsetShapeGen(a_dict, 1, true, false), types.use_next_shape());
       //registry.reg(Types::nns, new OffsetShapeGen(a_dict, 2, true, true), types.use_next_shape());
 
+      registry.reg(Types::has_uppercase, new MorphGen(m_dict, true, false), types.use_morph(), true);
       registry.reg(Types::has_digit, new MorphGen(m_dict, true, false), types.use_morph(), true);
       registry.reg(Types::has_hyphen, new MorphGen(m_dict, true, false), types.use_morph(), true);
       registry.reg(Types::has_period, new MorphGen(m_dict, true, false), types.use_morph(), true);

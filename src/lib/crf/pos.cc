@@ -93,9 +93,19 @@ class POS::Impl : public Tagger::Impl {
       }
     }
 
+    virtual void reg(void) {
+      Tagger::Impl::reg();
+
+      registry.reg(Types::has_uppercase, new MorphGen(m_dict, true, false), types.use_morph(), true);
+      registry.reg(Types::has_digit, new MorphGen(m_dict, true, false), types.use_morph(), true);
+      registry.reg(Types::has_hyphen, new MorphGen(m_dict, true, false), types.use_morph(), true);
+    }
+
   public:
+    BinDict m_dict;
+
     Impl(POS::Config &cfg, Types &types, const std::string &preface)
-      : Base(cfg, types, preface) { }
+      : Base(cfg, types, preface), m_dict(Types::nmorph) { }
 
 };
 
