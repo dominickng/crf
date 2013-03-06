@@ -4,7 +4,7 @@
 #include "tagset.h"
 
 namespace NLP {
-  typedef HT::StringEntry<uint16_t> Entry;
+  typedef HT::StringEntry<uint64_t> Entry;
   typedef HT::OrderedHashTable<Entry, std::string> ImplBase;
   class TagSet::Impl : public ImplBase, public Util::Shared {
     public:
