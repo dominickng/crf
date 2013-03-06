@@ -242,6 +242,20 @@ namespace NLP {
         BinDict &dict;
     };
 
+    class GazGen : public FeatureGen {
+      public:
+        GazGen(GazDict &dict, Gazetteers gaz, const bool add_state, const bool add_trans);
+        virtual ~GazGen(void) { }
+
+        virtual Attribute &load(const Type &type, std::istream &in);
+        virtual void operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i);
+        virtual void operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i);
+        virtual void operator()(const Type &type, Sentence &sent, PDFs &dist, int i);
+
+        GazDict &dict;
+        Gazetteers gaz;
+    };
+
 
   }
 }

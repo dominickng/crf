@@ -92,6 +92,15 @@ namespace NLP {
           const static Type ps_s_ns;
           const static Type s_ns_nns;
 
+          //gazetteers
+          const static Type pgaz;
+          const static Type gaz;
+          const static Type ngaz;
+
+          const static Type gaz_common;
+          const static Type gaz_first;
+          const static Type gaz_last;
+
           //transition
           const static Type trans;
 
@@ -119,6 +128,10 @@ namespace NLP {
           config::Op<bool> use_prev_shape;
           config::Op<bool> use_next_shape;
           config::Op<bool> use_shape_bigram;
+
+          config::Op<bool> use_gaz;
+          config::Op<bool> use_prev_gaz;
+          config::Op<bool> use_next_gaz;
 
           config::Op<bool> use_trans;
 

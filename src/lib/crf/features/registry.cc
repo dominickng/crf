@@ -2,6 +2,7 @@
 
 #include "config.h"
 #include "hashtable.h"
+#include "gazetteers.h"
 #include "lexicon.h"
 #include "prob.h"
 #include "tagset.h"

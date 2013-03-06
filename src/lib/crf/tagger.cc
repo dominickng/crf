@@ -3,6 +3,7 @@
 #include "config.h"
 #include "fastmath.h"
 #include "hashtable/size.h"
+#include "gazetteers.h"
 #include "io.h"
 #include "lexicon.h"
 #include "prob.h"

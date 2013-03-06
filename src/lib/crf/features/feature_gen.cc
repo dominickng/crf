@@ -2,6 +2,7 @@
 
 #include "config.h"
 #include "hashtable.h"
+#include "gazetteers.h"
 #include "lexicon.h"
 #include "prob.h"
 #include "tagset.h"
@@ -414,6 +415,46 @@ void MorphGen::operator()(const Type &type, Attributes &attributes, Sentence &se
 
 void MorphGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int i) {
   _add_features(dict.get(type), dist);
+}
+
+GazGen::GazGen(GazDict &dict, Gazetteers gaz, const bool add_state, const bool add_trans) :
+  FeatureGen(add_state, add_trans), dict(dict), gaz(gaz) { }
+
+Attribute &GazGen::load(const Type &type, std::istream &in) {
+  return dict.load(type, in);
+}
+
+void GazGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) {
+  uint64_t flags = gaz.lower(sent.words[i]);
+
+  if (Gazetteers::COMMON & flags)
+    attributes(type.name, gaz.gaz_name(Gazetteers::COMMON), tp, _add_state, _add_trans);
+  if (Gazetteers::FIRST & flags)
+    attributes(type.name, gaz.gaz_name(Gazetteers::FIRST), tp, _add_state, _add_trans);
+  if (Gazetteers::LAST & flags)
+    attributes(type.name, gaz.gaz_name(Gazetteers::LAST), tp, _add_state, _add_trans);
+}
+
+void GazGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i) {
+  uint64_t flags = gaz.lower(sent.words[i]);
+
+  if (Gazetteers::COMMON & flags)
+    attributes(type.name, gaz.gaz_name(Gazetteers::COMMON), c);
+  if (Gazetteers::FIRST & flags)
+    attributes(type.name, gaz.gaz_name(Gazetteers::FIRST), c);
+  if (Gazetteers::LAST & flags)
+    attributes(type.name, gaz.gaz_name(Gazetteers::LAST), c);
+}
+
+void GazGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int i) {
+  uint64_t flags = gaz.lower(sent.words[i]);
+
+  if (Gazetteers::COMMON & flags)
+    _add_features(dict.get(gaz.gaz_name(Gazetteers::COMMON)), dist);
+  if (Gazetteers::FIRST & flags)
+    _add_features(dict.get(gaz.gaz_name(Gazetteers::FIRST)), dist);
+  if (Gazetteers::LAST & flags)
+    _add_features(dict.get(gaz.gaz_name(Gazetteers::LAST)), dist);
 }
 
 } }

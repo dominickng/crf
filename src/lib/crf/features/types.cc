@@ -72,6 +72,14 @@ const Type Types::ps_s = {"prev shape + curr shape", "ps_s", 1};
 const Type Types::s_ns = {"shape + next shape", "s_ns", 2};
 const Type Types::ns_nns = {"next 2 shapes", "ns_nns", 3};
 
+const Type Types::pgaz = {"prev gazetteer feature", "pgaz", 0};
+const Type Types::gaz = {"gazetteer feature", "gaz", 0};
+const Type Types::ngaz = {"next gazetteer feature", "ngaz", 0};
+
+const Type Types::gaz_common = {"common word gazetteer feature", "gaz_common", 0};
+const Type Types::gaz_first = {"first name gazetteer feature", "gaz_first", 1};
+const Type Types::gaz_last = {"last name gazetteer feature", "gaz_last", 2};
+
 const Type Types::trans = {"transition feature", "trans", 0};
 
 Types::Types(void) :
@@ -99,6 +107,11 @@ Types::Types(void) :
   use_prev_shape(*this, "use_prev_shape", "use prev shape features", true, true, true),
   use_next_shape(*this, "use_next_shape", "use next shape features", true, true, true),
   use_shape_bigram(*this, "use_shape_bigram", "use shape bigram features", true, true, true),
+
+  use_gaz(*this, "use_gaz", "use gaz features", true, true, true),
+  use_prev_gaz(*this, "use_prev_gaz", "use prev gaz features", true, true, true),
+  use_next_gaz(*this, "use_next_gaz", "use next gaz features", true, true, true),
+
   use_trans(*this, "use_trans", "use transition features", true, true, true)
   { }
 

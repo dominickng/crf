@@ -3,6 +3,7 @@
 #include "config.h"
 #include "fastmath.h"
 #include "hashtable/size.h"
+#include "gazetteers.h"
 #include "io.h"
 #include "lexicon.h"
 #include "prob.h"
@@ -128,6 +129,8 @@ class NER::Impl : public Tagger::Impl {
       registry.reg(Types::lowercase, new MorphGen(m_dict, true, false), types.use_morph(), true);
       registry.reg(Types::titlecase, new MorphGen(m_dict, true, false), types.use_morph(), true);
       registry.reg(Types::mixedcase, new MorphGen(m_dict, true, false), types.use_morph(), true);
+
+      registry.reg(Types::gaz, new GazGen(g_dict, gazetteers, true, false), types.use_gaz());
     }
 
     virtual void load(void) {
@@ -136,6 +139,8 @@ class NER::Impl : public Tagger::Impl {
     }
 
   public:
+    Gazetteers gazetteers;
+
     TagSet pos;
     TagSetDict p_dict;
     TagSetDict p_p_dict;
@@ -149,12 +154,14 @@ class NER::Impl : public Tagger::Impl {
     BiTagSetDict np_nnp_p_dict;
 
     BinDict m_dict;
+    GazDict g_dict;
 
     Impl(NER::Config &cfg, Types &types, const std::string &preface)
-      : Base(cfg, types, preface), pos(cfg.pos()), p_dict(pos), p_p_dict(pos),
+      : Base(cfg, types, preface), gazetteers(cfg.data(), cfg.gazetteers()),
+        pos(cfg.pos()), p_dict(pos), p_p_dict(pos),
         pp_p_dict(pos), n_p_dict(pos), nn_p_dict(pos), ppp_pp_p_dict(pos),
         pp_p_p_dict(pos), p_np_p_dict(pos), np_nnp_p_dict(pos),
-        m_dict(Types::nmorph) { }
+        m_dict(Types::nmorph), g_dict(sizeof(uint64_t) * 8, gazetteers) { }
 
 };
 

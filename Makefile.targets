@@ -5,7 +5,7 @@ IO_OBJECTS = src/lib/io/reader_factory.o src/lib/io/reader_format.o src/lib/io/r
 
 CONFIG_OBJECTS = src/lib/config/base.o src/lib/config/group.o src/lib/config/option.o src/lib/config/info.o
 
-CRF_OBJECTS = src/lib/word.o src/lib/lexicon.o src/lib/tagset.o src/lib/crf/tagger.o src/lib/crf/ner.o src/lib/crf/pos.o src/lib/crf/chunk.o
+CRF_OBJECTS = src/lib/word.o src/lib/lexicon.o src/lib/tagset.o src/lib/gazetteers.o src/lib/crf/tagger.o src/lib/crf/ner.o src/lib/crf/pos.o src/lib/crf/chunk.o
 
 FEATURE_OBJECTS = src/lib/crf/features/attributes.o src/lib/crf/features/registry.o \
 		  src/lib/crf/features/feature_gen.o src/lib/crf/features/feature_word.o \

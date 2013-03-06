@@ -210,5 +210,38 @@ namespace NLP {
         std::vector<Attribute> attributes;
     };
 
+    /**
+     * GazDict.
+     * Class to support lookup of gazetteer features. Implemented as a vector,
+     * using the index of each flag name
+     */
+    class GazDict : public FeatureDict {
+      public:
+        GazDict(const size_t size, Gazetteers gaz)
+          : attributes(size), gaz(gaz) { }
+        virtual ~GazDict(void) { };
+
+        virtual Attribute &load(const Type &type, std::istream &in) {
+          Raw value;
+          in >> value;
+          int index = gaz.gaz_index(value);
+          if (index == -1)
+            throw IOException("can't find gazetteer name", value);
+          return insert(index);
+        }
+
+        Attribute get(const std::string &name) {
+          int index = gaz.gaz_index(name);
+          return attributes[index];
+        }
+
+        Attribute &insert(const int index) {
+          return attributes[index];
+        }
+
+      private:
+        std::vector<Attribute> attributes;
+        Gazetteers gaz;
+    };
   }
 }
