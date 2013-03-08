@@ -32,6 +32,8 @@ namespace NLP {
       const static uint64_t CONLL_IORG = 1 << 9;
       const static uint64_t CONLL_IPER = 1 << 10;
 
+      typedef std::vector<std::string> GazNames;
+
       Gazetteers(const size_t nbuckets=HT::LARGE, const size_t pool_size=HT::LARGE);
       Gazetteers(const std::string &dir, const std::string &config,
           const size_t nbuckets=HT::LARGE, const size_t pool_size=HT::LARGE);
@@ -50,7 +52,7 @@ namespace NLP {
       int gaz_index(const std::string &name) const;
 
       const std::string &gaz_name(const uint64_t flag) const;
-      const std::vector<std::string> &gaz_names(void) const;
+      const GazNames &gaz_names(void) const;
 
       size_t size(void) const;
       void clear(void);

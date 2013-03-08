@@ -426,35 +426,35 @@ Attribute &GazGen::load(const Type &type, std::istream &in) {
 
 void GazGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) {
   uint64_t flags = gaz.lower(sent.words[i]);
+  Gazetteers::GazNames names = gaz.gaz_names();
 
-  if (Gazetteers::COMMON & flags)
-    attributes(type.name, gaz.gaz_name(Gazetteers::COMMON), tp, _add_state, _add_trans);
-  if (Gazetteers::FIRST & flags)
-    attributes(type.name, gaz.gaz_name(Gazetteers::FIRST), tp, _add_state, _add_trans);
-  if (Gazetteers::LAST & flags)
-    attributes(type.name, gaz.gaz_name(Gazetteers::LAST), tp, _add_state, _add_trans);
+  for (size_t i = 0; i < names.size(); ++i) {
+    uint64_t flag = 1 << i;
+    if (flag & flags)
+      attributes(type.name, names[i], tp, _add_state, _add_trans);
+  }
 }
 
 void GazGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, Context &c, int i) {
   uint64_t flags = gaz.lower(sent.words[i]);
+  Gazetteers::GazNames names = gaz.gaz_names();
 
-  if (Gazetteers::COMMON & flags)
-    attributes(type.name, gaz.gaz_name(Gazetteers::COMMON), c);
-  if (Gazetteers::FIRST & flags)
-    attributes(type.name, gaz.gaz_name(Gazetteers::FIRST), c);
-  if (Gazetteers::LAST & flags)
-    attributes(type.name, gaz.gaz_name(Gazetteers::LAST), c);
+  for (size_t i = 0; i < names.size(); ++i) {
+    uint64_t flag = 1 << i;
+    if (flag & flags)
+      attributes(type.name, names[i], c);
+  }
 }
 
 void GazGen::operator()(const Type &type, Sentence &sent, PDFs &dist, int i) {
   uint64_t flags = gaz.lower(sent.words[i]);
+  Gazetteers::GazNames names = gaz.gaz_names();
 
-  if (Gazetteers::COMMON & flags)
-    _add_features(dict.get(gaz.gaz_name(Gazetteers::COMMON)), dist);
-  if (Gazetteers::FIRST & flags)
-    _add_features(dict.get(gaz.gaz_name(Gazetteers::FIRST)), dist);
-  if (Gazetteers::LAST & flags)
-    _add_features(dict.get(gaz.gaz_name(Gazetteers::LAST)), dist);
+  for (size_t i = 0; i < names.size(); ++i) {
+    uint64_t flag = 1 << i;
+    if (flag & flags)
+      _add_features(dict.get(names[i]), dist);
+  }
 }
 
 } }
