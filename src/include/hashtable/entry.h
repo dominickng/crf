@@ -10,7 +10,7 @@ namespace Util {
         ~StringEntry(void) { }
 
         void *operator new(size_t size, Pool *pool, size_t len) {
-          return (void *)pool->alloc(size + len - 1);
+          return (void *)pool->alloc(size + len);
         }
 
         void operator delete(void *, Pool *, size_t) { /* blank */ }
