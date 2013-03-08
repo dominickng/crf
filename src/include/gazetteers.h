@@ -8,6 +8,7 @@
  */
 namespace NLP {
   namespace HT = Util::hashtable;
+  typedef uint64_t GazFlags;
 
   class Gazetteers {
     private:
@@ -15,24 +16,24 @@ namespace NLP {
       Impl *_impl;
 
     public:
+      typedef std::vector<std::string> GazNames;
+
       // for common words
-      const static uint64_t COMMON = 1 << 0;
+      const static GazFlags COMMON = 1 << 0;
       // first names
-      const static uint64_t FIRST = 1 << 1;
+      const static GazFlags FIRST = 1 << 1;
       //last names
-      const static uint64_t LAST = 1 << 2;
+      const static GazFlags LAST = 1 << 2;
 
       //conll gazetteers
-      const static uint64_t CONLL_LOC = 1 << 3;
-      const static uint64_t CONLL_MISC = 1 << 4;
-      const static uint64_t CONLL_ORG = 1 << 5;
-      const static uint64_t CONLL_PER = 1 << 6;
-      const static uint64_t CONLL_ILOC = 1 << 7;
-      const static uint64_t CONLL_IMISC = 1 << 8;
-      const static uint64_t CONLL_IORG = 1 << 9;
-      const static uint64_t CONLL_IPER = 1 << 10;
-
-      typedef std::vector<std::string> GazNames;
+      const static GazFlags CONLL_LOC = 1 << 3;
+      const static GazFlags CONLL_MISC = 1 << 4;
+      const static GazFlags CONLL_ORG = 1 << 5;
+      const static GazFlags CONLL_PER = 1 << 6;
+      const static GazFlags CONLL_ILOC = 1 << 7;
+      const static GazFlags CONLL_IMISC = 1 << 8;
+      const static GazFlags CONLL_IORG = 1 << 9;
+      const static GazFlags CONLL_IPER = 1 << 10;
 
       Gazetteers(const size_t nbuckets=HT::LARGE, const size_t pool_size=HT::LARGE);
       Gazetteers(const std::string &dir, const std::string &config,
@@ -41,17 +42,17 @@ namespace NLP {
 
       ~Gazetteers(void);
 
-      void add(const std::string &entry, const uint64_t flags);
+      void add(const std::string &entry, const GazFlags flags);
 
       void load(const std::string &dir, const std::string &config);
-      void load(const std::string &filename, const uint64_t flag);
+      void load(const std::string &filename, const GazFlags flag);
 
-      uint64_t exists(const std::string &str) const;
-      uint64_t lower(const std::string &str) const;
+      GazFlags exists(const std::string &str) const;
+      GazFlags lower(const std::string &str) const;
 
       int gaz_index(const std::string &name) const;
 
-      const std::string &gaz_name(const uint64_t flag) const;
+      const std::string &gaz_name(const GazFlags flag) const;
       const GazNames &gaz_names(void) const;
 
       size_t size(void) const;
