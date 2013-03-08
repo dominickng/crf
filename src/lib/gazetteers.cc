@@ -34,6 +34,8 @@ namespace NLP {
         while (input >> name >> index >> filename) {
           if (filename[0] != '/')
             filename = dir + '/' + filename;
+          if (name.size() == 0)
+            throw IOException("Empty gazetteer name", filename);
           names[index] = name;
           load(filename, 1 << index);
         }
