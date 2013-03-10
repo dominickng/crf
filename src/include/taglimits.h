@@ -67,7 +67,7 @@ namespace NLP {
 
       size_t nskip(size_t type) {
         size_t skip = 1;
-        for (int i = type; i < ntypes(); ++i)
+        for (size_t i = type; i < ntypes(); ++i)
           skip *= ntags(i);
         return skip;
       }
