@@ -46,6 +46,10 @@ namespace Util {
 
         virtual void _validate(void) { }
 
+        T escape(const T &val) const {
+          return val;
+        }
+
       public:
         const T _default;
         T _value;
@@ -68,7 +72,7 @@ namespace Util {
           out << prefix << _name << " <arg>: " << _desc;
 
           if (_has_default)
-            out << " (def = " << _default << ")";
+            out << " (def = " << escape(_default) << ")";
           out << std::endl;
         }
 
@@ -123,6 +127,22 @@ namespace Util {
       std::istringstream s(value);
       if (!(s >> std::boolalpha >> _value >> std::noboolalpha))
         throw ConfigException("Invalid value", _name, value);
+    }
+
+    /**
+     * escape.
+     * Specialised version for Op<string> that escapes special chars
+     */
+    template <> inline std::string Op<std::string>::escape(const std::string &val) const {
+      std::string out;
+      for (size_t i = 0; i < val.size(); ++i) {
+        switch(val[i]) {
+          case '\t': out += "\\t"; break;
+          case '\n': out += "\\n"; break;
+          default: out += val[i];
+        }
+      }
+      return out;
     }
 
     /**
@@ -313,7 +333,7 @@ namespace Util {
           out << OpRestricted<T>::_sep << "... >: " << OpRestricted<T>::_desc;
 
           if (OpRestricted<T>::_has_default)
-            out << " (def = " << _defaults << ")" << std::endl;
+            out << " (def = " << Op<std::string>::escape(_defaults) << ")" << std::endl;
         }
 
         virtual void set_default(void) {
