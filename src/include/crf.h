@@ -6,6 +6,7 @@
 #include "lexicon.h"
 #include "prob.h"
 #include "tagset.h"
+#include "taglimits.h"
 #include "vector.h"
 #include "crf/nodepool.h"
 #include "crf/lattice.h"

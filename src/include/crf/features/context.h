@@ -13,12 +13,32 @@ namespace NLP {
     class Context {
       public:
         FeaturePtrs features;
-        TagPair klasses;
+        TagPairs klasses;
         size_t index;
 
         Context(void) : features(), klasses(), index(0) { }
-        Context(TagPair klasses, const size_t index=0) : features(), klasses(klasses), index(index) { }
-        Context(Tag prev, Tag curr, const size_t index=0) : features(), klasses(prev, curr), index(index) { }
+        Context(TagPair kl, const size_t index=0)
+          : features(), klasses(), index(index) {
+            klasses.push_back(kl);
+        }
+        Context(Tag prev, Tag curr, const size_t index=0)
+          : features(), klasses(), index(index) {
+          klasses.push_back(TagPair(prev, curr));
+        }
+
+        bool klasses_match(TagPair &other) const {
+          for (size_t i = 0; i < klasses.size(); ++i)
+            if (klasses[i] == other)
+              return true;
+          return false;
+        }
+
+        bool klasses_match_or_none(TagPair &other) const {
+          for (size_t i = 0; i < klasses.size(); ++i)
+            if (klasses[i] == other || (other.prev == None::val && other.curr == klasses[i].curr))
+              return true;
+          return false;
+        }
     };
 
     /**

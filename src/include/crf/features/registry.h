@@ -17,7 +17,9 @@ namespace NLP {
         void reg(const Type &type, FeatureGen *gen, const bool active, const bool rare=false);
         Attribute &load(const std::string &type, std::istream &in);
 
-        void generate(Attributes &attributes, Lexicon lexicon, TagSet tags, Sentence &sent, Raws &rawtags, Contexts &contexts, const bool extract);
+        void generate(Attributes &attributes, Lexicon lexicon, TagSet tags,
+            Sentence &sent, const std::string &chains, Contexts &contexts,
+            const bool extract);
 
         void add_features(Lexicon lexicon, Sentence &sent, PDFs &dist, int i);
 

@@ -10,11 +10,15 @@ namespace NLP {
 
       char word_sep;
 
-      Format(const std::string &format)
+      Format(const std::string &format, const bool chain=false)
         : fields(), separators(), sent_pre(), sent_post() {
-        parse(format);
+          if (chain)
+            parse_chain(format);
+          else
+            parse(format);
       }
 
       void parse(const std::string &format);
+      void parse_chain(const std::string &format);
   };
 }

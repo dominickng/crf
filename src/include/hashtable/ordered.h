@@ -40,6 +40,14 @@ namespace Util {
         }
     };
 
+    template <typename E>
+    class TypeCmp {
+      public:
+        bool operator()(const E *const e1, const E *const e2) {
+          return (e1->type == e2->type) ? e1->index < e2->index : e1->type < e2->type;
+        }
+    };
+
     template <typename E, typename K, typename Hash=Hasher::Hash>
     class OrderedHashTable : public BaseHashTable<E, K, Hash> {
       protected:
@@ -86,7 +94,7 @@ namespace Util {
 
         void renumber(void) {
           for (size_t i = 0; i != _entries.size(); ++i)
-            _entries[i]->index = i+1;
+            _entries[i]->index = i;
         }
 
         template <typename Comparator>
@@ -116,6 +124,11 @@ namespace Util {
 
         void sort_by_index(void) {
           sort(IndexCmp<Entry>());
+          renumber();
+        }
+
+        void sort_by_type(void) {
+          sort(TypeCmp<Entry>());
           renumber();
         }
 

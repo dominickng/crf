@@ -8,6 +8,7 @@
 #include "lexicon.h"
 #include "prob.h"
 #include "tagset.h"
+#include "taglimits.h"
 #include "vector.h"
 #include "crf/nodepool.h"
 #include "crf/lattice.h"
@@ -21,6 +22,7 @@ namespace NLP { namespace CRF {
 const std::string POS::name = "pos";
 const std::string POS::desc = "Part of speech CRF tagger";
 const std::string POS::reader = "format";
+const std::string POS::chain = "%p";
 
 class POS::Impl : public Tagger::Impl {
   protected:
@@ -76,7 +78,7 @@ class POS::Impl : public Tagger::Impl {
       Sentence sent;
       Contexts contexts; //not used in this pass
       while (reader.next(sent)) {
-        registry.generate(attributes, lexicon, tags, sent, sent.pos, contexts, true);
+        registry.generate(attributes, lexicon, tags, sent, chains(), contexts, true);
         sent.reset();
       }
 
@@ -88,7 +90,7 @@ class POS::Impl : public Tagger::Impl {
       while (reader.next(sent)) {
         Contexts contexts(sent.words.size());
         instances.push_back(contexts);
-        registry.generate(attributes, lexicon, tags, sent, sent.pos, instances.back(), false);
+        registry.generate(attributes, lexicon, tags, sent, chains(), instances.back(), false);
         sent.reset();
       }
     }
@@ -105,7 +107,7 @@ class POS::Impl : public Tagger::Impl {
     BinDict m_dict;
 
     Impl(POS::Config &cfg, Types &types, const std::string &preface)
-      : Base(cfg, types, preface), m_dict(Types::nmorph) { }
+      : Base(cfg, types, chain, preface), m_dict(Types::nmorph) { }
 
 };
 

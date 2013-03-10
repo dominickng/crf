@@ -8,6 +8,7 @@
 #include "lexicon.h"
 #include "prob.h"
 #include "tagset.h"
+#include "taglimits.h"
 #include "vector.h"
 #include "crf/nodepool.h"
 #include "crf/lattice.h"
@@ -21,6 +22,7 @@ namespace NLP { namespace CRF {
 const std::string Chunk::name = "chunk";
 const std::string Chunk::desc = "Chunking CRF tagger";
 const std::string Chunk::reader = "conll";
+const std::string Chunk::chain = "%c";
 
 class Chunk::Impl : public Tagger::Impl {
   protected:
@@ -78,7 +80,7 @@ class Chunk::Impl : public Tagger::Impl {
       Sentence sent;
       Contexts contexts; //not used in this pass
       while (reader.next(sent)) {
-        registry.generate(attributes, lexicon, tags, sent, sent.chunks, contexts, true);
+        registry.generate(attributes, lexicon, tags, sent, chains(), contexts, true);
         sent.reset();
       }
 
@@ -90,7 +92,7 @@ class Chunk::Impl : public Tagger::Impl {
       while (reader.next(sent)) {
         Contexts contexts(sent.words.size());
         instances.push_back(contexts);
-        registry.generate(attributes, lexicon, tags, sent, sent.chunks, instances.back(), false);
+        registry.generate(attributes, lexicon, tags, sent, chains(), instances.back(), false);
         sent.reset();
       }
     }
@@ -135,9 +137,10 @@ class Chunk::Impl : public Tagger::Impl {
     BiTagSetDict np_nnp_p_dict;
 
     Impl(Chunk::Config &cfg, Types &types, const std::string &preface)
-      : Base(cfg, types, preface), pos(cfg.pos()), p_dict(pos), p_p_dict(pos),
-        pp_p_dict(pos), n_p_dict(pos), nn_p_dict(pos), ppp_pp_p_dict(pos),
-        pp_p_p_dict(pos), p_np_p_dict(pos), np_nnp_p_dict(pos) { }
+      : Base(cfg, types, chain, preface), pos(cfg.pos()), p_dict(pos),
+        p_p_dict(pos), pp_p_dict(pos), n_p_dict(pos), nn_p_dict(pos),
+        ppp_pp_p_dict(pos), pp_p_p_dict(pos), p_np_p_dict(pos),
+        np_nnp_p_dict(pos) { }
 
 };
 

@@ -8,6 +8,7 @@
 #include "lexicon.h"
 #include "prob.h"
 #include "tagset.h"
+#include "taglimits.h"
 #include "vector.h"
 #include "crf/nodepool.h"
 #include "crf/lattice.h"
@@ -34,6 +35,10 @@ lbfgsfloatval_t Tagger::Impl::duration_s(void) {
 
 lbfgsfloatval_t Tagger::Impl::duration_m(void) {
   return (clock() - clock_begin) / (60.0 * CLOCKS_PER_SEC);
+}
+
+const std::string &Tagger::Impl::chains(void) const {
+  return format.fields;
 }
 
 void Tagger::Impl::reset(const size_t size) {
@@ -124,7 +129,7 @@ void Tagger::Impl::compute_expectations(Contexts &c) {
     for (size_t j = 0; j < c[i].features.size(); ++j) {
       Feature &f = *(c[i].features[j]);
       TagPair &klasses = f.klasses;
-      if (klasses.prev == None::val) { //state feature
+      if (klasses.prev == None::val || klasses.prev.type() != klasses.curr.type()) { //state feature
         lbfgsfloatval_t alpha = alphas[i][klasses.curr];
         lbfgsfloatval_t beta = betas[i][klasses.curr];
         f.exp += alpha * beta * inv_scale;
@@ -313,11 +318,11 @@ lbfgsfloatval_t Tagger::Impl::sum_llhood(Contexts &contexts, lbfgsfloatval_t dec
 
   for (Contexts::iterator i = contexts.begin(); i != contexts.end(); ++i) {
     for (FeaturePtrs::iterator j = i->features.begin(); j != i->features.end(); ++j)
-      if ((*j)->klasses == i->klasses || ((*j)->klasses.prev == None::val && (*j)->klasses.curr == i->klasses.curr))
+      if (i->klasses_match_or_none((*j)->klasses))
         score += *((*j)->lambda) * decay;
 
     for (FeaturePtrs::iterator j = trans_features.begin(); j != trans_features.end(); ++j)
-      if ((*j)->klasses == i->klasses) {
+      if (i->klasses_match((*j)->klasses)) {
         score += *((*j)->lambda) * decay;
         break;
       }
@@ -431,7 +436,7 @@ void Tagger::Impl::print_psis(Contexts &contexts, PSIs &psis) {
 void Tagger::Impl::print_fwd_bwd(Contexts &contexts, PDFs &pdfs, PDF &scale) {
   std::cout << std::setw(16) << ' ';
   for (size_t i = 0; i < contexts.size(); ++i)
-    std::cout << std::setw(16) << tags.str(contexts[i].klasses.curr);
+    std::cout << std::setw(16) << tags.str(contexts[i].klasses[0].curr);
   std::cout << std::endl;
   for(Tag curr(0); curr < ntags; ++curr) {
     std::cout << std::setw(16) << tags.str(curr);
@@ -752,18 +757,18 @@ void Tagger::Impl::compute_weights(Contexts &c, lbfgsfloatval_t gain) {
       Feature &f = *(c[i].features[j]);
       TagPair &klasses = f.klasses;
       if (klasses.prev == None::val) {
-        if (klasses.curr == c[i].klasses.curr)
+        if (c[i].klasses_match_or_none(klasses))
           *f.lambda += gain;
         *f.lambda -= state_marginals[i][klasses.curr] * gain;
       }
-      else if (klasses == c[i].klasses)
+      else if (c[i].klasses_match(klasses))
         *f.lambda += gain;
     }
 
     for (size_t j = 0; j < trans_features.size(); ++j) {
       Feature &f = *trans_features[j];
       TagPair &klasses = f.klasses;
-      if (klasses == c[i].klasses)
+      if (c[i].klasses_match(klasses))
         *f.lambda += gain;
     }
   }
@@ -912,6 +917,7 @@ void Tagger::Impl::reg(void) {
 void Tagger::Impl::load(void) {
   lexicon.load();
   tags.load();
+  limits.calc(tags);
   reg();
   _load_model(model);
 }
@@ -1070,9 +1076,10 @@ void Tagger::Impl::train(Reader &reader, const std::string &trainer) {
   logger << "beginning feature extraction" << std::endl;
   reg();
   extract(reader, instances);
+  limits.calc(tags);
   logger << "completed feature extraction in " << duration_s() << "s\n" << std::endl;
 
-  ntags = tags.size();
+  ntags = limits.max_index();
   inv_sigma_sq = 1.0 / (cfg.sigma() * cfg.sigma());
 
   // initialize the working vectors. each one is prepopulated to the size

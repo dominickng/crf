@@ -5,6 +5,7 @@ namespace NLP {
         const static std::string name;
         const static std::string desc;
         const static std::string reader;
+        const static std::string chain;
 
         class Config : public Tagger::Config {
           public:

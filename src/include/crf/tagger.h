@@ -228,6 +228,8 @@ namespace NLP {
 
         lbfgsfloatval_t duration_s(void);
         lbfgsfloatval_t duration_m(void);
+
+        const std::string &chains(void) const;
         virtual void reset(const size_t size);
 
         void compute_psis(Context &context, PDFs &dist, lbfgsfloatval_t decay=1.0);
@@ -283,9 +285,11 @@ namespace NLP {
         Model model;
         Registry registry;
         Log logger;
+        Format format;
 
         Lexicon lexicon;
         TagSet tags;
+        TagLimits limits;
         Lexicon words2tags;
         Attributes attributes;
         Instances instances;
@@ -331,12 +335,13 @@ namespace NLP {
         PSIs psis;
         PDF scale;
 
-        Impl(Config &cfg, Types &types, const std::string &preface)
+        Impl(Config &cfg, Types &types, const std::string &chains,
+            const std::string &preface)
           : Util::Shared(), cfg(cfg), types(types),
             model("info", "Tagger model info file", cfg.model),
             registry(cfg.rare_cutoff()), logger(cfg.log(), std::cout),
-            lexicon(cfg.lexicon()), tags(cfg.tags()),
-            words2tags(cfg.tagdict()), attributes(),
+            format(chains, true), lexicon(cfg.lexicon()), tags(cfg.tags()),
+            limits(), words2tags(cfg.tagdict()), attributes(),
             instances(), weights(), attribs2weights(), w_dict(lexicon),
             ww_dict(lexicon), a_dict(), t_dict(), preface(preface),
             inv_sigma_sq(), log_z(0.0), ntags(), clock_begin(),

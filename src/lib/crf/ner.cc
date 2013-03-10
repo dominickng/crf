@@ -8,6 +8,7 @@
 #include "lexicon.h"
 #include "prob.h"
 #include "tagset.h"
+#include "taglimits.h"
 #include "vector.h"
 #include "crf/nodepool.h"
 #include "crf/lattice.h"
@@ -21,6 +22,7 @@ namespace NLP { namespace CRF {
 const std::string NER::name = "ner";
 const std::string NER::desc = "Named entity recognising CRF tagger";
 const std::string NER::reader = "conll";
+const std::string NER::chain = "%e";
 
 class NER::Impl : public Tagger::Impl {
   protected:
@@ -46,7 +48,7 @@ class NER::Impl : public Tagger::Impl {
         state.next_word();
       }
       //state.lattice.print(std::cout, tags, sent.size());
-      state.lattice.best(tags, sent.entities, sent.size());
+      state.lattice.best(tags, sent.get_single(chains()[0]), sent.size());
     }
 
     virtual void _pass1(Reader &reader) {
@@ -78,7 +80,7 @@ class NER::Impl : public Tagger::Impl {
       Sentence sent;
       Contexts contexts; //not used in this pass
       while (reader.next(sent)) {
-        registry.generate(attributes, lexicon, tags, sent, sent.entities, contexts, true);
+        registry.generate(attributes, lexicon, tags, sent, chains(), contexts, true);
         sent.reset();
       }
 
@@ -90,7 +92,7 @@ class NER::Impl : public Tagger::Impl {
       while (reader.next(sent)) {
         Contexts contexts(sent.words.size());
         instances.push_back(contexts);
-        registry.generate(attributes, lexicon, tags, sent, sent.entities, instances.back(), false);
+        registry.generate(attributes, lexicon, tags, sent, chains(), instances.back(), false);
         sent.reset();
       }
     }
@@ -158,8 +160,8 @@ class NER::Impl : public Tagger::Impl {
     GazDict g_dict;
 
     Impl(NER::Config &cfg, Types &types, const std::string &preface)
-      : Base(cfg, types, preface), gazetteers(cfg.data(), cfg.gazetteers()),
-        pos(cfg.pos()), p_dict(pos), p_p_dict(pos),
+      : Base(cfg, types, chain, preface), gazetteers(cfg.data(),
+        cfg.gazetteers()), pos(cfg.pos()), p_dict(pos), p_p_dict(pos),
         pp_p_dict(pos), n_p_dict(pos), nn_p_dict(pos), ppp_pp_p_dict(pos),
         pp_p_p_dict(pos), p_np_p_dict(pos), np_nnp_p_dict(pos),
         m_dict(Types::nmorph), g_dict(sizeof(uint64_t) * 8, gazetteers) { }

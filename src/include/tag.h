@@ -4,6 +4,7 @@ namespace NLP {
   class Tag {
     private:
       uint16_t _id;
+      uint16_t _type;
 
       uint16_t _check(const uint64_t id) const {
         if (id > UINT16_MAX)
@@ -12,25 +13,30 @@ namespace NLP {
       }
 
     public:
-      Tag(void) : _id(0) { }
-      Tag(None) : _id(0) { }
-      Tag(Sentinel) : _id(1) { }
+      Tag(void) : _id(0), _type(0) { }
+      Tag(None) : _id(0), _type(0) { }
+      Tag(Sentinel) : _id(1), _type(0) { }
 
-      Tag(const uint16_t id) : _id(id) { }
+      Tag(const uint16_t id) : _id(id), _type(0) { }
+      Tag(const uint16_t id, const uint16_t type) : _id(id), _type(type) { }
       //explicit Tag(const uint64_t id) : _id(_check(id)) { }
 
-      Tag(const Tag &other) : _id(other._id) { }
+      Tag(const Tag &other) : _id(other._id), _type(other._type) { }
 
       Tag &operator=(const Tag other) {
         _id = other._id;
+        _type = other._type;
         return *this;
       }
 
       operator uint16_t(void) const { return _id; }
       inline uint16_t id(void) const { return _id; }
+      inline uint16_t type(void) const { return _type; }
 
-      //inline bool operator==(const Tag &other) { return _id == other._id; }
-      //inline bool operator!=(const Tag &other) { return _id != other._id; }
+      inline bool operator==(const Tag &other) const  { return _id == other._id; }
+      inline bool operator==(const uint16_t other) const  { return _id == other; }
+      inline bool operator==(const uint64_t other) const  { return _id == other; }
+      inline bool operator!=(const Tag &other) const { return _id != other._id; }
 
       inline Tag& operator++(void) {
         ++_id;

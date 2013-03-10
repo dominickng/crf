@@ -168,20 +168,24 @@ namespace NLP {
          * feature objects in the attributes dictionary that are active for
          * that context.
          */
-        void generate(Attributes &attributes, Lexicon lexicon, TagSet tags, Sentence &sent, Raws &rawtags, Contexts &contexts, const bool extract) {
+        void generate(Attributes &attributes, Lexicon lexicon, TagSet tags,
+            Sentence &sent, const std::string &chains, Contexts &contexts,
+            const bool extract) {
           for (size_t i = 0; i < sent.size(); ++i) {
-            for (Entries::iterator j = _actives.begin(); j != _actives.end(); ++j) {
-              RegEntry *e = *j;
-              if (!(e->rare) || lexicon.freq(sent.words[i]) < rare_cutoff) {
-                TagPair tp;
-                get_tagpair(tags, rawtags, tp, i);
-                if (extract)
-                  (*e->gen)(e->type, attributes, sent, tp, i);
-                else {
-                  contexts[i].klasses = tp;
-                  contexts[i].index = i;
-                  (*e->gen)(e->type, attributes, sent, contexts[i], i);
-                  //std::cout << "added " << e->type.name << " at position " << i << ' ' << " for tag " << tp.curr << " nfeatures = " << contexts[i].features.size() << std::endl;
+            for (size_t j = 0; j < chains.size(); ++j) {
+              TagPair tp;
+              get_tagpair(tags, sent.get_single(chains[j]), tp, i);
+              for (Entries::iterator k = _actives.begin(); k != _actives.end(); ++k) {
+                RegEntry *e = *k;
+                if (!(e->rare) || lexicon.freq(sent.words[i]) < rare_cutoff) {
+                  if (extract)
+                    (*e->gen)(e->type, attributes, sent, tp, i);
+                  else {
+                    contexts[i].klasses.push_back(tp);
+                    contexts[i].index = i;
+                    (*e->gen)(e->type, attributes, sent, contexts[i], i);
+                    //std::cout << "added " << e->type.name << " at position " << i << ' ' << " for tag " << tp.curr << " nfeatures = " << contexts[i].features.size() << std::endl;
+                  }
                 }
               }
             }
@@ -222,8 +226,8 @@ namespace NLP {
       return entry->gen->load(entry->type, in);
     }
 
-    void Registry::generate(Attributes &attributes, Lexicon lexicon, TagSet tags, Sentence &sent, Raws &rawtags, Contexts &contexts, const bool extract) {
-      _impl->generate(attributes, lexicon, tags, sent, rawtags, contexts, extract);
+    void Registry::generate(Attributes &attributes, Lexicon lexicon, TagSet tags, Sentence &sent, const std::string &chains, Contexts &contexts, const bool extract) {
+      _impl->generate(attributes, lexicon, tags, sent, chains, contexts, extract);
     }
 
     void Registry::add_features(Lexicon lexicon, Sentence &sent, PDFs &dist, int i) {

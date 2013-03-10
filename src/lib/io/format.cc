@@ -21,6 +21,39 @@ void Format::_parse_escape(const char **str, std::string &dest) {
     dest += *s;
 }
 
+void Format::parse_chain(const std::string &format) {
+  const char *s = format.c_str();
+
+  if (!*s)
+    throw Exception("format string must contain at least one field");
+
+  while (*s) {
+    if (s[0] != '%')
+      break;
+    if (!s[1])
+      throw Exception("unexpected end of format string after %");
+    if (s[1] == '%')
+      break;
+    if (Sentence::type(s[1]) == Sentence::TYPE_INVALID)
+      throw FormatException("unrecognised format string specifier %", s[1]);
+
+    fields += s[1];
+    if (!s[2])
+      break;
+
+    s += 2;
+    if (s[0] == '%') {
+      if (s[1] == '%')
+        ++s;
+      else
+        throw Exception("missing separator after %");
+    }
+    _parse_escape(&s, separators);
+    ++s;
+  }
+}
+
+
 void Format::parse(const std::string &format) {
   const char *s = format.c_str();
 
