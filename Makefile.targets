@@ -14,7 +14,7 @@ FEATURE_OBJECTS = src/lib/crf/features/attributes.o src/lib/crf/features/registr
 
 REQUIRED_OBJECTS = $(IO_OBJECTS) $(CRF_OBJECTS) $(FEATURE_OBJECTS)
 
-.PHONY: all deps clean
+.PHONY: all deps clean wc
 
 all: dirs $(BINARIES)
 
@@ -26,6 +26,9 @@ clean:
 
 deps:
 	src/scripts/depends "$(CXX) -MM $(INCLUDE)" `find src -name '*.cc' | grep -v ^src/lib/port` $(PORT_OBJECTS:%.o=%.cc) > Makefile.deps
+
+wc:
+	wc `find src -name "*.cc" -or -name "*.h"`
 
 %.h.gch: %.h
 	$(CXX) -x c++-header $(CXXFLAGS) -o $@ $<
