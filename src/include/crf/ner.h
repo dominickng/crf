@@ -13,8 +13,8 @@ namespace NLP {
             config::OpPath gazetteers;
             config::OpPath pos;
 
-            Config(const std::string &name="ner",
-                const std::string &desc="ner CRF tagger config")
+            Config(const std::string &name=NER::name,
+                const std::string &desc=NER::desc)
               : Tagger::Config(name, desc, 0.707, 400),
                 data(*this, "data", "location of the data directory for gazeteers", "//data", true, &model),
                 gazetteers(*this, "gazetteers", "location of the gazetteers config file", "//gazetteers", true, &data),

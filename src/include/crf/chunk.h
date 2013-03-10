@@ -11,8 +11,8 @@ namespace NLP {
           public:
             config::OpPath pos;
 
-            Config(const std::string &name="chunk",
-                const std::string &desc="chunk CRF tagger config")
+            Config(const std::string &name=Chunk::name,
+                const std::string &desc=Chunk::desc)
               : Tagger::Config(name, desc, 0.707, 500),
                 pos(*this, "pos", "location to save the pos tag file", "//postags", true, &model) { }
         };
