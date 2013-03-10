@@ -1,11 +1,16 @@
-BINARIES = bin/test bin/train_pos bin/pos bin/train_ner bin/ner bin/chunk bin/train_chunk
+BINARIES = bin/test bin/train_pos bin/pos bin/train_ner bin/ner \
+	   bin/chunk bin/train_chunk bin/ner_factorial bin/train_ner_factorial
 CORE_OBJECTS = src/lib/base.o src/lib/version.o src/lib/input.o
 PORT_OBJECTS = src/lib/port/colour.o src/lib/port/unix_common.o
-IO_OBJECTS = src/lib/io/reader_factory.o src/lib/io/reader_format.o src/lib/io/reader_conll.o src/lib/io/format.o src/lib/io/writer_factory.o src/lib/io/writer_format.o src/lib/io/log.cc
+IO_OBJECTS = src/lib/io/reader_factory.o src/lib/io/reader_format.o \
+	     src/lib/io/reader_conll.o src/lib/io/format.o src/lib/io/writer_factory.o \
+	     src/lib/io/writer_format.o src/lib/io/log.cc
 
 CONFIG_OBJECTS = src/lib/config/base.o src/lib/config/group.o src/lib/config/option.o src/lib/config/info.o
 
-CRF_OBJECTS = src/lib/word.o src/lib/lexicon.o src/lib/tagset.o src/lib/gazetteers.o src/lib/crf/tagger.o src/lib/crf/ner.o src/lib/crf/pos.o src/lib/crf/chunk.o
+CRF_OBJECTS = src/lib/word.o src/lib/lexicon.o src/lib/tagset.o src/lib/gazetteers.o \
+	      src/lib/crf/tagger.o src/lib/crf/ner.o src/lib/crf/pos.o src/lib/crf/chunk.o \
+	      src/lib/crf/ner_factorial.o
 
 FEATURE_OBJECTS = src/lib/crf/features/attributes.o src/lib/crf/features/registry.o \
 		  src/lib/crf/features/feature_gen.o src/lib/crf/features/feature_word.o \
@@ -52,6 +57,12 @@ bin/train_chunk: src/main/train_chunk.o $(CORE_OBJECTS) $(PORT_OBJECTS) $(CONFIG
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 bin/chunk: src/main/chunk.o $(CORE_OBJECTS) $(PORT_OBJECTS) $(CONFIG_OBJECTS) $(REQUIRED_OBJECTS)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+bin/train_ner_factorial: src/main/train_ner_factorial.o $(CORE_OBJECTS) $(PORT_OBJECTS) $(CONFIG_OBJECTS) $(REQUIRED_OBJECTS)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+bin/ner_factorial: src/main/ner_factorial.o $(CORE_OBJECTS) $(PORT_OBJECTS) $(CONFIG_OBJECTS) $(REQUIRED_OBJECTS)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 .FORCE:

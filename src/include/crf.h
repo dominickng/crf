@@ -16,3 +16,4 @@
 #include "crf/pos.h"
 #include "crf/chunk.h"
 #include "crf/ner.h"
+#include "crf/ner_factorial.h"
