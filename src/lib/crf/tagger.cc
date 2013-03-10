@@ -37,10 +37,6 @@ lbfgsfloatval_t Tagger::Impl::duration_m(void) {
   return (clock() - clock_begin) / (60.0 * CLOCKS_PER_SEC);
 }
 
-const std::string &Tagger::Impl::chains(void) const {
-  return format.fields;
-}
-
 void Tagger::Impl::reset(const size_t size) {
   std::fill(scale.begin(), scale.begin() + size, 1.0);
 
@@ -1079,7 +1075,7 @@ void Tagger::Impl::train(Reader &reader, const std::string &trainer) {
   limits.calc(tags);
   logger << "completed feature extraction in " << duration_s() << "s\n" << std::endl;
 
-  ntags = limits.max_index();
+  ntags = limits.max_index(chains.size());
   inv_sigma_sq = 1.0 / (cfg.sigma() * cfg.sigma());
 
   // initialize the working vectors. each one is prepopulated to the size

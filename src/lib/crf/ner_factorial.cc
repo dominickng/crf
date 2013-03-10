@@ -63,9 +63,8 @@ class NERFactorial::Impl : public Tagger::Impl {
         for (size_t i = 0; i < sent.size(); ++i) {
           lexicon.add(sent.words[i]);
           pos.add(sent.pos[i]);
-          tags.add(sent.entities[i], 0);
-          tags.add(sent.pos[i], 1);
-          tags.add(sent.chunks[i], 2);
+          for (size_t j = 0; j < chains.size(); ++j)
+            tags.add(sent.get_single(chains[j])[i], j);
           words2tags.add(sent.words[i] + ' ' + sent.entities[i]);
           if (sent.size() > max_size)
             max_size = sent.size();
@@ -85,7 +84,7 @@ class NERFactorial::Impl : public Tagger::Impl {
       Sentence sent;
       Contexts contexts; //not used in this pass
       while (reader.next(sent)) {
-        registry.generate(attributes, lexicon, tags, sent, chains(), contexts, true);
+        registry.generate(attributes, lexicon, tags, sent, chains, contexts, true);
         sent.reset();
       }
 
@@ -97,7 +96,7 @@ class NERFactorial::Impl : public Tagger::Impl {
       while (reader.next(sent)) {
         Contexts contexts(sent.words.size());
         instances.push_back(contexts);
-        registry.generate(attributes, lexicon, tags, sent, chains(), instances.back(), false);
+        registry.generate(attributes, lexicon, tags, sent, chains, instances.back(), false);
         sent.reset();
       }
     }

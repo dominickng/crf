@@ -78,7 +78,7 @@ class POS::Impl : public Tagger::Impl {
       Sentence sent;
       Contexts contexts; //not used in this pass
       while (reader.next(sent)) {
-        registry.generate(attributes, lexicon, tags, sent, chains(), contexts, true);
+        registry.generate(attributes, lexicon, tags, sent, chains, contexts, true);
         sent.reset();
       }
 
@@ -90,7 +90,7 @@ class POS::Impl : public Tagger::Impl {
       while (reader.next(sent)) {
         Contexts contexts(sent.words.size());
         instances.push_back(contexts);
-        registry.generate(attributes, lexicon, tags, sent, chains(), instances.back(), false);
+        registry.generate(attributes, lexicon, tags, sent, chains, instances.back(), false);
         sent.reset();
       }
     }

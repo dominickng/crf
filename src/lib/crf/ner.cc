@@ -48,7 +48,7 @@ class NER::Impl : public Tagger::Impl {
         state.next_word();
       }
       //state.lattice.print(std::cout, tags, sent.size());
-      state.lattice.best(tags, sent.get_single(chains()[0]), sent.size());
+      state.lattice.best(tags, sent.get_single(chains[0]), sent.size());
     }
 
     virtual void _pass1(Reader &reader) {
@@ -80,7 +80,7 @@ class NER::Impl : public Tagger::Impl {
       Sentence sent;
       Contexts contexts; //not used in this pass
       while (reader.next(sent)) {
-        registry.generate(attributes, lexicon, tags, sent, chains(), contexts, true);
+        registry.generate(attributes, lexicon, tags, sent, chains, contexts, true);
         sent.reset();
       }
 
@@ -92,7 +92,7 @@ class NER::Impl : public Tagger::Impl {
       while (reader.next(sent)) {
         Contexts contexts(sent.words.size());
         instances.push_back(contexts);
-        registry.generate(attributes, lexicon, tags, sent, chains(), instances.back(), false);
+        registry.generate(attributes, lexicon, tags, sent, chains, instances.back(), false);
         sent.reset();
       }
     }

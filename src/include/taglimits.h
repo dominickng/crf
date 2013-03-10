@@ -43,10 +43,10 @@ namespace NLP {
           std::cout << i << ' ' << _limits[i].prev << ' ' << _limits[i].curr << std::endl;
       }
 
-      size_t max_index(void) {
+      size_t max_index(const size_t nchains) {
         if (_max_index == 0) {
           _max_index = 1;
-          for (size_t i = 0; i < _limits.size(); ++i)
+          for (size_t i = 0; i < nchains; ++i)
             _max_index *= ntags(i);
           ++_max_index;
         }
