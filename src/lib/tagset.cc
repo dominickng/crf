@@ -148,7 +148,7 @@ namespace NLP {
       }
 
       const Tag canonize(const std::string &raw, const uint16_t type=0) const {
-        return canonize(raw.c_str());
+        return canonize(raw.c_str(), type);
       }
 
       const Tag canonize(const char *raw, const uint16_t type=0) const {
@@ -170,6 +170,10 @@ namespace NLP {
         tags.reserve(raws.size());
         for (Raws::const_iterator i = raws.begin(); i != raws.end(); ++i)
           tags.push_back(canonize(*i, type));
+      }
+
+      const char *str(const uint16_t tag) const {
+        return _entries[tag]->str;
       }
 
       const char *str(const Tag &tag) const {
@@ -240,7 +244,8 @@ namespace NLP {
   void TagSet::canonize(const Raws &raws, Tags &tags, const uint16_t type) const { _impl->canonize(raws, tags, type); }
   const Tag TagSet::operator[](const size_t index) const { return _impl->at(index); }
 
-  const char *TagSet::str(const Tag &word) const { return _impl->str(word); }
+  const char *TagSet::str(const uint16_t tag) const { return _impl->str(tag); }
+  const char *TagSet::str(const Tag &tag) const { return _impl->str(tag); }
   void TagSet::str(const Tags &tags, Raws &raws) const { _impl->str(tags, raws); }
 
   size_t TagSet::size(void) const { return _impl->size(); }

@@ -35,7 +35,7 @@ Attribute &TransGen::load(const Type &type, std::istream &in) {
 }
 
 void TransGen::operator()(const Type &type, Attributes &attributes, Sentence &sent, TagPair tp, int i) {
-  if (i > 0)
+  if (i > 0 && tp.prev.type() == tp.curr.type())
     attributes(type.name, name, tp, false, true);
 }
 

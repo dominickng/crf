@@ -134,14 +134,14 @@ namespace NLP {
          *
          * Uses the Sentinel tag for words at the start or end of the sentence.
          */
-        void get_tagpair(TagSet tags, Raws &raws, TagPair &tp, int i) {
+        void get_tagpair(TagSet tags, Raws &raws, TagPair &tp, int i, uint16_t type) {
           if (i == 0) {
             tp.prev = Tag(Sentinel::val);
-            tp.curr = tags.canonize(raws[0]);
+            tp.curr = tags.canonize(raws[0], type);
           }
           else {
-            tp.prev = tags.canonize(raws[i-1]);
-            tp.curr = tags.canonize(raws[i]);
+            tp.prev = tags.canonize(raws[i-1], type);
+            tp.curr = tags.canonize(raws[i], type);
           }
         }
 
@@ -173,18 +173,27 @@ namespace NLP {
             const bool extract) {
           for (size_t i = 0; i < sent.size(); ++i) {
             for (size_t j = 0; j < chains.size(); ++j) {
-              TagPair tp;
-              get_tagpair(tags, sent.get_single(chains[j]), tp, i);
-              for (Entries::iterator k = _actives.begin(); k != _actives.end(); ++k) {
-                RegEntry *e = *k;
-                if (!(e->rare) || lexicon.freq(sent.words[i]) < rare_cutoff) {
-                  if (extract)
-                    (*e->gen)(e->type, attributes, sent, tp, i);
-                  else {
-                    contexts[i].klasses.push_back(tp);
-                    contexts[i].index = i;
-                    (*e->gen)(e->type, attributes, sent, contexts[i], i);
-                    //std::cout << "added " << e->type.name << " at position " << i << ' ' << " for tag " << tp.curr << " nfeatures = " << contexts[i].features.size() << std::endl;
+              for (size_t k = j; k < chains.size(); ++k) {
+                TagPair tp;
+                if (j == k)
+                  get_tagpair(tags, sent.get_single(chains[j]), tp, i, j);
+                else {
+                  tp.prev = tags.canonize(sent.get_single(chains[k])[i], k);
+                  tp.curr = tags.canonize(sent.get_single(chains[j])[i], j);
+                }
+                if (!extract) {
+                  contexts[i].klasses.push_back(tp);
+                  contexts[i].index = i;
+                }
+                for (Entries::iterator l = _actives.begin(); l != _actives.end(); ++l) {
+                  RegEntry *e = *l;
+                  if (!(e->rare) || lexicon.freq(sent.words[i]) < rare_cutoff) {
+                    if (extract)
+                      (*e->gen)(e->type, attributes, sent, tp, i);
+                    else if (j == 0 && k == 0) {
+                      (*e->gen)(e->type, attributes, sent, contexts[i], i);
+                      //std::cout << "added " << e->type.name << " at position " << i << ' ' << " for tag " << tp.prev << " -> " << tp.curr << " (" << chains[k] << "," << chains[j] << ") nfeatures = " << contexts[i].features.size() << std::endl;
+                    }
                   }
                 }
               }

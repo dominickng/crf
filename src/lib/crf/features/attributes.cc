@@ -330,7 +330,8 @@ namespace NLP {
           if (add_trans_feature)
             _add(type, str, tp);
           if (add_state_feature) {
-            tp.prev = None::val;
+            if (tp.prev.type() == tp.curr.type() || tp.prev == Sentinel::val)
+              tp.prev = None::val;
             _add(type, str, tp);
           }
         }

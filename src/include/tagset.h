@@ -28,6 +28,7 @@ namespace NLP {
       const Tag canonize(const char *raw, const uint16_t type=0) const;
       void canonize(const Raws &raws, Tags &tags, const uint16_t type=0) const;
 
+      const char *str(const uint16_t tag) const;
       const char *str(const Tag &tag) const;
       void str(const Tags &tags, Raws &raws) const;
 

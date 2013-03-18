@@ -59,7 +59,7 @@ void Tagger::Impl::reset(const size_t size) {
  * summed distributions, scaling by a decay factor for SGD. The distribution is
  * indexed by a tuple of (previous_tag, current_tag)
  *
- * State features (previous_Tag = None::val) are uniformly added to every
+ * State features (previous_tag = None::val) are uniformly added to every
  * (x, current_tag) for each tag x
  */
 void Tagger::Impl::compute_psis(Context &context, PDFs &dist, lbfgsfloatval_t decay) {
@@ -913,7 +913,7 @@ void Tagger::Impl::reg(void) {
 void Tagger::Impl::load(void) {
   lexicon.load();
   tags.load();
-  limits.calc(tags);
+  limits.calc();
   reg();
   _load_model(model);
 }
@@ -1072,7 +1072,7 @@ void Tagger::Impl::train(Reader &reader, const std::string &trainer) {
   logger << "beginning feature extraction" << std::endl;
   reg();
   extract(reader, instances);
-  limits.calc(tags);
+  limits.calc();
   logger << "completed feature extraction in " << duration_s() << "s\n" << std::endl;
 
   ntags = limits.max_index(chains.size());

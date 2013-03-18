@@ -341,12 +341,12 @@ namespace NLP {
             model("info", "Tagger model info file", cfg.model),
             registry(cfg.rare_cutoff()), logger(cfg.log(), std::cout),
             chains(Format(chains, true).fields), lexicon(cfg.lexicon()),
-            tags(cfg.tags()), limits(), words2tags(cfg.tagdict()), attributes(),
-            instances(), weights(), attribs2weights(), w_dict(lexicon),
-            ww_dict(lexicon), a_dict(), t_dict(), preface(preface),
-            inv_sigma_sq(), log_z(0.0), ntags(), clock_begin(),
-            alphas(), betas(), state_marginals(), trans_marginals(),
-            psis(), scale() { }
+            tags(cfg.tags()), limits(tags), words2tags(cfg.tagdict()),
+            attributes(), instances(), weights(), attribs2weights(),
+            w_dict(lexicon), ww_dict(lexicon), a_dict(), t_dict(),
+            preface(preface), inv_sigma_sq(), log_z(0.0), ntags(),
+            clock_begin(), alphas(), betas(), state_marginals(),
+            trans_marginals(), psis(), scale() { }
 
         virtual ~Impl(void) { /* nothing */ }
 
