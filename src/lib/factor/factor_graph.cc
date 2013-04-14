@@ -34,7 +34,7 @@ namespace NLP {
       // factor from variable to the next time slice
       size_t index = i % max_size;
       if (i % max_size != max_size - 1) {
-        Factor *f = new (pool, 2) Factor(index + 1, 2);
+        Factor *f = new (pool, 2) Factor(index + 1, 2, false);
         f->variables[0] = variables[i];
         f->variables[1] = variables[i + 1];
         variables[i]->factors[(variables[i]->nfactors)++] = f;
@@ -45,7 +45,7 @@ namespace NLP {
       // factor between variables at the same time slice
       size_t j = i;
       while (j < variables.size() - max_size) {
-        Factor *f = new (pool, 2) Factor(index, 2);
+        Factor *f = new (pool, 2) Factor(index, 2, true);
         f->variables[0] = variables[j];
         f->variables[1] = variables[j + max_size];
         factors.push_back(f);
@@ -161,5 +161,65 @@ namespace NLP {
     return converged;
   }
 
+  double FactorGraph::_compute_state_marginals(PSIs &psis, PDFs &state_marginals, Variable *variable, size_t index) {
+    double norm = 0.0;
+    double log_partition = 0.0;
+    size_t state_max = variable->tag_offset + variable->ntags;
 
+    for (size_t state = 0; state < variable->ntags; ++state) {
+      Tag tag = state + variable->tag_offset;
+      double msg_product = messages(variable->factors[0], variable, state) * messages(variable->factors[1], variable, state);
+      double belief = psis[index][None::val][tag] * msg_product;
+      norm += belief;
+      log_partition += msg_product;
+      state_marginals[index][tag] = belief;
+    }
+    norm = (norm != 0) ? 1.0 / norm : 1.0;
+
+    for (size_t state = variable->tag_offset; state < state_max; ++state)
+      state_marginals[index][state] *= norm;
+
+    return std::log(log_partition);
+  }
+
+  double FactorGraph::_compute_trans_marginals(PSIs &psis, PDFs &trans_marginals, Factor *factor, Variable *from, Variable *to) {
+    double norm = 0.0;
+    size_t prev_max = from->tag_offset + from->ntags;
+    size_t curr_max = to->tag_offset + to->ntags;
+    for (size_t prev = 0; prev < from->ntags; ++prev) {
+      for (size_t curr = 0; curr < to->ntags; ++curr) {
+        Tag prev_tag = prev + from->tag_offset;
+        Tag curr_tag = curr + to->tag_offset;
+        double belief = psis[factor->index][prev_tag][curr_tag] * messages(from, factor, prev) * messages(to, factor, curr);
+        norm += belief;
+        trans_marginals[prev_tag][curr_tag] = belief;
+      }
+    }
+    //factor->norm = norm; //is this needed?
+    norm = (norm != 0) ? 1.0 / norm : 1.0;
+
+    for (size_t prev_tag = from->tag_offset; prev_tag < prev_max; ++prev_tag)
+      for (size_t curr_tag = to->tag_offset; curr_tag < curr_max; ++curr_tag)
+        trans_marginals[prev_tag][curr_tag] *= norm;
+
+    return std::log(factor->norm);
+  }
+
+  double FactorGraph::marginals(PSIs &psis, PDFs &state_marginals, PDFs &trans_marginals) {
+    double log_partition = 0.0;
+    for (Factors::iterator i = randomized_factors.begin(); i != randomized_factors.end(); ++i) {
+      Factor *factor = *i;
+      Variable *from = factor->variables[0];
+      Variable *to = factor->variables[1];
+
+      if (!factor->between_chains) {
+        if (factor->index == 1)
+          log_partition += _compute_state_marginals(psis, state_marginals, from, 0);
+        log_partition += _compute_state_marginals(psis, state_marginals, to, factor->index);
+      }
+      log_partition += _compute_trans_marginals(psis, trans_marginals, factor, from, to);
+    }
+
+    return log_partition;
+  }
 }
