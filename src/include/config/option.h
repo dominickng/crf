@@ -1,8 +1,11 @@
 namespace Util {
   namespace config {
+    /**
+     * OpBase. A namespaced option that stores a value. An OpBase must be
+     * constructed as a member of some OpGroup, under which it will be
+     * namespaced.
+     */
     class OpBase : public OptionBase {
-      // represent ops that hold some form an argument
-      // must be part of some OpGroup
       protected:
         const bool _has_default;
 
