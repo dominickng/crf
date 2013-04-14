@@ -77,6 +77,10 @@ namespace NLP {
         return _limits[type].curr.id() - _limits[type].prev.id();
       }
 
+      inline size_t real_ntags(size_t type) const {
+        return _limits[type].curr.id() - _limits[type].prev.id();
+      }
+
       Tag canonize(Tag t) const {
         for (size_t i = 0; i < t.type(); ++i)
           t -= ntags(i);
