@@ -59,7 +59,7 @@ namespace NLP {
     bool converged = true;
     for (size_t i = 0; i < nmessages; ++i) {
       converged = (std::fabs(old_messages[i] - new_messages[i]) < threshold) && converged;
-      //std::cout << "convergence " << old_messages[i] << ' ' << new_messages[i] << ' ' << (std::fabs(old_messages[i] - new_messages[i]) < threshold) << ' ' << converged << std::endl ;
+      std::cout << "convergence " << old_messages[i] << ' ' << new_messages[i] << ' ' << (std::fabs(old_messages[i] - new_messages[i]) < threshold) << ' ' << converged << std::endl ;
 
     }
     return converged;
@@ -69,10 +69,7 @@ namespace NLP {
     //std::cout << "message_from_variable" << std::endl;
     double *old_messages = new double[from->ntags];
     double *msgs = messages(from, to);
-    if (msgs)
-      memcpy(old_messages, msgs, sizeof(double) * from->ntags);
-    else
-      std::fill(old_messages, old_messages + from->ntags, std::numeric_limits<double>::max());
+    bool ret = msgs && memcpy(old_messages, msgs, sizeof(double) * from->ntags);
 
     for (size_t i = 0; i < from->ntags; ++i) {
       Tag tag = i + from->tag_offset;
@@ -93,7 +90,7 @@ namespace NLP {
       }
       messages(from, to, i, msg);
     }
-    bool ret = converged(old_messages, messages(from, to), from->ntags, threshold);
+    ret = ret && converged(old_messages, messages(from, to), from->ntags, threshold);
     delete [] old_messages;
     return ret;
   }
@@ -103,10 +100,7 @@ namespace NLP {
     double sum = 0.0;
     double *old_messages = new double[to->ntags];
     double *msgs = messages(from, to);
-    if (msgs)
-      memcpy(old_messages, msgs, sizeof(double) * to->ntags);
-    else
-      std::fill(old_messages, old_messages + to->ntags, std::numeric_limits<double>::max());
+    bool ret = msgs && memcpy(old_messages, msgs, sizeof(double) * to->ntags);
 
     for (size_t i = 0; i < to->ntags; ++i) {
       Tag t1 = i + to->tag_offset;
@@ -127,7 +121,7 @@ namespace NLP {
     double norm = (sum != 0) ? 1.0 / sum : 1.0;
     messages.normalize(from, to, norm);
     from->norm = norm;
-    bool ret = converged(old_messages, messages(from, to), to->ntags, threshold);
+    ret = ret && converged(old_messages, messages(from, to), to->ntags, threshold);
     delete [] old_messages;
     return ret;
   }
