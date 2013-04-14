@@ -260,7 +260,7 @@ namespace NLP {
         lbfgsfloatval_t sgd_iterate(InstancePtrs &instance_ptrs, lbfgsfloatval_t *weights,
             const int nfeatures, const int nsamples, const lbfgsfloatval_t t0,
             const lbfgsfloatval_t lambda, const int nepochs, const int period);
-        void compute_marginals(Contexts &c, lbfgsfloatval_t decay=1.0);
+        void compute_marginals(Contexts &c);
         void compute_weights(Contexts &c, lbfgsfloatval_t gain);
         lbfgsfloatval_t score(Contexts &contexts, lbfgsfloatval_t decay=1.0);
         lbfgsfloatval_t score_instance(Contexts &contexts, lbfgsfloatval_t decay=1.0,

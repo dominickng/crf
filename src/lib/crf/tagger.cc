@@ -16,11 +16,6 @@
 #include "crf/features.h"
 #include "crf/tagger.h"
 
-template <typename T>
-inline bool isinf(T value) {
-  return std::numeric_limits<T>::has_infinity && value == std::numeric_limits<T>::infinity();
-}
-
 namespace NLP { namespace CRF {
 
 Tagger::Tagger(Tagger::Config &cfg, const std::string &preface, Impl *impl)
@@ -720,7 +715,7 @@ lbfgsfloatval_t Tagger::Impl::sgd_iterate(InstancePtrs &instance_ptrs,
  * out of the transition expectations.
  *
  */
-void Tagger::Impl::compute_marginals(Contexts &c, lbfgsfloatval_t decay) {
+void Tagger::Impl::compute_marginals(Contexts &c) {
   for (size_t i = 0; i < c.size(); ++i) {
     lbfgsfloatval_t inv_scale = (1.0 / scale[i]);
     for (Tag curr = 2; curr < ntags; ++curr) {
@@ -807,7 +802,7 @@ lbfgsfloatval_t Tagger::Impl::score_instance(Contexts &contexts, lbfgsfloatval_t
   compute_psis(contexts, psis, decay);
   forward(contexts, alphas, psis, scale);
   backward(contexts, betas, psis, scale);
-  compute_marginals(contexts, decay);
+  compute_marginals(contexts);
   compute_weights(contexts, gain);
   //std::cout << -score << ' ' << log_z << ' ' << (attributes.sum_lambda_sq() * inv_sigma_sq * 0.5) <<  std::endl;
   return -score + log_z;
