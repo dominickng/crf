@@ -1070,7 +1070,7 @@ void Tagger::Impl::train(Reader &reader, const std::string &trainer) {
   limits.calc();
   logger << "completed feature extraction in " << duration_s() << "s\n" << std::endl;
 
-  ntags = limits.max_index(chains.size());
+  ntags = tags.size();
   inv_sigma_sq = 1.0 / (cfg.sigma() * cfg.sigma());
 
   // initialize the working vectors. each one is prepopulated to the size
