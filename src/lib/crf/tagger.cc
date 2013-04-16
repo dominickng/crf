@@ -10,6 +10,7 @@
 #include "tagset.h"
 #include "taglimits.h"
 #include "vector.h"
+#include "factor.h"
 #include "crf/nodepool.h"
 #include "crf/lattice.h"
 #include "crf/state.h"
@@ -142,6 +143,46 @@ void Tagger::Impl::compute_expectations(Contexts &c) {
         lbfgsfloatval_t alpha = alphas[i-1][klasses.prev];
         lbfgsfloatval_t beta = betas[i][klasses.curr];
         f.exp += alpha * psis[i][klasses.prev][klasses.curr] * beta;
+      }
+    }
+  }
+}
+
+/**
+ * compute_expectations_from_marginals.
+ * Iterate through contexts, computing the expected values of each feature
+ *
+ * The expected value of a state feature is the sum over each occurence of the
+ * feature of p(i, tag), where i is the current position and tag is the
+ * current gold tag
+ *
+ * The expected value of a transition feature is the sum over each occurence
+ * of the feature of p(prev, curr, i-1, i) where i is the current position,
+ * prev is the previous gold tag, and curr is the current gold tag
+ */
+void Tagger::Impl::compute_expectations_from_marginals(Contexts &c) {
+  FeaturePtrs &trans_features = attributes.trans_features();
+
+  for (size_t i = 0; i < c.size(); ++i) {
+    for (size_t j = 0; j < c[i].features.size(); ++j) {
+      Feature &f = *(c[i].features[j]);
+      TagPair &klasses = f.klasses;
+      if (klasses.prev == None::val) { //state feature
+        f.exp += state_marginals[i][klasses.curr];
+      }
+      else {
+        //trans feature
+        //FIXME TODO WARNING for some reason, trans features that look
+        //further than 1 word back don't work
+        f.exp += trans_marginals[klasses.prev][klasses.curr];
+      }
+    }
+
+    if (i > 0) {
+      for (size_t j = 0; j < trans_features.size(); ++j) {
+        Feature &f = *trans_features[j];
+        TagPair &klasses = f.klasses;
+        f.exp += trans_marginals[klasses.prev][klasses.curr];
       }
     }
   }
@@ -395,6 +436,44 @@ lbfgsfloatval_t Tagger::Impl::_lbfgs_evaluate(const lbfgsfloatval_t *x,
 }
 
 /**
+ * _lbfgs_bp_evaluate.
+ * Gradient and objective evaluation function for libLBFGS optimization.
+ * Updates the gradient for each feature lambda, and computes the new value
+ * of the objective function (regularised_llhood)
+ *
+ * The update process is:
+ *  1. reset previously computed feature expectations and log_z to 0
+ *  2. for each training instance:
+ *        a. reset the working vectors (alphas, betas, etc.)
+ *        b. compute the activation scores (psis) for each position in the
+ *           instance
+ *        c. perform loopy belief propagation to estimate the true marginals
+ *        d. increment the feature expectations based on the instance
+ *  3. calculate the gradient of each feature, and copy to the grad vector
+ *  4. calculate the regularised log likelihood and return it
+ */
+lbfgsfloatval_t Tagger::Impl::_lbfgs_bp_evaluate(const lbfgsfloatval_t *x,
+    lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step) {
+  attributes.reset_expectations();
+
+  log_z = 0.0;
+  for (Instances::iterator i = instances.begin(); i != instances.end(); ++i) {
+    Contexts &contexts = *i;
+    reset(i->size());
+    compute_psis(contexts, psis);
+    graph.propagate(psis, contexts.size(), cfg.bp_iterations(), cfg.bp_convergence_threshold());
+    log_z += graph.marginals(psis, state_marginals, trans_marginals);
+    compute_expectations_from_marginals(contexts);
+  }
+  //attributes.prep_finite_differences();
+  //finite_differences(g, false);
+
+  attributes.copy_gradients(g, inv_sigma_sq);
+  //attributes.print(inv_sigma_sq);
+
+  return regularised_llhood();
+}
+/**
  * print_psis.
  * Debugging function to print out the matrix of activation values (psis)
  * for a given instance.
@@ -402,15 +481,15 @@ lbfgsfloatval_t Tagger::Impl::_lbfgs_evaluate(const lbfgsfloatval_t *x,
 void Tagger::Impl::print_psis(Contexts &contexts, PSIs &psis) {
   for (size_t i = 0; i < contexts.size(); ++i) {
     std::cout << "Position " << i << std::endl;
-    for (size_t j = 0; j < psis[i].size(); ++j) {
+    for (size_t j = 0; j < tags.size(); ++j) {
       if(j == 0){
         std::cout << std::setw(16) << ' ';
-        for (size_t k = 0; k < psis[i][j].size(); ++k)
+        for (size_t k = 0; k < tags.size(); ++k)
           std::cout << std::setw(16) << tags.str(k);
         std::cout << std::endl;
       }
       std::cout << std::setw(16) << tags.str(j);
-      for (size_t k = 0; k < psis[i][j].size(); ++k){
+      for (size_t k = 0; k < tags.size(); ++k){
         std::cout << std::setw(16) << psis[i][j][k] << ' ';
       }
       std::cout << std::endl;
@@ -429,16 +508,44 @@ void Tagger::Impl::print_fwd_bwd(Contexts &contexts, PDFs &pdfs, PDF &scale) {
   for (size_t i = 0; i < contexts.size(); ++i)
     std::cout << std::setw(16) << tags.str(contexts[i].klasses[0].curr);
   std::cout << std::endl;
-  for(Tag curr(0); curr < ntags; ++curr) {
+  for (Tag curr(0); curr < ntags; ++curr) {
     std::cout << std::setw(16) << tags.str(curr);
-    for(size_t i = 0; i < contexts.size(); ++i)
+    for (size_t i = 0; i < contexts.size(); ++i)
       std::cout << std::setw(16) << pdfs[i][curr];
     std::cout << std::endl;
   }
   std::cout << std::setw(16) << "scale:";
-  for(size_t i = 0; i < contexts.size(); ++i)
+  for (size_t i = 0; i < contexts.size(); ++i)
     std::cout << std::setw(16) << scale[i];
 
+  std::cout << '\n' << std::endl;
+}
+
+void Tagger::Impl::print_state_marginals(Contexts &contexts, PDFs &state_marginals) {
+  std::cout << std::setw(16) << ' ';
+  for (size_t i = 0; i < contexts.size(); ++i)
+    std::cout << std::setw(16) << tags.str(contexts[i].klasses[0].curr);
+  std::cout << std::endl;
+  for (size_t curr = 0; curr < ntags; ++curr) {
+    std::cout << std::setw(16) << tags.str(tags[curr]);
+    for (size_t i = 0; i < contexts.size(); ++i)
+      std::cout << std::setw(16) << state_marginals[i][curr];
+    std::cout << std::endl;
+  }
+  std::cout << '\n' << std::endl;
+}
+
+void Tagger::Impl::print_trans_marginals(PDFs &trans_marginals) {
+  std::cout << std::setw(16) << ' ';
+  for (size_t i = 0; i < ntags; ++i)
+    std::cout << std::setw(16) << tags.str(tags[i]);
+  std::cout << std::endl;
+  for (size_t curr = 0; curr < ntags; ++curr) {
+    std::cout << std::setw(16) << tags.str(tags[curr]);
+    for (size_t i = 0; i < ntags; ++i)
+      std::cout << std::setw(16) << trans_marginals[i][curr];
+    std::cout << std::endl;
+  }
   std::cout << '\n' << std::endl;
 }
 
@@ -865,6 +972,41 @@ void Tagger::Impl::train_sgd(Reader &reader, lbfgsfloatval_t *weights) {
   sgd_iterate(instance_ptrs, weights, n, instance_ptrs.size(), t0, lambda, cfg.niterations(), cfg.period());
 }
 
+void Tagger::Impl::train_loopy_bp(Reader &reader, lbfgsfloatval_t *weights) {
+  logger << "beginning loopy BP optimization" << std::endl;
+  const size_t n = model.nfeatures();
+  graph.build(model.max_size());
+
+  for (size_t i = 0; i < n; ++i)
+    weights[i] = 0.0;
+
+  attributes.assign_lambdas(weights);
+  clock_begin = clock();
+  for (Instances::iterator i = instances.begin(); i != instances.end(); ++i) {
+    Contexts &contexts = *i;
+    reset(contexts.size());
+    compute_psis(contexts, psis);
+    //print_psis(contexts, psis);
+  }
+  regularised_llhood();
+
+  lbfgs_parameter_t param;
+  lbfgs_parameter_init(&param);
+  param.max_iterations = cfg.niterations();
+  param.linesearch = LBFGS_LINESEARCH_MORETHUENTE;
+  param.epsilon = 1e-5;
+  param.delta = 1e-5;
+  param.past = 10;
+
+  attributes.assign_lambdas(weights);
+  clock_begin = clock();
+
+  int ret = lbfgs(n, weights, NULL, lbfgs_bp_evaluate, lbfgs_progress, (void *)this, &param);
+
+  logger << "L-BFGS optimization terminated with status code " << ret << std::endl;
+
+}
+
 /**
  * reg.
  * Registers active feature generating functions with their associated
@@ -1097,6 +1239,8 @@ void Tagger::Impl::train(Reader &reader, const std::string &trainer) {
     train_lbfgs(reader, weights);
   else if (trainer == "sgd")
     train_sgd(reader, weights);
+  else if (trainer == "loopy_bp")
+    train_loopy_bp(reader, weights);
   else
     throw ValueException("Unknown training algorithm", trainer);
 
@@ -1118,6 +1262,18 @@ lbfgsfloatval_t Tagger::Impl::lbfgs_evaluate(void *_instance,
     const lbfgsfloatval_t *x, lbfgsfloatval_t *g, const int n,
     const lbfgsfloatval_t step) {
   return reinterpret_cast<Tagger::Impl *>(_instance)->_lbfgs_evaluate(x, g, n, step);
+}
+
+/**
+ * lbfgs_bp_evaluate.
+ * Static function required for libLBFGS. Casts the instance parameter to
+ * its true type of a Tagger::Impl pointer, and then calls the
+ * _lbfgs_bp_evaluate method on it.
+ */
+lbfgsfloatval_t Tagger::Impl::lbfgs_bp_evaluate(void *_instance,
+    const lbfgsfloatval_t *x, lbfgsfloatval_t *g, const int n,
+    const lbfgsfloatval_t step) {
+  return reinterpret_cast<Tagger::Impl *>(_instance)->_lbfgs_bp_evaluate(x, g, n, step);
 }
 
 /**

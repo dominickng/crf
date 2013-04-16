@@ -10,6 +10,7 @@
 #include "tagset.h"
 #include "taglimits.h"
 #include "vector.h"
+#include "factor.h"
 #include "crf/nodepool.h"
 #include "crf/lattice.h"
 #include "crf/state.h"

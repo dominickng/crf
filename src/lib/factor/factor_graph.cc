@@ -127,7 +127,7 @@ namespace NLP {
     }
     double norm = (sum != 0) ? 1.0 / sum : 1.0;
     messages.normalize(from, to, norm);
-    from->norm = norm;
+    from->norm = sum;
     ret = ret && converged(old_messages, messages(from, to), to->ntags, threshold);
     delete [] old_messages;
     return ret;

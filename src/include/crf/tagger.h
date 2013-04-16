@@ -160,6 +160,9 @@ namespace NLP {
             config::Op<uint64_t> period;
             config::Op<uint64_t> niterations;
 
+            config::Op<uint64_t> bp_iterations;
+            config::Op<double> bp_convergence_threshold;
+
             config::Op<uint64_t> cutoff_default;
             config::Op<uint64_t> cutoff_words;
             config::Op<uint64_t> cutoff_attribs;
@@ -182,6 +185,8 @@ namespace NLP {
             batch(*this, "batch", "batch size for SGD optimization (ignored for L-BFGS)", 1, true, true),
             period(*this, "period", "period size for checking SGD convergence (ignored for L-BFGS)", 10, true, true),
             niterations(*this, "niterations", "number of training iterations", niterations, true),
+            bp_iterations(*this, "bp_iterations", "number of iterations to run belief propagation", 1000, true, true),
+            bp_convergence_threshold(*this, "bp_convergence_threshold", "threshold value for checking belief propagation convergence", 0.0001, true, true),
             cutoff_default(*this, "cutoff_default", "minimum frequency cutoff for features", 1, true, true),
             cutoff_words(*this, "cutoff_words", "minimum frequency cutoff for word features", 1, true, true),
             cutoff_attribs(*this, "cutoff_attribs", "minimum frequency cutoff for attributes", 1, true, true),
@@ -235,6 +240,7 @@ namespace NLP {
         void compute_psis(Context &context, PDFs &dist, lbfgsfloatval_t decay=1.0);
         void compute_psis(Contexts &contexts, PSIs &psis, lbfgsfloatval_t decay=1.0);
         void compute_expectations(Contexts &c);
+        void compute_expectations_from_marginals(Contexts &c);
         void forward(Contexts &contexts, PDFs &alphas, PSIs &psis, PDF &scale);
         void forward_noscale(Contexts &contexts, PDFs &alphas, PSIs &psis);
         void backward(Contexts &contexts, PDFs &betas, PSIs &psis, PDF &scale);
@@ -243,9 +249,13 @@ namespace NLP {
         lbfgsfloatval_t regularised_llhood(void);
         lbfgsfloatval_t _lbfgs_evaluate(const lbfgsfloatval_t *x,
             lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step);
+        lbfgsfloatval_t _lbfgs_bp_evaluate(const lbfgsfloatval_t *x,
+            lbfgsfloatval_t *g, const int n, const lbfgsfloatval_t step);
 
         void print_psis(Contexts &contexts, PSIs &psis);
         void print_fwd_bwd(Contexts &contexts, PDFs &pdfs, PDF &scale);
+        void print_state_marginals(Contexts &contexts, PDFs &state_marginals);
+        void print_trans_marginals(PDFs &trans_marginals);
 
         void finite_differences(lbfgsfloatval_t *g, bool overwrite=false);
 
@@ -273,6 +283,8 @@ namespace NLP {
         void train_lbfgs(Reader &reader, lbfgsfloatval_t *weights);
         void train_sgd(Reader &reader, lbfgsfloatval_t *weights);
 
+        void train_loopy_bp(Reader &reader, lbfgsfloatval_t *weights);
+
         virtual void reg(void);
         virtual void load(void);
         virtual void _load_model(Model &model);
@@ -295,6 +307,8 @@ namespace NLP {
         Instances instances;
         Weights weights;
         Attribs2Weights attribs2weights;
+
+        FactorGraph graph;
 
         WordDict w_dict;
         BiWordDict ww_dict;
@@ -343,8 +357,8 @@ namespace NLP {
             chains(Format(chains, true).fields), lexicon(cfg.lexicon()),
             tags(cfg.tags()), limits(tags), words2tags(cfg.tagdict()),
             attributes(), instances(), weights(), attribs2weights(),
-            w_dict(lexicon), ww_dict(lexicon), a_dict(), t_dict(),
-            preface(preface), inv_sigma_sq(), log_z(0.0), ntags(),
+            graph(limits), w_dict(lexicon), ww_dict(lexicon), a_dict(),
+            t_dict(), preface(preface), inv_sigma_sq(), log_z(0.0), ntags(),
             clock_begin(), alphas(), betas(), state_marginals(),
             trans_marginals(), psis(), scale() { }
 
@@ -354,6 +368,10 @@ namespace NLP {
         void train(Reader &reader, const std::string &trainer);
 
         static lbfgsfloatval_t lbfgs_evaluate(void *instance,
+            const lbfgsfloatval_t *x, lbfgsfloatval_t *g, const int n,
+            const lbfgsfloatval_t step);
+
+        static lbfgsfloatval_t lbfgs_bp_evaluate(void *instance,
             const lbfgsfloatval_t *x, lbfgsfloatval_t *g, const int n,
             const lbfgsfloatval_t step);
 
